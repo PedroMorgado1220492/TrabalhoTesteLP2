@@ -1,0 +1,14 @@
+
+DEPARTAMENTO,DPT,Departamento de Informática,JOA
+DEPARTAMENTO,DPT,Departamento de Informática,JOA
+DEPARTAMENTO,DPM,Departamento de Matemática,MAR
+CURSO,CS,Ciência da Computação,DPT,JOA
+CURSO,MA,Matemática,DPM,MAR
+UC,LP,Programação,1,CS,JOA
+UC,BD,Bases de Dados,1,CS,JOA
+UC,ALG,Álgebra,1,MA,MAR
+UC,AN,Análise,1,MA,MAR
+DOCENTE,JOA,João Almeida,joa@issmf.ipp.pt,1234
+DOCENTE,MAR,Maria Rocha,mar@issmf.ipp.pt,1234
+ESTUDANTE,1001,Pedro Silva,1001@issmf.ipp.pt,1234,CS,2026
+ESTUDANTE,1002,Ana Costa,1002@issmf.ipp.pt,1234,MA,2026
