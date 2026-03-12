@@ -27,7 +27,7 @@ public class GestorController {
     public void iniciarMenuGestor() {
         boolean aExecutar = true;
         while (aExecutar) {
-            int opcao = view.mostrarMenuPrincipalGestor(); // Sugestão: adicione "Gerir Docentes" na View
+            int opcao = view.mostrarMenuPrincipalGestor();
             switch (opcao) {
                 case 1:
                     gerirDepartamentos();
@@ -42,15 +42,35 @@ public class GestorController {
                     gerirEstudantes();
                     break;
                 case 5:
-                    gerirDocentes(); // Nova opção para o Gestor criar os docentes!
+                    gerirDocentes();
                     break;
-                case 6: // Ajuste o número de "Sair" na sua View conforme necessário
+                case 6:
+                    avancarAnoLetivo(); // NOVA OPÇÃO AQUI!
+                    break;
+                case 7:
                     view.mostrarMensagem("A sair do Backoffice...");
                     aExecutar = false;
                     break;
                 default:
                     view.mostrarMensagem("Opção inválida.");
             }
+        }
+    }
+
+    // --- NOVA LÓGICA DE TRANSIÇÃO DE ANO ---
+    private void avancarAnoLetivo() {
+        view.mostrarMensagem("\n--- TRANSIÇÃO DE ANO LETIVO ---");
+        view.mostrarMensagem("Atenção: Esta ação irá avaliar todos os alunos, subir o ano de frequência");
+        view.mostrarMensagem("dos que tiverem aprovação (>= 60%) e arquivar todas as notas.");
+
+        int proximoAno = repositorio.getAnoAtual() + 1;
+        String confirmacao = view.pedirInputString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N)");
+
+        if (confirmacao.equalsIgnoreCase("S")) {
+            repositorio.avancarAno();
+            view.mostrarMensagem("Sucesso! Bem-vindo ao ano letivo de " + repositorio.getAnoAtual() + ".");
+        } else {
+            view.mostrarMensagem("Operação cancelada. Mantemo-nos em " + repositorio.getAnoAtual() + ".");
         }
     }
 
@@ -201,7 +221,7 @@ public class GestorController {
         }
     }
 
-    // --- LÓGICA DE ESTUDANTES (COM VALIDAÇÕES) ---
+    // --- LÓGICA DE ESTUDANTES ---
     private void gerirEstudantes() {
         boolean aExecutar = true;
         while (aExecutar) {
@@ -213,7 +233,6 @@ public class GestorController {
                         break;
                     }
 
-                    // VALIDAÇÃO: NOME
                     String nome = "";
                     while (true) {
                         nome = view.pedirInputString("Nome do Estudante (Nome e Sobrenome)");
@@ -221,7 +240,6 @@ public class GestorController {
                         view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras.");
                     }
 
-                    // VALIDAÇÃO: NIF
                     String nif = "";
                     while (true) {
                         nif = view.pedirInputString("NIF (9 dígitos)");
@@ -231,7 +249,6 @@ public class GestorController {
 
                     String morada = view.pedirInputString("Morada");
 
-                    // VALIDAÇÃO: DATA DE NASCIMENTO
                     String dataNascimento = "";
                     while (true) {
                         dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
@@ -275,17 +292,15 @@ public class GestorController {
         }
     }
 
-    // --- LÓGICA DE DOCENTES (COM VALIDAÇÕES) ---
+    // --- LÓGICA DE DOCENTES ---
     private void gerirDocentes() {
         boolean aExecutar = true;
         while (aExecutar) {
-            // Pode usar um view.mostrarMenuDocentes() ou apenas listar opções diretamente
             String escolha = view.pedirInputString("\n--- GERIR DOCENTES ---\n1 - Adicionar Docente\n2 - Recuar\nOpção");
 
             if (escolha.equals("1")) {
                 String sigla = view.pedirInputString("Sigla do Docente (3 letras, ex: ABC)");
 
-                // VALIDAÇÃO: NOME
                 String nome = "";
                 while (true) {
                     nome = view.pedirInputString("Nome do Docente (Nome e Sobrenome)");
@@ -293,7 +308,6 @@ public class GestorController {
                     view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome.");
                 }
 
-                // VALIDAÇÃO: NIF
                 String nif = "";
                 while (true) {
                     nif = view.pedirInputString("NIF (9 dígitos)");
@@ -303,7 +317,6 @@ public class GestorController {
 
                 String morada = view.pedirInputString("Morada");
 
-                // VALIDAÇÃO: DATA DE NASCIMENTO
                 String dataNascimento = "";
                 while (true) {
                     dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");

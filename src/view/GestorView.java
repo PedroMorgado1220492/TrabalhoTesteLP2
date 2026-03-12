@@ -16,7 +16,9 @@ public class GestorView {
         System.out.println("2 - Gerir Cursos");
         System.out.println("3 - Gerir Unidades Curriculares");
         System.out.println("4 - Gerir Estudantes");
-        System.out.println("5 - Voltar / Logout");
+        System.out.println("5 - Gerir Docentes");
+        System.out.println("6 - Avançar Ano Letivo");
+        System.out.println("7 - Voltar / Logout");
         System.out.print("Opção: ");
         int opcao = scanner.nextInt();
         scanner.nextLine(); // Limpar buffer

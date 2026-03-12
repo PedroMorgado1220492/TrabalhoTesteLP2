@@ -1,0 +1,13 @@
+Tipo;Coluna1;Coluna2;Coluna3;Coluna4;Coluna5;Coluna6;Coluna7;Coluna8
+GESTOR;backoffice@issmf.ipp.pt;admin123;Gestor Geral;123456789;Rua Central do ISSMF;01-01-1980
+DEPARTAMENTO;DEI;Departamento de Engenharia Informatica
+DEPARTAMENTO;DEM;Departamento de Engenharia Mecanica
+DOCENTE;ABC;abc@issmf.ipp.pt;pass123;Antonio Bernardo Costa;987654321;Rua da Universidade 10;15-05-1975
+DOCENTE;MLA;mla@issmf.ipp.pt;pass123;Maria Luisa Antunes;556677889;Praca da Republica 1;05-03-1978
+CURSO;LEI;Licenciatura em Engenharia Informatica;DEI
+CURSO;LEM;Licenciatura em Engenharia Mecanica;DEM
+UC;P1;Programacao I;1;ABC;LEI
+UC;ALGA;Algebra Linear;1;MLA;LEI
+UC;AM1;Analise Matematica I;1;MLA;LEM
+ESTUDANTE;1000;1000@issmf.ipp.pt;aluno123;Maria Santos;223344556;Rua dos Estudantes 1;10-03-2002;2024;LEI
+ESTUDANTE;1001;1001@issmf.ipp.pt;aluno123;Ricardo Jorge;334455667;Avenida do Mar 12;25-07-2001;2023;LEM

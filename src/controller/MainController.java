@@ -1,16 +1,13 @@
 package controller;
 
+import utils.*;
 import view.MainView;
 import model.RepositorioDados;
 import model.Estudante;
 import model.Utilizador;
 import model.Gestor;
 import model.Docente;
-import utils.ImportadorCSV;
-import utils.EmailGenerator;
-import utils.PasswordGenerator;
 import model.Curso;
-import utils.Validador;
 
 public class MainController {
 
@@ -118,8 +115,11 @@ public class MainController {
                         view.mostrarMensagem("UCs:           " + repositorio.getTotalUcs());
                     }
                     break;
-                case 5:
-                    view.mostrarMensagem("A encerrar o sistema ISSMF. Até logo!");
+
+                case 5: // Sair
+                    view.mostrarMensagem("A guardar dados e a encerrar o sistema...");
+                    // Pode usar o mesmo caminho que usou na importação
+                    ExportadorCSV.exportarDados("dados.csv", repositorio);
                     aExecutar = false;
                     break;
                 default:

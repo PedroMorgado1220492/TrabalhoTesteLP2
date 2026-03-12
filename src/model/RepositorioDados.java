@@ -99,11 +99,31 @@ public class RepositorioDados {
     }
 
     public void avancarAno() {
-        this.anoAtual++;
-    }
+        this.anoAtual++; // Exemplo: Passa de 2026 para 2027
 
-    public Curso[] getCursos() { return cursos; }
-    public int getTotalCursos() { return totalCursos; }
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante est = estudantes[i];
+
+            if (est != null) {
+                // 1. Verifica a regra dos 60% e atualiza o ano de frequência (se aplicável)
+                if (est.temAproveitamentoParaProgredir()) {
+                    if (est.getAnoFrequencia() < 3) {
+                        est.setAnoFrequencia(est.getAnoFrequencia() + 1);
+                    } else {
+                    // TERMINOU O CURSO!
+                    System.out.println(">> Parabéns! O aluno " + est.getNome() + " concluiu o curso!");
+                }
+
+                }
+
+                // 2. ARQUIVAR DADOS: Independentemente de ter passado ou reprovado,
+                // o ano letivo acabou. As notas vão para o histórico e o array atual é limpo.
+                est.arquivarAvaliacoes();
+            }
+        }
+
+        System.out.println(">> Sucesso: O ano letivo avançou para " + this.anoAtual + "!");
+    }
 
     public Utilizador autenticar(String email, String password) {
         // 1. Procurar nos Gestores
@@ -140,4 +160,10 @@ public class RepositorioDados {
 
     public UnidadeCurricular[] getUcs() { return ucs; }
     public int getTotalUcs() { return totalUcs; }
+
+    public Gestor[] getGestores() {return gestores;}
+    public int getTotalGestores() {return totalGestores;}
+
+    public Curso[] getCursos() { return cursos; }
+    public int getTotalCursos() { return totalCursos; }
 }

@@ -63,6 +63,52 @@ public class ImportadorCSV {
                         );
                         repositorio.adicionarEstudante(est);
                         break;
+
+                    case "NOTA":
+                        // Formato: NOTA;numMecanografico;siglaUC;nota1;nota2;nota3
+                        int numMec = Integer.parseInt(dados[1]);
+                        String siglaUC = dados[2];
+
+                        // 1. Procurar o estudante no repositório
+                        Estudante estNota = procurarEstudante(numMec, repositorio);
+                        // 2. Procurar a UC no repositório
+                        UnidadeCurricular ucNota = procurarUC(siglaUC, repositorio);
+
+                        if (estNota != null && ucNota != null) {
+                            // Criamos ou obtemos a avaliação para este aluno e UC
+                            // Passamos o ano atual do repositório ou um valor padrão
+                            for (int i = 3; i <= 5; i++) {
+                                double valorNota = Double.parseDouble(dados[i]);
+                                // Só adicionamos se a nota for maior que 0 (ou seja, se foi lançada)
+                                if (valorNota > 0) {
+                                    estNota.adicionarNota(ucNota, valorNota, repositorio.getAnoAtual());
+                                }
+                            }
+                        }
+                        break;
+                    case "HISTORICO":
+                        // Formato: HISTORICO;numMecanografico;siglaUC;anoAvaliacao;nota1;nota2;nota3
+                        int numMecHist = Integer.parseInt(dados[1]);
+                        String siglaUCHist = dados[2];
+                        int anoAvaliacao = Integer.parseInt(dados[3]);
+
+                        Estudante estHist = procurarEstudante(numMecHist, repositorio);
+                        UnidadeCurricular ucHist = procurarUC(siglaUCHist, repositorio);
+
+                        if (estHist != null && ucHist != null) {
+                            // Cria a avaliação com o ano passado e injeta as notas
+                            Avaliacao avaliacaoAntiga = new Avaliacao(estHist, ucHist, anoAvaliacao);
+                            for (int i = 4; i <= 6; i++) {
+                                double valorNota = Double.parseDouble(dados[i]);
+                                if (valorNota > 0) {
+                                    avaliacaoAntiga.adicionarResultado(valorNota);
+                                }
+                            }
+
+                            // Adiciona diretamente ao array de histórico (precisas de criar este método no Estudante.java)
+                            estHist.adicionarAoHistorico(avaliacaoAntiga);
+                        }
+                        break;
                 }
             }
         } catch (IOException e) {
@@ -93,6 +139,24 @@ public class ImportadorCSV {
         for (int i = 0; i < repo.getTotalDocentes(); i++) {
             if (repo.getDocentes()[i].getSigla().equalsIgnoreCase(sigla)) {
                 return repo.getDocentes()[i];
+            }
+        }
+        return null;
+    }
+
+    private static Estudante procurarEstudante(int numMec, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalEstudantes(); i++) {
+            if (repo.getEstudantes()[i].getNumeroMecanografico() == numMec) {
+                return repo.getEstudantes()[i];
+            }
+        }
+        return null;
+    }
+
+    private static UnidadeCurricular procurarUC(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalUcs(); i++) {
+            if (repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getUcs()[i];
             }
         }
         return null;

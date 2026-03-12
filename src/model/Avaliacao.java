@@ -26,7 +26,8 @@ public class Avaliacao {
     public int getAnoAvaliacao() { return anoAvaliacao; }
     public double[] getResultadosAvaliacoes() { return resultadosAvaliacoes; }
     public int getTotalAvaliacoesLancadas() { return totalAvaliacoesLancadas; }
-
+    public UnidadeCurricular getUc() {return unidadeCurricular;
+    }
     // ---------- MÉTODOS ÚTEIS ----------
     public boolean adicionarResultado(double nota) {
         if (totalAvaliacoesLancadas < resultadosAvaliacoes.length) {

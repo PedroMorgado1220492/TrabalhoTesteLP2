@@ -1,10 +1,8 @@
-// Ficheiro: controller/DocenteController.java
 package controller;
 
+import model.*;
 import view.DocenteView;
-import model.Docente;
-import model.RepositorioDados;
-import utils.Validador; // Importante para as validações de dados!
+import utils.Validador;
 
 public class DocenteController {
     private DocenteView view;
@@ -26,10 +24,10 @@ public class DocenteController {
                     verDadosDocente();
                     break;
                 case 2:
-                    atualizarDadosDocente(); // Chamada para a funcionalidade completa
+                    atualizarDadosDocente();
                     break;
                 case 3:
-                    view.mostrarMensagem("Funcionalidade de lançar notas a ser desenvolvida.");
+                    gerirAvaliacoes(); // Agora ligamos à lógica real
                     break;
                 case 4:
                     view.mostrarMensagem("A sair da conta de Docente...");
@@ -51,7 +49,81 @@ public class DocenteController {
         view.mostrarMensagem("Data de Nascimento: " + docenteLogado.getDataNascimento());
     }
 
-    // --- NOVA LÓGICA DE ATUALIZAÇÃO DE DADOS ---
+    private void gerirAvaliacoes() {
+        if (docenteLogado.getTotalUcsLecionadas() == 0) {
+            view.mostrarMensagem("Atenção: Você não tem Unidades Curriculares atribuídas.");
+            return;
+        }
+
+        view.mostrarMensagem("\n--- AS MINHAS UNIDADES CURRICULARES ---");
+        UnidadeCurricular[] minhasUcs = docenteLogado.getUcsLecionadas();
+        for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
+            view.mostrarMensagem((i + 1) + " - " + minhasUcs[i].getNome() + " [" + minhasUcs[i].getSigla() + "]");
+        }
+
+        try {
+            int escolhaUc = Integer.parseInt(view.pedirInputString("Escolha a UC (Número)")) - 1;
+            if (escolhaUc < 0 || escolhaUc >= docenteLogado.getTotalUcsLecionadas()) {
+                view.mostrarMensagem("Opção inválida.");
+                return;
+            }
+
+            UnidadeCurricular ucSelecionada = minhasUcs[escolhaUc];
+            Curso cursoDaUc = ucSelecionada.getCursos()[0];
+
+            view.mostrarMensagem("\n--- ALUNOS INSCRITOS EM " + cursoDaUc.getNome() + " ---");
+
+            Estudante[] todosEstudantes = repositorio.getEstudantes();
+            Estudante[] alunosDoCurso = new Estudante[100];
+            int totalAlunosEncontrados = 0;
+
+            for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+                if (todosEstudantes[i] != null && todosEstudantes[i].getCurso() != null &&
+                        todosEstudantes[i].getCurso().getSigla().equals(cursoDaUc.getSigla())) {
+                    alunosDoCurso[totalAlunosEncontrados] = todosEstudantes[i];
+                    totalAlunosEncontrados++;
+                    view.mostrarMensagem(totalAlunosEncontrados + " - " + todosEstudantes[i].getNome());
+                }
+            }
+
+            if (totalAlunosEncontrados == 0) {
+                view.mostrarMensagem("Não existem alunos inscritos neste curso.");
+                return;
+            }
+
+            int escolhaAluno = Integer.parseInt(view.pedirInputString("Escolha o Aluno (Número)")) - 1;
+            if (escolhaAluno < 0 || escolhaAluno >= totalAlunosEncontrados) {
+                view.mostrarMensagem("Aluno inválido.");
+                return;
+            }
+
+            Estudante alunoSelecionado = alunosDoCurso[escolhaAluno];
+            view.mostrarMensagem("\nLançar nota para: " + alunoSelecionado.getNome());
+            view.mostrarMensagem("Notas já lançadas: " + this.obterQuantidadeNotas(alunoSelecionado, ucSelecionada) + "/3");
+
+            double nota = Double.parseDouble(view.pedirInputString("Introduza a nota (0-20)"));
+
+            if (nota < 0 || nota > 20) {
+                view.mostrarMensagem("Erro: A nota deve ser entre 0 e 20.");
+            } else {
+                alunoSelecionado.adicionarNota(ucSelecionada, nota, repositorio.getAnoAtual());
+                view.mostrarMensagem("Sucesso! Nota registada no sistema.");
+            }
+        } catch (Exception e) {
+            view.mostrarMensagem("Erro na introdução de dados. Operação cancelada.");
+        }
+    }
+
+    private int obterQuantidadeNotas(Estudante est, UnidadeCurricular uc) {
+        if (est.getAvaliacoes() == null) return 0;
+        for (Avaliacao a : est.getAvaliacoes()) {
+            if (a != null && a.getUnidadeCurricular().getSigla().equals(uc.getSigla())) {
+                return a.getTotalAvaliacoesLancadas();
+            }
+        }
+        return 0;
+    }
+
     private void atualizarDadosDocente() {
         boolean aExecutar = true;
         while (aExecutar) {
@@ -61,61 +133,39 @@ public class DocenteController {
                     String novoNome = "";
                     while (true) {
                         novoNome = view.pedirInputString("Introduza o novo Nome (Nome e Sobrenome)");
-                        if (Validador.isNomeValido(novoNome)) {
-                            break; // Validação passou, sai do ciclo
-                        }
-                        view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras.");
+                        if (Validador.isNomeValido(novoNome)) break;
+                        view.mostrarMensagem("Erro: O nome deve conter nome e sobrenome.");
                     }
                     docenteLogado.setNome(novoNome);
-                    view.mostrarMensagem("Nome atualizado com sucesso para: " + novoNome);
+                    view.mostrarMensagem("Nome atualizado!");
                     break;
-
                 case 2: // Alterar NIF
                     String novoNif = "";
                     while (true) {
                         novoNif = view.pedirInputString("Introduza o novo NIF (9 dígitos)");
-                        if (Validador.isNifValido(novoNif)) {
-                            break; // Validação passou, sai do ciclo
-                        }
-                        view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                        if (Validador.isNifValido(novoNif)) break;
+                        view.mostrarMensagem("Erro: NIF inválido.");
                     }
                     docenteLogado.setNif(novoNif);
-                    view.mostrarMensagem("NIF atualizado com sucesso!");
+                    view.mostrarMensagem("NIF atualizado!");
                     break;
-
-                case 3: // Alterar Morada
-                    // A morada é livre, logo não precisa de validação complexa
-                    String novaMorada = view.pedirInputString("Introduza a nova Morada");
-                    docenteLogado.setMorada(novaMorada);
-                    view.mostrarMensagem("Morada atualizada com sucesso!");
+                case 3: // Morada
+                    docenteLogado.setMorada(view.pedirInputString("Introduza a nova Morada"));
+                    view.mostrarMensagem("Morada atualizada!");
                     break;
-
-                case 4: // Alterar Password (Com verificação de segurança)
-                    String passwordAntiga = view.pedirInputString("Introduza a sua Password Atual");
-
-                    // 1º Passo: Validar se a password antiga está correta
-                    if (passwordAntiga.equals(docenteLogado.getPassword())) {
-
-                        String passwordNova = view.pedirInputString("Introduza a NOVA Password");
-                        String confirmarPassword = view.pedirInputString("Confirme a NOVA Password");
-
-                        // 2º Passo: Validar se as duas novas coincidem
-                        if (passwordNova.equals(confirmarPassword)) {
-                            docenteLogado.setPassword(passwordNova);
-                            view.mostrarMensagem("Sucesso! A sua password foi alterada.");
-                        } else {
-                            view.mostrarMensagem("Erro: As passwords introduzidas não coincidem. Operação cancelada.");
-                        }
-
-                    } else {
-                        view.mostrarMensagem("Erro: A password atual está incorreta. Operação cancelada.");
-                    }
+                case 4: // Password
+                    String antiga = view.pedirInputString("Password Atual");
+                    if (antiga.equals(docenteLogado.getPassword())) {
+                        String nova = view.pedirInputString("Nova Password");
+                        if (nova.equals(view.pedirInputString("Confirme Nova Password"))) {
+                            docenteLogado.setPassword(nova);
+                            view.mostrarMensagem("Password alterada!");
+                        } else view.mostrarMensagem("As passwords não coincidem.");
+                    } else view.mostrarMensagem("Password atual incorreta.");
                     break;
-
-                case 5: // Recuar
+                case 5:
                     aExecutar = false;
                     break;
-
                 default:
                     view.mostrarMensagem("Opção inválida.");
             }

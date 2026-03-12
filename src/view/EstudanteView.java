@@ -10,12 +10,13 @@ public class EstudanteView {
     }
 
     public int mostrarMenuPrincipal() {
-        System.out.println("\n=== ÁREA DO ESTUDANTE ===");
+        System.out.println("\n=== MENU ESTUDANTE ===");
         System.out.println("1 - Ver Dados Pessoais");
         System.out.println("2 - Atualizar Dados");
-        System.out.println("3 - Ver Percurso Académico");
-        System.out.println("4 - Sair / Logout");
-        System.out.print("Opção: ");
+        System.out.println("3 - Ver Avaliações do Ano Atual");
+        System.out.println("4 - Ver Histórico Completo"); // NOVA OPÇÃO
+        System.out.println("5 - Sair");
+        System.out.print("Escolha uma opção: ");
         int opcao = scanner.nextInt();
         scanner.nextLine(); // Limpar o buffer
         return opcao;
