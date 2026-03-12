@@ -1,4 +1,3 @@
-// Ficheiro: controller/MainController.java
 package controller;
 
 import view.MainView;
@@ -10,6 +9,8 @@ import model.Docente;
 import utils.ImportadorCSV;
 import utils.EmailGenerator;
 import utils.PasswordGenerator;
+import model.Curso;
+import utils.Validador;
 
 public class MainController {
 
@@ -78,22 +79,44 @@ public class MainController {
                     view.mostrarMensagem("Sucesso! O sistema avançou para o ano letivo de " + repositorio.getAnoAtual());
                     break;
                 case 4:
-                    // Pede ao utilizador para escrever o caminho do ficheiro
                     view.mostrarMensagem("\n--- IMPORTAR BASE DE DADOS ---");
                     view.mostrarMensagem("Dica: Se o ficheiro estiver na mesma pasta, digite apenas 'dados.csv'.");
-                    view.mostrarMensagem("Se estiver noutra pasta, digite o caminho completo (ex: C:\\Users\\utilizador\\Desktop\\dados.csv).");
+                    view.mostrarMensagem("Se estiver noutra pasta, digite o caminho completo.");
 
-                    String caminhoFicheiro = view.pedirInputString("Caminho do ficheiro CSV");
+                    String caminhoFicheiro = "";
 
-                    view.mostrarMensagem("A iniciar importação do ficheiro: " + caminhoFicheiro);
+                    // Ciclo para continuar a pedir até o ficheiro existir
+                    while (true) {
+                        caminhoFicheiro = view.pedirInputString("Caminho do ficheiro CSV (ou digite 'sair' para cancelar)");
 
-                    // Chama o importador com o caminho que o utilizador escreveu
-                    ImportadorCSV.importarDados(caminhoFicheiro, repositorio);
+                        // Permite ao utilizador desistir se não encontrar o ficheiro
+                        if (caminhoFicheiro.equalsIgnoreCase("sair")) {
+                            view.mostrarMensagem("Importação cancelada.");
+                            break;
+                        }
 
-                    // Mostra o resumo final
-                    view.mostrarMensagem("--- Resumo da Base de Dados ---");
-                    view.mostrarMensagem("Estudantes guardados: " + repositorio.getTotalEstudantes());
-                    view.mostrarMensagem("Docentes guardados: " + repositorio.getTotalDocentes());
+                        // Verifica fisicamente se o ficheiro existe no computador
+                        java.io.File ficheiro = new java.io.File(caminhoFicheiro);
+                        if (ficheiro.exists() && !ficheiro.isDirectory()) {
+                            // Ficheiro existe! Sai do ciclo para continuar a importação
+                            break;
+                        } else {
+                            view.mostrarMensagem("Erro: Ficheiro não encontrado! Verifique o caminho e tente novamente.");
+                        }
+                    }
+
+                    // Se não cancelou, avança com a importação
+                    if (!caminhoFicheiro.equalsIgnoreCase("sair")) {
+                        view.mostrarMensagem("A iniciar importação do ficheiro: " + caminhoFicheiro);
+                        ImportadorCSV.importarDados(caminhoFicheiro, repositorio);
+
+                        view.mostrarMensagem("--- Resumo da Base de Dados ---");
+                        view.mostrarMensagem("Departamentos: " + repositorio.getTotalDepartamentos());
+                        view.mostrarMensagem("Cursos:        " + repositorio.getTotalCursos());
+                        view.mostrarMensagem("Docentes:      " + repositorio.getTotalDocentes());
+                        view.mostrarMensagem("Estudantes:    " + repositorio.getTotalEstudantes());
+                        view.mostrarMensagem("UCs:           " + repositorio.getTotalUcs());
+                    }
                     break;
                 case 5:
                     view.mostrarMensagem("A encerrar o sistema ISSMF. Até logo!");
@@ -109,23 +132,65 @@ public class MainController {
     private void criarEstudanteSemLogin() {
         view.mostrarMensagem("\n--- NOVO REGISTO DE ESTUDANTE ---");
 
-        // 1. Pede dados básicos
-        String nome = view.pedirInputString("Nome");
-        String nif = view.pedirInputString("NIF");
+        // 0. Validação de Cursos (Não pode inscrever se não houver cursos)
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarMensagem("Atenção: De momento não existem cursos disponíveis no sistema para inscrição. Tente mais tarde.");
+            return; // Sai do método e volta ao menu principal
+        }
+
+        // 1. Pede dados básicos (Já com as nossas super validações!)
+        String nome = "";
+        while (true) {
+            nome = view.pedirInputString("Nome (Nome e Sobrenome)");
+            if (Validador.isNomeValido(nome)) break;
+            view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras.");
+        }
+
+        String nif = "";
+        while (true) {
+            nif = view.pedirInputString("NIF (9 dígitos)");
+            if (Validador.isNifValido(nif)) break;
+            view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+        }
+
         String morada = view.pedirInputString("Morada");
-        String dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
 
-        // 2. Gera os dados automáticos (Número Mecanográfico, Email e Password)
-        // O contadorMecanografico pode começar em 1000 e somar os estudantes que já existem
+        String dataNascimento = "";
+        while (true) {
+            dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
+            if (Validador.isDataNascimentoValida(dataNascimento)) break;
+            view.mostrarMensagem("Erro: A data deve respeitar estritamente o formato DD-MM-AAAA (ex: 15-04-2002).");
+        }
+
+        // 2. Escolher o Curso
+        view.mostrarMensagem("\n--- Escolha o Curso ---");
+        Curso[] cursos = repositorio.getCursos();
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            view.mostrarMensagem((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
+        }
+
+        int escolhaCurso = -1;
+        while (true) {
+            try {
+                String input = view.pedirInputString("Número do Curso");
+                escolhaCurso = Integer.parseInt(input) - 1;
+                if (escolhaCurso >= 0 && escolhaCurso < repositorio.getTotalCursos()) {
+                    break; // Escolha válida, sai do ciclo
+                }
+                view.mostrarMensagem("Erro: Escolha um número de curso válido da lista.");
+            } catch (NumberFormatException e) {
+                view.mostrarMensagem("Erro: Por favor, introduza apenas números.");
+            }
+        }
+        Curso cursoEscolhido = cursos[escolhaCurso];
+
+        // 3. Gera os dados automáticos (Número Mecanográfico, Email e Password)
         int numeroMecanografico = 1000 + repositorio.getTotalEstudantes();
-
         String emailGerado = EmailGenerator.gerarEmailEstudante(numeroMecanografico);
         String passwordGerada = PasswordGenerator.generatePassword();
-
-        // O ano de inscrição vai buscar a variável dinâmica que criámos!
         int anoInscricao = repositorio.getAnoAtual();
 
-        // 3. Instancia o objeto Estudante
+        // 4. Instancia o objeto Estudante com o CURSO ESCOLHIDO
         Estudante novoEstudante = new Estudante(
                 numeroMecanografico,
                 emailGerado,
@@ -134,19 +199,20 @@ public class MainController {
                 nif,
                 morada,
                 dataNascimento,
-                null, // Curso a null nesta fase
-                anoInscricao // Usa o ano dinâmico do sistema!
+                cursoEscolhido, // Passamos o curso escolhido aqui!
+                anoInscricao
         );
 
-        // 4. Guarda no repositório com array tradicional
+        // 5. Guarda no repositório com array tradicional
         boolean sucesso = repositorio.adicionarEstudante(novoEstudante);
 
-        // 5. Dá o feedback final
+        // 6. Dá o feedback final
         if (sucesso) {
-            view.mostrarMensagem("Estudante registado com sucesso no ano letivo " + anoInscricao + "!");
+            view.mostrarMensagem("\nEstudante registado com sucesso no ano letivo " + anoInscricao + "!");
             view.mostrarMensagem("Nº Mecanográfico: " + numeroMecanografico);
             view.mostrarMensagem("Email: " + emailGerado);
             view.mostrarMensagem("Password: " + passwordGerada);
+            view.mostrarMensagem("Inscrito no Curso: " + cursoEscolhido.getNome());
         } else {
             view.mostrarMensagem("Erro: O sistema atingiu o limite máximo de estudantes.");
         }

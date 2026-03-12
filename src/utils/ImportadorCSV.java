@@ -1,118 +1,100 @@
-// Ficheiro: utils/ImportadorCSV.java
 package utils;
 
-import model.*; // Importa todas as nossas classes do modelo
+import model.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
 public class ImportadorCSV {
 
-    // Método estático para podermos chamar sem instanciar a classe
-    public static void importarDados(String caminhoFicheiro, RepositorioDados repositorio) {
-        BufferedReader leitor = null;
-        String linha = "";
-        String separador = ";"; // O ponto e vírgula é o separador padrão de CSVs em português
+    public static void importarDados(String caminho, RepositorioDados repositorio) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
+            String linha;
+            br.readLine(); // Saltar o cabeçalho
 
-        try {
-            leitor = new BufferedReader(new FileReader(caminhoFicheiro));
+            while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
 
-            // Lê a primeira linha e avança (útil se o seu CSV tiver um cabeçalho como "Tipo;Nome;NIF...")
-            // Se não tiver cabeçalho, pode apagar/comentar a linha abaixo.
-            linha = leitor.readLine();
+                String[] dados = linha.split(";");
+                String tipo = dados[0].toUpperCase();
 
-            // Lê o ficheiro linha a linha até chegar ao fim (null)
-            while ((linha = leitor.readLine()) != null) {
+                switch (tipo) {
+                    case "GESTOR":
+                        repositorio.adicionarGestor(new Gestor(dados[1], dados[2], dados[3], dados[4], dados[5], dados[6]));
+                        break;
 
-                // Divide a linha pelas colunas
-                String[] dados = linha.split(separador);
+                    case "DEPARTAMENTO":
+                        // DEPARTAMENTO;sigla;nome
+                        repositorio.adicionarDepartamento(new Departamento(dados[1], dados[2]));
+                        break;
 
-                // A primeira coluna diz-nos o que estamos a importar
-                String tipoRegisto = dados[0].trim().toUpperCase();
+                    case "DOCENTE":
+                        // DOCENTE;sigla;email;pass;nome;nif;morada;dataNasc
+                        repositorio.adicionarDocente(new Docente(dados[1], dados[2], dados[3], dados[4], dados[5], dados[6], dados[7]));
+                        break;
 
-                // Lógica para cada tipo de entidade
-                if (tipoRegisto.equals("GESTOR")) {
-                    importarGestor(dados, repositorio);
+                    case "CURSO":
+                        // CURSO;sigla;nome;siglaDep
+                        Departamento dep = procurarDepartamento(dados[3], repositorio);
+                        if (dep != null) {
+                            repositorio.adicionarCurso(new Curso(dados[1], dados[2], dep));
+                        }
+                        break;
+
+                    case "UC":
+                        // UC;sigla;nome;ano;siglaDocente;siglaCurso
+                        Docente doc = procurarDocente(dados[4], repositorio);
+                        Curso cursoUC = procurarCurso(dados[5], repositorio);
+                        if (doc != null && cursoUC != null) {
+                            UnidadeCurricular novaUc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
+                            if (repositorio.adicionarUnidadeCurricular(novaUc)) {
+                                cursoUC.adicionarUnidadeCurricular(novaUc);
+                            }
+                        }
+                        break;
+
+                    case "ESTUDANTE":
+                        // ESTUDANTE;numMec;email;pass;nome;nif;morada;dataNasc;anoInsc;siglaCurso
+                        Curso cursoEst = (dados.length > 9) ? procurarCurso(dados[9], repositorio) : null;
+
+                        Estudante est = new Estudante(
+                                Integer.parseInt(dados[1]), dados[2], dados[3], dados[4],
+                                dados[5], dados[6], dados[7], cursoEst, Integer.parseInt(dados[8])
+                        );
+                        repositorio.adicionarEstudante(est);
+                        break;
                 }
-                else if (tipoRegisto.equals("DOCENTE")) {
-                    importarDocente(dados, repositorio);
-                }
-                else if (tipoRegisto.equals("ESTUDANTE")) {
-                    importarEstudante(dados, repositorio);
-                }
-                // Poderíamos adicionar os "else if" para DEPARTAMENTO, CURSO, etc.
             }
-
-            System.out.println(">> Importação do ficheiro CSV concluída com sucesso!");
-
         } catch (IOException e) {
-            System.out.println(">> ERRO ao ler o ficheiro CSV: " + e.getMessage());
-        } finally {
-            // Garante que fechamos o ficheiro no final, mesmo que dê erro
-            if (leitor != null) {
-                try {
-                    leitor.close();
-                } catch (IOException e) {
-                    System.out.println(">> ERRO ao fechar o leitor.");
-                }
+            System.out.println("Erro ao ler o ficheiro: " + e.getMessage());
+        }
+    }
+
+    // Métodos Auxiliares de Procura (Essenciais para ligar os dados)
+    private static Departamento procurarDepartamento(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalDepartamentos(); i++) {
+            if (repo.getDepartamentos()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getDepartamentos()[i];
             }
         }
+        return null;
     }
 
-    // --- MÉTODOS AUXILIARES PARA LIMPAR O CÓDIGO ---
-
-    private static void importarGestor(String[] dados, RepositorioDados repositorio) {
-        if (dados.length < 7) {
-            System.out.println(">> AVISO: Linha de Gestor incompleta. A ignorar: " + String.join(";", dados));
-            return;
+    private static Curso procurarCurso(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalCursos(); i++) {
+            if (repo.getCursos()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getCursos()[i];
+            }
         }
-        String email = dados[1];
-        String password = dados[2];
-        String nome = dados[3];
-        String nif = dados[4];
-        String morada = dados[5];
-        String dataNascimento = dados[6];
-
-        Gestor novoGestor = new Gestor(email, password, nome, nif, morada, dataNascimento);
-        repositorio.adicionarGestor(novoGestor);
+        return null;
     }
 
-    private static void importarDocente(String[] dados, RepositorioDados repositorio) {
-        // VALIDAÇÃO DE SEGURANÇA: Verifica se a linha tem pelo menos as 8 colunas esperadas
-        if (dados.length < 8) {
-            System.out.println(">> AVISO: Linha de Docente incompleta ou mal formatada. A ignorar esta linha: " + String.join(";", dados));
-            return; // Sai do método sem tentar ler os índices que faltam
+    private static Docente procurarDocente(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalDocentes(); i++) {
+            if (repo.getDocentes()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getDocentes()[i];
+            }
         }
-
-        // Exemplo CSV: DOCENTE;sigla;email;password;nome;nif;morada;dataNascimento
-        String sigla = dados[1];
-        String email = dados[2];
-        String password = dados[3];
-        String nome = dados[4];
-        String nif = dados[5];
-        String morada = dados[6];
-        String dataNascimento = dados[7];
-
-        Docente novoDocente = new Docente(sigla, email, password, nome, nif, morada, dataNascimento);
-        repositorio.adicionarDocente(novoDocente);
-    }
-
-    private static void importarEstudante(String[] dados, RepositorioDados repositorio) {
-        if (dados.length < 9) {
-            System.out.println(">> AVISO: Linha de Estudante incompleta. A ignorar: " + String.join(";", dados));
-            return;
-        }
-        int numero = Integer.parseInt(dados[1]);
-        String email = dados[2];
-        String password = dados[3];
-        String nome = dados[4];
-        String nif = dados[5];
-        String morada = dados[6];
-        String dataNascimento = dados[7];
-        int anoInscricao = Integer.parseInt(dados[8]);
-
-        // Nota: Por agora passamos o Curso como null. Mais tarde poderemos procurar o curso pelo nome.
-        Estudante novoEstudante = new Estudante(numero, email, password, nome, nif, morada, dataNascimento, null, anoInscricao);
-        repositorio.adicionarEstudante(novoEstudante);
+        return null;
     }
 }

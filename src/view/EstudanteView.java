@@ -1,4 +1,3 @@
-// Ficheiro: view/EstudanteView.java
 package view;
 
 import java.util.Scanner;
@@ -18,8 +17,28 @@ public class EstudanteView {
         System.out.println("4 - Sair / Logout");
         System.out.print("Opção: ");
         int opcao = scanner.nextInt();
-        scanner.nextLine();
+        scanner.nextLine(); // Limpar o buffer
         return opcao;
+    }
+
+    // Este é o método que estava a faltar!
+    public int mostrarMenuAtualizarDados() {
+        System.out.println("\n--- ATUALIZAR DADOS PESSOAIS ---");
+        System.out.println("1 - Alterar Nome");
+        System.out.println("2 - Alterar NIF");
+        System.out.println("3 - Alterar Morada");
+        System.out.println("4 - Alterar Password");
+        System.out.println("5 - Recuar");
+        System.out.print("Opção: ");
+        int opcao = scanner.nextInt();
+        scanner.nextLine(); // Limpar o buffer
+        return opcao;
+    }
+
+    // Método essencial para o Controller conseguir ler o que o utilizador escreve
+    public String pedirInputString(String mensagem) {
+        System.out.print(mensagem + ": ");
+        return scanner.nextLine();
     }
 
     public void mostrarMensagem(String mensagem) {

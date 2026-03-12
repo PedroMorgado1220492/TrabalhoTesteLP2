@@ -6,11 +6,12 @@ import model.Gestor;
 import model.RepositorioDados;
 import model.Departamento;
 import model.Curso;
-import model.Docente;
 import model.UnidadeCurricular;
+import model.Docente;
 import model.Estudante;
 import utils.EmailGenerator;
 import utils.PasswordGenerator;
+import utils.Validador;
 
 public class GestorController {
     private GestorView view;
@@ -26,7 +27,7 @@ public class GestorController {
     public void iniciarMenuGestor() {
         boolean aExecutar = true;
         while (aExecutar) {
-            int opcao = view.mostrarMenuPrincipalGestor();
+            int opcao = view.mostrarMenuPrincipalGestor(); // Sugestão: adicione "Gerir Docentes" na View
             switch (opcao) {
                 case 1:
                     gerirDepartamentos();
@@ -38,9 +39,12 @@ public class GestorController {
                     gerirUCs();
                     break;
                 case 4:
-                    gerirEstudantes(); // Substitua a mensagem antiga por esta chamada
+                    gerirEstudantes();
                     break;
                 case 5:
+                    gerirDocentes(); // Nova opção para o Gestor criar os docentes!
+                    break;
+                case 6: // Ajuste o número de "Sair" na sua View conforme necessário
                     view.mostrarMensagem("A sair do Backoffice...");
                     aExecutar = false;
                     break;
@@ -56,7 +60,7 @@ public class GestorController {
         while (aExecutar) {
             int opcao = view.mostrarMenuDepartamentos();
             switch (opcao) {
-                case 1: // Adicionar Departamento
+                case 1:
                     String sigla = view.pedirInputString("Sigla do Departamento");
                     String nome = view.pedirInputString("Nome do Departamento");
 
@@ -67,10 +71,8 @@ public class GestorController {
                         view.mostrarMensagem("Erro: Limite de departamentos atingido.");
                     }
                     break;
-                case 2: // Alterar
-                    view.mostrarMensagem("Funcionalidade de alterar a ser desenvolvida.");
-                    break;
-                case 3: // Listar
+                case 2: view.mostrarMensagem("Funcionalidade em desenvolvimento."); break;
+                case 3:
                     view.mostrarMensagem("--- LISTA DE DEPARTAMENTOS ---");
                     if (repositorio.getTotalDepartamentos() == 0) {
                         view.mostrarMensagem("Não existem departamentos registados.");
@@ -81,9 +83,7 @@ public class GestorController {
                         }
                     }
                     break;
-                case 4: // Recuar
-                    aExecutar = false;
-                    break;
+                case 4: aExecutar = false; break;
             }
         }
     }
@@ -94,46 +94,36 @@ public class GestorController {
         while (aExecutar) {
             int opcao = view.mostrarMenuCursos();
             switch (opcao) {
-                case 1: // Adicionar Curso
+                case 1:
                     if (repositorio.getTotalDepartamentos() == 0) {
-                        view.mostrarMensagem("Atenção: Precisa de criar um Departamento antes de criar um Curso.");
-                        break; // Sai do case e volta ao menu
+                        view.mostrarMensagem("Atenção: Crie um Departamento primeiro.");
+                        break;
                     }
 
                     String siglaCurso = view.pedirInputString("Sigla do Curso");
                     String nomeCurso = view.pedirInputString("Nome do Curso");
 
-                    // 1. Listar os departamentos disponíveis
                     view.mostrarMensagem("--- Escolha o Departamento ---");
                     Departamento[] deps = repositorio.getDepartamentos();
                     for (int i = 0; i < repositorio.getTotalDepartamentos(); i++) {
                         view.mostrarMensagem((i + 1) + " - " + deps[i].getSigla() + " (" + deps[i].getNome() + ")");
                     }
+                    int escolhaIndex = Integer.parseInt(view.pedirInputString("Número do Departamento")) - 1;
 
-                    // 2. Ler a escolha do utilizador
-                    String escolhaString = view.pedirInputString("Digite o número do Departamento");
-                    int escolhaIndex = Integer.parseInt(escolhaString) - 1; // Subtraímos 1 para voltar ao índice do array (0, 1, 2...)
-
-                    // 3. Validar a escolha
                     if (escolhaIndex < 0 || escolhaIndex >= repositorio.getTotalDepartamentos()) {
-                        view.mostrarMensagem("Erro: Departamento inválido. Operação cancelada.");
+                        view.mostrarMensagem("Erro: Departamento inválido.");
                         break;
                     }
 
-                    // 4. Associar e guardar o curso
-                    Departamento depAssociado = deps[escolhaIndex];
-
-                    Curso novoCurso = new Curso(siglaCurso, nomeCurso, depAssociado);
+                    Curso novoCurso = new Curso(siglaCurso, nomeCurso, deps[escolhaIndex]);
                     if (repositorio.adicionarCurso(novoCurso)) {
-                        view.mostrarMensagem("Curso '" + nomeCurso + "' adicionado com sucesso ao departamento " + depAssociado.getSigla() + "!");
+                        view.mostrarMensagem("Curso '" + nomeCurso + "' adicionado com sucesso!");
                     } else {
-                        view.mostrarMensagem("Erro: Limite de cursos atingido no sistema.");
+                        view.mostrarMensagem("Erro: Limite de cursos atingido.");
                     }
                     break;
-                case 2: // Alterar
-                    view.mostrarMensagem("Funcionalidade de alterar a ser desenvolvida.");
-                    break;
-                case 3: // Listar
+                case 2: view.mostrarMensagem("Funcionalidade em desenvolvimento."); break;
+                case 3:
                     view.mostrarMensagem("--- LISTA DE CURSOS ---");
                     if (repositorio.getTotalCursos() == 0) {
                         view.mostrarMensagem("Não existem cursos registados.");
@@ -144,34 +134,27 @@ public class GestorController {
                         }
                     }
                     break;
-                case 4: // Recuar
-                    aExecutar = false;
-                    break;
+                case 4: aExecutar = false; break;
             }
         }
     }
 
-    // --- LÓGICA DE UNIDADES CURRICULARES ---
+    // --- LÓGICA DE UCS ---
     private void gerirUCs() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuUCs();
             switch (opcao) {
-                case 1: // Adicionar UC
-                    // Validação Inicial: Só podemos criar uma UC se houver Docentes e Cursos para a associar!
+                case 1:
                     if (repositorio.getTotalDocentes() == 0 || repositorio.getTotalCursos() == 0) {
-                        view.mostrarMensagem("Atenção: Precisa de ter pelo menos 1 Docente e 1 Curso registados no sistema para criar uma UC.");
+                        view.mostrarMensagem("Atenção: Precisa de ter pelo menos 1 Docente e 1 Curso.");
                         break;
                     }
 
                     String siglaUc = view.pedirInputString("Sigla da UC");
                     String nomeUc = view.pedirInputString("Nome da UC");
+                    int anoCurricular = Integer.parseInt(view.pedirInputString("Ano Curricular (1, 2 ou 3)"));
 
-                    // Pedimos o ano curricular e convertemos de String para int
-                    String anoString = view.pedirInputString("Ano Curricular (1, 2 ou 3)");
-                    int anoCurricular = Integer.parseInt(anoString);
-
-                    // --- 1º Associação: Escolher o Docente Responsável ---
                     view.mostrarMensagem("\n--- Escolha o Docente Responsável ---");
                     Docente[] docentes = repositorio.getDocentes();
                     for (int i = 0; i < repositorio.getTotalDocentes(); i++) {
@@ -179,15 +162,12 @@ public class GestorController {
                     }
                     int escolhaDocente = Integer.parseInt(view.pedirInputString("Número do Docente")) - 1;
 
-                    // Validação simples da escolha
                     if (escolhaDocente < 0 || escolhaDocente >= repositorio.getTotalDocentes()) {
-                        view.mostrarMensagem("Docente inválido. Operação cancelada.");
-                        break;
+                        view.mostrarMensagem("Docente inválido."); break;
                     }
                     Docente docenteResponsavel = docentes[escolhaDocente];
 
-                    // --- 2º Associação: Escolher o Curso ---
-                    view.mostrarMensagem("\n--- Escolha o Curso ao qual a UC pertence ---");
+                    view.mostrarMensagem("\n--- Escolha o Curso ---");
                     Curso[] cursos = repositorio.getCursos();
                     for (int i = 0; i < repositorio.getTotalCursos(); i++) {
                         view.mostrarMensagem((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
@@ -195,136 +175,157 @@ public class GestorController {
                     int escolhaCurso = Integer.parseInt(view.pedirInputString("Número do Curso")) - 1;
 
                     if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
-                        view.mostrarMensagem("Curso inválido. Operação cancelada.");
-                        break;
+                        view.mostrarMensagem("Curso inválido."); break;
                     }
                     Curso cursoAssociado = cursos[escolhaCurso];
 
-                    // --- Instanciação e Gravação ---
                     UnidadeCurricular novaUc = new UnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
-
                     if (repositorio.adicionarUnidadeCurricular(novaUc)) {
-                        // Liga as pontas todas nos respetivos Arrays!
                         cursoAssociado.adicionarUnidadeCurricular(novaUc);
                         novaUc.adicionarCurso(cursoAssociado);
-
                         docenteResponsavel.adicionarUcResponsavel(novaUc);
-                        docenteResponsavel.adicionarUcLecionada(novaUc); // Assumimos que o responsável também a leciona
-
-                        view.mostrarMensagem("Sucesso! A UC '" + nomeUc + "' foi criada, entregue ao docente " + docenteResponsavel.getSigla() + " e associada ao curso " + cursoAssociado.getSigla() + ".");
-                    } else {
-                        view.mostrarMensagem("Erro: Limite de UCs atingido no sistema.");
+                        docenteResponsavel.adicionarUcLecionada(novaUc);
+                        view.mostrarMensagem("UC '" + nomeUc + "' criada com sucesso!");
                     }
                     break;
-
-                case 2: // Alterar
-                    view.mostrarMensagem("Funcionalidade de alterar a ser desenvolvida.");
-                    break;
-
-                case 3: // Listar UCs
-                    view.mostrarMensagem("\n--- LISTA DE UNIDADES CURRICULARES ---");
-                    if (repositorio.getTotalUcs() == 0) {
-                        view.mostrarMensagem("Não existem UCs registadas.");
-                    } else {
-                        UnidadeCurricular[] ucs = repositorio.getUcs();
-                        for (int i = 0; i < repositorio.getTotalUcs(); i++) {
-                            view.mostrarMensagem("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() +
-                                    " | Ano: " + ucs[i].getAnoCurricular() +
-                                    " | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
-                        }
+                case 2: view.mostrarMensagem("Funcionalidade em desenvolvimento."); break;
+                case 3:
+                    view.mostrarMensagem("\n--- LISTA DE UCs ---");
+                    UnidadeCurricular[] ucs = repositorio.getUcs();
+                    for (int i = 0; i < repositorio.getTotalUcs(); i++) {
+                        view.mostrarMensagem("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() + " | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
                     }
                     break;
-
-                case 4: // Recuar
-                    aExecutar = false;
-                    break;
+                case 4: aExecutar = false; break;
             }
         }
     }
 
-    // --- LÓGICA DE ESTUDANTES ---
+    // --- LÓGICA DE ESTUDANTES (COM VALIDAÇÕES) ---
     private void gerirEstudantes() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuEstudantes();
             switch (opcao) {
-                case 1: // Adicionar Estudante
-                    // Validação: O aluno precisa de ser inscrito num curso, logo tem de existir pelo menos um!
+                case 1:
                     if (repositorio.getTotalCursos() == 0) {
-                        view.mostrarMensagem("Atenção: Precisa de criar pelo menos um Curso antes de registar Estudantes.");
+                        view.mostrarMensagem("Atenção: Precisa de criar um Curso primeiro.");
                         break;
                     }
 
-                    String nome = view.pedirInputString("Nome do Estudante");
-                    String nif = view.pedirInputString("NIF");
-                    String morada = view.pedirInputString("Morada");
-                    String dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
+                    // VALIDAÇÃO: NOME
+                    String nome = "";
+                    while (true) {
+                        nome = view.pedirInputString("Nome do Estudante (Nome e Sobrenome)");
+                        if (Validador.isNomeValido(nome)) break;
+                        view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras.");
+                    }
 
-                    // --- Associação: Escolher o Curso ---
-                    view.mostrarMensagem("\n--- Escolha o Curso a que o Aluno se vai inscrever ---");
+                    // VALIDAÇÃO: NIF
+                    String nif = "";
+                    while (true) {
+                        nif = view.pedirInputString("NIF (9 dígitos)");
+                        if (Validador.isNifValido(nif)) break;
+                        view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                    }
+
+                    String morada = view.pedirInputString("Morada");
+
+                    // VALIDAÇÃO: DATA DE NASCIMENTO
+                    String dataNascimento = "";
+                    while (true) {
+                        dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
+                        if (Validador.isDataNascimentoValida(dataNascimento)) break;
+                        view.mostrarMensagem("Erro: A data deve respeitar o formato DD-MM-AAAA.");
+                    }
+
+                    view.mostrarMensagem("\n--- Escolha o Curso ---");
                     Curso[] cursos = repositorio.getCursos();
                     for (int i = 0; i < repositorio.getTotalCursos(); i++) {
-                        view.mostrarMensagem((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
+                        view.mostrarMensagem((i + 1) + " - " + cursos[i].getNome());
                     }
                     int escolhaCurso = Integer.parseInt(view.pedirInputString("Número do Curso")) - 1;
-
                     if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
-                        view.mostrarMensagem("Curso inválido. Operação cancelada.");
-                        break;
+                        view.mostrarMensagem("Curso inválido."); break;
                     }
-                    Curso cursoAssociado = cursos[escolhaCurso];
 
-                    // --- Gerar dados automáticos ---
                     int numeroMecanografico = 1000 + repositorio.getTotalEstudantes();
                     String passwordGerada = PasswordGenerator.generatePassword();
                     int anoInscricao = repositorio.getAnoAtual();
 
-                    // Usamos o método do gestorAtivo que criámos no modelo!
                     Estudante novoEstudante = gestorAtivo.criarEstudante(
-                            numeroMecanografico,
-                            passwordGerada,
-                            nome,
-                            nif,
-                            morada,
-                            dataNascimento,
-                            cursoAssociado, // Agora já passamos o curso real em vez de null!
-                            anoInscricao
+                            numeroMecanografico, passwordGerada, nome, nif, morada, dataNascimento, cursos[escolhaCurso], anoInscricao
                     );
 
-                    // --- Gravar na Base de Dados ---
                     if (repositorio.adicionarEstudante(novoEstudante)) {
-                        view.mostrarMensagem("Sucesso! Estudante registado no ano letivo " + anoInscricao + ".");
-                        view.mostrarMensagem("Nº Mecanográfico: " + numeroMecanografico);
-                        view.mostrarMensagem("Email: " + novoEstudante.getEmail());
-                        view.mostrarMensagem("Password: " + passwordGerada);
-                        view.mostrarMensagem("Inscrito no Curso: " + cursoAssociado.getSigla());
-                    } else {
-                        view.mostrarMensagem("Erro: Limite de estudantes atingido no sistema.");
+                        view.mostrarMensagem("Estudante registado com sucesso! Email: " + novoEstudante.getEmail());
                     }
                     break;
-
-                case 2: // Alterar
-                    view.mostrarMensagem("Funcionalidade de alterar a ser desenvolvida.");
-                    break;
-
-                case 3: // Listar Estudantes
+                case 2: view.mostrarMensagem("Funcionalidade em desenvolvimento."); break;
+                case 3:
                     view.mostrarMensagem("\n--- LISTA DE ESTUDANTES ---");
-                    if (repositorio.getTotalEstudantes() == 0) {
-                        view.mostrarMensagem("Não existem estudantes registados.");
-                    } else {
-                        Estudante[] estudantes = repositorio.getEstudantes();
-                        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-                            String siglaCurso = (estudantes[i].getCurso() != null) ? estudantes[i].getCurso().getSigla() : "N/A";
-                            view.mostrarMensagem("- " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() +
-                                    " | Curso: " + siglaCurso +
-                                    " | 1ª Inscrição: " + estudantes[i].getAnoPrimeiraInscricao());
-                        }
+                    Estudante[] estudantes = repositorio.getEstudantes();
+                    for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+                        String siglaCurso = (estudantes[i].getCurso() != null) ? estudantes[i].getCurso().getSigla() : "N/A";
+                        view.mostrarMensagem("- " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
                     }
                     break;
+                case 4: aExecutar = false; break;
+            }
+        }
+    }
 
-                case 4: // Recuar
-                    aExecutar = false;
-                    break;
+    // --- LÓGICA DE DOCENTES (COM VALIDAÇÕES) ---
+    private void gerirDocentes() {
+        boolean aExecutar = true;
+        while (aExecutar) {
+            // Pode usar um view.mostrarMenuDocentes() ou apenas listar opções diretamente
+            String escolha = view.pedirInputString("\n--- GERIR DOCENTES ---\n1 - Adicionar Docente\n2 - Recuar\nOpção");
+
+            if (escolha.equals("1")) {
+                String sigla = view.pedirInputString("Sigla do Docente (3 letras, ex: ABC)");
+
+                // VALIDAÇÃO: NOME
+                String nome = "";
+                while (true) {
+                    nome = view.pedirInputString("Nome do Docente (Nome e Sobrenome)");
+                    if (Validador.isNomeValido(nome)) break;
+                    view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome.");
+                }
+
+                // VALIDAÇÃO: NIF
+                String nif = "";
+                while (true) {
+                    nif = view.pedirInputString("NIF (9 dígitos)");
+                    if (Validador.isNifValido(nif)) break;
+                    view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                }
+
+                String morada = view.pedirInputString("Morada");
+
+                // VALIDAÇÃO: DATA DE NASCIMENTO
+                String dataNascimento = "";
+                while (true) {
+                    dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
+                    if (Validador.isDataNascimentoValida(dataNascimento)) break;
+                    view.mostrarMensagem("Erro: A data deve respeitar o formato DD-MM-AAAA.");
+                }
+
+                String emailGerado = EmailGenerator.gerarEmailDocente(sigla);
+                String passwordGerada = PasswordGenerator.generatePassword();
+
+                Docente novoDocente = new Docente(sigla, emailGerado, passwordGerada, nome, nif, morada, dataNascimento);
+
+                if (repositorio.adicionarDocente(novoDocente)) {
+                    view.mostrarMensagem("Docente '" + nome + "' registado com sucesso! Email: " + emailGerado);
+                } else {
+                    view.mostrarMensagem("Erro: Limite de docentes atingido.");
+                }
+
+            } else if (escolha.equals("2")) {
+                aExecutar = false;
+            } else {
+                view.mostrarMensagem("Opção inválida.");
             }
         }
     }

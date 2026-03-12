@@ -21,9 +21,13 @@ public class MainView {
         System.out.println("5 - Sair");
         System.out.print("Opção: ");
 
-        int opcao = scanner.nextInt();
-        scanner.nextLine(); // Limpa o buffer do scanner (o Enter que o utilizador carrega)
-        return opcao;
+        try {
+            // Le como texto e convertemos. Assim nunca dá o erro InputMismatchException!
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+
     }
 
     // Outros métodos utilitários que a MainView possa precisar
