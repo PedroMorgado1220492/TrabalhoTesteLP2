@@ -1,0 +1,6 @@
+Tipo;Col1;Col2;Col3;Col4;Col5;Col6;Col7;Col8
+GESTOR;backoffice@issmf.ipp.pt;admin123;Gestor Principal;123456789;Rua do ISSMF;01-01-1980
+DOCENTE;ABC;abc@issmf.ipp.pt;pass123;Antonio Bernardo Costa;987654321;Rua da Universidade;15-05-1975
+DOCENTE;XYZ;xyz@issmf.ipp.pt;Xavier Ygor Zeca;112233445;Avenida Central;20-10-1982
+ESTUDANTE;1000;1000@issmf.ipp.pt;aluno123;Maria Santos;223344556;Rua dos Estudantes;10-03-2002;2024
+ESTUDANTE;1001;1001@issmf.ipp.pt;aluno123;João Pedro;334455667;Praça da Alegria;25-07-2001;2023

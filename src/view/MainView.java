@@ -1,11 +1,16 @@
+// Ficheiro: view/MainView.java
 package view;
 
 import java.util.Scanner;
 
 public class MainView {
+    private Scanner scanner;
 
-    private Scanner scanner = new Scanner(System.in);
+    public MainView() {
+        this.scanner = new Scanner(System.in);
+    }
 
+    // O seu menu principal perfeitamente integrado na View
     public int mostrarMenu() {
         System.out.println();
         System.out.println("===== SISTEMA ISSMF =====");
@@ -15,26 +20,19 @@ public class MainView {
         System.out.println("4 - Importar CSV");
         System.out.println("5 - Sair");
         System.out.print("Opção: ");
-        return scanner.nextInt();
+
+        int opcao = scanner.nextInt();
+        scanner.nextLine(); // Limpa o buffer do scanner (o Enter que o utilizador carrega)
+        return opcao;
     }
 
-    public String lerEmail() {
-        System.out.print("Email: ");
-        return new Scanner(System.in).nextLine();
+    // Outros métodos utilitários que a MainView possa precisar
+    public String pedirInputString(String mensagem) {
+        System.out.print(mensagem + ": ");
+        return scanner.nextLine();
     }
 
-    public String lerPassword() {
-        System.out.print("Password: ");
-        return new Scanner(System.in).nextLine();
-    }
-
-    public String lerNome() {
-        System.out.print("Nome: ");
-        return new Scanner(System.in).nextLine();
-    }
-
-    public String lerCSV() {
-        System.out.print("Nome do ficheiro CSV: ");
-        return new Scanner(System.in).nextLine();
+    public void mostrarMensagem(String mensagem) {
+        System.out.println(">> " + mensagem);
     }
 }

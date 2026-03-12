@@ -1,66 +1,52 @@
+// Ficheiro: controller/DocenteController.java
 package controller;
 
-import model.*;
+import view.DocenteView;
+import model.Docente;
+import model.RepositorioDados;
 
 public class DocenteController {
+    private DocenteView view;
+    private Docente docenteLogado;
+    private RepositorioDados repositorio;
 
-    private SistemaAcademico sistema;
-
-    public DocenteController(SistemaAcademico sistema) {
-        this.sistema = sistema;
+    public DocenteController(Docente docenteLogado, RepositorioDados repositorio) {
+        this.view = new DocenteView();
+        this.docenteLogado = docenteLogado;
+        this.repositorio = repositorio;
     }
 
-    // Adiciona nota a um estudante numa UC
-    public void adicionarNota(Estudante estudante, UnidadeCurricular uc, int numeroAvaliacao, double nota) {
-        PercursoAcademico pa = estudante.getPercursoAcademico();
-        if (pa == null) {
-            pa = new PercursoAcademico(estudante);
-            estudante.setPercursoAcademico(pa);
-        }
-
-        Avaliacao avaliacao = pa.getAvaliacao(uc);
-        if (avaliacao == null) {
-            avaliacao = new Avaliacao(estudante, uc, sistema.getAnoAtual());
-            pa.adicionarAvaliacao(avaliacao);
-        }
-
-        avaliacao.adicionarNota(nota);
-        System.out.println("Nota registada: " + nota + " para " + estudante.getNome() + " na UC " + uc.getNome());
-    }
-
-    // Lista UCs que o docente leciona
-    public UnidadeCurricular[] listarUCsDocente(Docente d) {
-        UnidadeCurricular[] todas = sistema.getUcs();
-        UnidadeCurricular[] lecionadas = new UnidadeCurricular[100];
-        int count = 0;
-        for (int i = 0; i < sistema.getTotalUCs(); i++) {
-            if (todas[i].getDocenteResponsavel() == d) {
-                lecionadas[count++] = todas[i];
+    public void iniciarMenu() {
+        boolean aExecutar = true;
+        while (aExecutar) {
+            int opcao = view.mostrarMenuPrincipal();
+            switch (opcao) {
+                case 1:
+                    verDadosDocente();
+                    break;
+                case 2:
+                    view.mostrarMensagem("Funcionalidade de atualizar dados a ser desenvolvida.");
+                    break;
+                case 3:
+                    view.mostrarMensagem("Funcionalidade de lançar notas a ser desenvolvida.");
+                    break;
+                case 4:
+                    view.mostrarMensagem("A sair da conta de Docente...");
+                    aExecutar = false;
+                    break;
+                default:
+                    view.mostrarMensagem("Opção inválida.");
             }
         }
-        UnidadeCurricular[] result = new UnidadeCurricular[count];
-        for (int i = 0; i < count; i++) result[i] = lecionadas[i];
-        return result;
     }
 
-    public Avaliacao getAvaliacao(Estudante e, UnidadeCurricular uc) {
-        PercursoAcademico pa = e.getPercursoAcademico();
-        if (pa != null) return pa.getAvaliacao(uc);
-        return null;
-    }
-
-    public void adicionarAvaliacao(Estudante e, UnidadeCurricular uc, double nota) {
-        PercursoAcademico pa = e.getPercursoAcademico();
-        if (pa == null) {
-            pa = new PercursoAcademico(e);
-            e.setPercursoAcademico(pa);
-        }
-
-        Avaliacao a = pa.getAvaliacao(uc);
-        if (a == null) {
-            a = new Avaliacao(e, uc, 2026);
-            pa.adicionarAvaliacao(a);
-        }
-        a.adicionarNota(nota);
+    private void verDadosDocente() {
+        view.mostrarMensagem("\n--- FICHA DE DOCENTE ---");
+        view.mostrarMensagem("Sigla: " + docenteLogado.getSigla());
+        view.mostrarMensagem("Nome: " + docenteLogado.getNome());
+        view.mostrarMensagem("Email: " + docenteLogado.getEmail());
+        view.mostrarMensagem("NIF: " + docenteLogado.getNif());
+        view.mostrarMensagem("Morada: " + docenteLogado.getMorada());
+        view.mostrarMensagem("Data de Nascimento: " + docenteLogado.getDataNascimento());
     }
 }

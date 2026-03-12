@@ -1,46 +1,44 @@
+// Ficheiro: model/Departamento.java
 package model;
 
 public class Departamento {
 
-    private static final int MAX = 200;
-
     private String sigla;
     private String nome;
-
-    private UnidadeCurricular[] ucs = new UnidadeCurricular[MAX];
-    private int totalUCs = 0;
-
     private Docente docenteResponsavel;
+
+    // Arrays em vez de ArrayList
+    private Curso[] cursos;
+    private int totalCursos;
 
     public Departamento(String sigla, String nome) {
         this.sigla = sigla;
         this.nome = nome;
+
+        // Vamos assumir um máximo de 10 cursos por departamento
+        this.cursos = new Curso[10];
+        this.totalCursos = 0;
     }
 
-    // ---------------------------
-    // Getters e Setters
-    // ---------------------------
+    // ---------- GETTERS ----------
     public String getSigla() { return sigla; }
     public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-
     public Docente getDocenteResponsavel() { return docenteResponsavel; }
-    public void setDocenteResponsavel(Docente docenteResponsavel) {
-        this.docenteResponsavel = docenteResponsavel;
-    }
+    public Curso[] getCursos() { return cursos; }
+    public int getTotalCursos() { return totalCursos; }
 
-    public void adicionarUC(UnidadeCurricular uc) {
-        if (totalUCs < MAX) {
-            ucs[totalUCs++] = uc;
+    // ---------- SETTERS ----------
+    public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setNome(String nome) { this.nome = nome; }
+    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
+
+    // ---------- MÉTODOS PARA ADICIONAR AOS ARRAYS ----------
+    public boolean adicionarCurso(Curso curso) {
+        if (totalCursos < cursos.length) {
+            cursos[totalCursos] = curso;
+            totalCursos++;
+            return true;
         }
-    }
-
-    public UnidadeCurricular[] getUcs() { return ucs; }
-    public int getTotalUCs() { return totalUCs; }
-
-    @Override
-    public String toString() {
-        return sigla + " - " + nome +
-                (docenteResponsavel != null ? " (Responsável: " + docenteResponsavel.getNome() + ")" : "");
+        return false; // Array cheio
     }
 }

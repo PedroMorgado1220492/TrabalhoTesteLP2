@@ -1,159 +1,154 @@
+// Ficheiro: controller/MainController.java
 package controller;
 
-import model.*;
-import view.*;
-import util.CSVService;
-import util.PasswordGenerator;
-import java.util.Scanner;
+import view.MainView;
+import model.RepositorioDados;
+import model.Estudante;
+import model.Utilizador;
+import model.Gestor;
+import model.Docente;
+import utils.ImportadorCSV;
+import utils.EmailGenerator;
+import utils.PasswordGenerator;
 
 public class MainController {
 
-    private SistemaAcademico sistema;
-    private MainView mainView;
-    private GestorController gestorController;
-    private DocenteController docenteController;
-    private EstudanteController estudanteController;
-    private Scanner sc;
+    private MainView view;
+    private RepositorioDados repositorio;
 
-    public MainController(SistemaAcademico sistema) {
-        this.sistema = sistema;
-        this.mainView = new MainView();
-        this.gestorController = new GestorController(sistema);
-        this.docenteController = new DocenteController(sistema);
-        this.estudanteController = new EstudanteController();
-        this.sc = new Scanner(System.in);
+    public MainController() {
+        this.view = new MainView();
+        this.repositorio = new RepositorioDados();
     }
 
-    public void run() {
-        boolean running = true;
-        while (running) {
-            int opcao = mainView.mostrarMenu();
+    public void iniciarSistema() {
+        boolean aExecutar = true;
+        view.mostrarMensagem("Bem-vindo ao Sistema do ISSMF!");
+
+        while (aExecutar) {
+            // Mostra o ano atual no menu para o utilizador saber em que ano está
+            view.mostrarMensagem("--- Ano Letivo Atual: " + repositorio.getAnoAtual() + " ---");
+            int opcao = view.mostrarMenu();
+
             switch (opcao) {
-                case 1: // Login
-                    loginFlow();
+                case 1:
+                    view.mostrarMensagem("\n--- LOGIN DO SISTEMA ---");
+                    String emailLogin = view.pedirInputString("Email");
+                    String passwordLogin = view.pedirInputString("Password");
+
+                    // Pede à base de dados para autenticar
+                    Utilizador utilizadorLogado = repositorio.autenticar(emailLogin, passwordLogin);
+
+                    if (utilizadorLogado == null) {
+                        view.mostrarMensagem("Erro: Email ou Password incorretos.");
+                    } else {
+                        view.mostrarMensagem("Login efetuado com sucesso!");
+
+                        // Verifica que tipo de utilizador é (Polimorfismo!)
+                        if (utilizadorLogado instanceof Gestor) {
+                            view.mostrarMensagem("Bem-vindo Gestor: Backoffice");
+                            GestorController gc = new GestorController((Gestor) utilizadorLogado, repositorio);
+                            gc.iniciarMenuGestor();
+
+                        } else if (utilizadorLogado instanceof Docente) {
+                            Docente docenteLogado = (Docente) utilizadorLogado;
+                            view.mostrarMensagem("Bem-vindo Docente: " + docenteLogado.getSigla());
+
+                            // Liga o controlador do Docente!
+                            DocenteController dc = new DocenteController(docenteLogado, repositorio);
+                            dc.iniciarMenu();
+
+                        } else if (utilizadorLogado instanceof Estudante) {
+                            Estudante estudanteLogado = (Estudante) utilizadorLogado;
+                            view.mostrarMensagem("Bem-vindo Estudante: " + estudanteLogado.getNumeroMecanografico());
+
+                            // Liga o controlador do Estudante!
+                            EstudanteController ec = new EstudanteController(estudanteLogado, repositorio);
+                            ec.iniciarMenu();
+                        }
+                    }
                     break;
-
-                case 2: // Criar estudante sem login
-                    System.out.print("Nome do estudante: ");
-                    String nome = sc.nextLine();
-
-                    System.out.print("NIF: ");
-                    String nif = sc.nextLine();
-
-                    System.out.print("Data nascimento: ");
-                    String dataNascimento = sc.nextLine();
-
-                    System.out.print("Morada: ");
-                    String morada = sc.nextLine();
-
-                    int numero = sistema.gerarNumeroMecanografico();
-                    Curso curso = null; // podes depois pedir o curso ao utilizador
-
-                    gestorController.criarEstudante(numero, nome, nif, dataNascimento, morada, curso);
-
-                    System.out.print("Indique o caminho do CSV para guardar: ");
-                    String caminhoExport = sc.nextLine();
-                    CSVService.exportarSistema(sistema, caminhoExport);
+                case 2:
+                    // --- OPÇÃO 2: CRIAR ESTUDANTE SEM LOGIN ---
+                    criarEstudanteSemLogin();
                     break;
-
-                case 3: // Avançar Ano
-                    sistema.avancarAno();
-                    System.out.print("Indique o caminho do CSV para guardar: ");
-                    caminhoExport = sc.nextLine();
-                    CSVService.exportarSistema(sistema, caminhoExport);
+                case 3:
+                    // --- OPÇÃO 3: AVANÇAR ANO ---
+                    repositorio.avancarAno();
+                    view.mostrarMensagem("Sucesso! O sistema avançou para o ano letivo de " + repositorio.getAnoAtual());
                     break;
+                case 4:
+                    // Pede ao utilizador para escrever o caminho do ficheiro
+                    view.mostrarMensagem("\n--- IMPORTAR BASE DE DADOS ---");
+                    view.mostrarMensagem("Dica: Se o ficheiro estiver na mesma pasta, digite apenas 'dados.csv'.");
+                    view.mostrarMensagem("Se estiver noutra pasta, digite o caminho completo (ex: C:\\Users\\utilizador\\Desktop\\dados.csv).");
 
-                case 4: // Importar CSV manual
-                    System.out.print("Indique o caminho do ficheiro CSV: ");
-                    String caminhoCSV = sc.nextLine();
-                    CSVService.importarCSV(sistema, caminhoCSV);
+                    String caminhoFicheiro = view.pedirInputString("Caminho do ficheiro CSV");
+
+                    view.mostrarMensagem("A iniciar importação do ficheiro: " + caminhoFicheiro);
+
+                    // Chama o importador com o caminho que o utilizador escreveu
+                    ImportadorCSV.importarDados(caminhoFicheiro, repositorio);
+
+                    // Mostra o resumo final
+                    view.mostrarMensagem("--- Resumo da Base de Dados ---");
+                    view.mostrarMensagem("Estudantes guardados: " + repositorio.getTotalEstudantes());
+                    view.mostrarMensagem("Docentes guardados: " + repositorio.getTotalDocentes());
                     break;
-
-                case 5: // Sair
-                    System.out.print("Indique o caminho do CSV para guardar antes de sair: ");
-                    caminhoExport = sc.nextLine();
-                    CSVService.exportarSistema(sistema, caminhoExport);
-                    running = false;
+                case 5:
+                    view.mostrarMensagem("A encerrar o sistema ISSMF. Até logo!");
+                    aExecutar = false;
                     break;
-
                 default:
-                    System.out.println("Opção inválida.");
-            }
-        }
-
-        System.out.println("Programa terminado.");
-    }
-
-    private void loginFlow() {
-        String email = mainView.lerEmail();
-        String password = mainView.lerPassword();
-
-        Utilizador user = new AuthController(sistema).login(email, password);
-        if (user == null) {
-            System.out.println("Login inválido.");
-            return;
-        }
-
-        if (user instanceof Gestor) {
-            System.out.println("Backoffice");
-            menuGestor((Gestor) user);
-
-        } else if (user instanceof Docente) {
-            Docente d = (Docente) user;
-            System.out.println("Docente: " + d.getSigla());
-            menuDocente(d);
-
-        } else if (user instanceof Estudante) {
-            Estudante e = (Estudante) user;
-            System.out.println("Estudante: " + e.getNumeroMecanografico());
-            menuEstudante(e);
-        }
-    }
-
-    private void menuGestor(Gestor gestor) {
-        GestorView gv = new GestorView();
-        boolean gestorRunning = true;
-        while (gestorRunning) {
-            int menu = gv.menuGestor();
-            switch (menu) {
-                case 1: gv.departamentoMenu(gestorController); break;
-                case 2: gv.cursoMenu(gestorController); break;
-                case 3: gv.ucMenu(gestorController); break;
-                case 4: gv.docenteMenu(gestorController); break;
-                case 5: gv.estudanteMenu(gestorController); break;
-                case 6: gv.alterarPassword(gestor); break;
-                case 0: gestorRunning = false; break;
-                default: System.out.println("Opção inválida.");
+                    view.mostrarMensagem("Opção inválida.");
             }
         }
     }
 
-    private void menuDocente(Docente docente) {
-        DocenteView dv = new DocenteView();
-        boolean docenteRunning = true;
-        while (docenteRunning) {
-            int menu = dv.menuDocente();
-            switch (menu) {
-                case 1: dv.adicionarAvaliacao(docente, docenteController, sistema); break;
-                case 2: dv.verDados(docente); break;
-                case 0: docenteRunning = false; break;
-                default: System.out.println("Opção inválida.");
-            }
-        }
-    }
+    // --- Lógica isolada para manter o Switch limpo ---
+    private void criarEstudanteSemLogin() {
+        view.mostrarMensagem("\n--- NOVO REGISTO DE ESTUDANTE ---");
 
-    private void menuEstudante(Estudante estudante) {
-        EstudanteView ev = new EstudanteView();
-        boolean estudanteRunning = true;
-        while (estudanteRunning) {
-            int menu = ev.menuEstudante();
-            switch (menu) {
-                case 1: ev.verDados(estudante); break;
-                case 2: ev.verPercurso(estudante, estudanteController); break;
-                case 3: ev.alterarDados(estudante); break;
-                case 0: estudanteRunning = false; break;
-                default: System.out.println("Opção inválida.");
-            }
+        // 1. Pede dados básicos
+        String nome = view.pedirInputString("Nome");
+        String nif = view.pedirInputString("NIF");
+        String morada = view.pedirInputString("Morada");
+        String dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
+
+        // 2. Gera os dados automáticos (Número Mecanográfico, Email e Password)
+        // O contadorMecanografico pode começar em 1000 e somar os estudantes que já existem
+        int numeroMecanografico = 1000 + repositorio.getTotalEstudantes();
+
+        String emailGerado = EmailGenerator.gerarEmailEstudante(numeroMecanografico);
+        String passwordGerada = PasswordGenerator.generatePassword();
+
+        // O ano de inscrição vai buscar a variável dinâmica que criámos!
+        int anoInscricao = repositorio.getAnoAtual();
+
+        // 3. Instancia o objeto Estudante
+        Estudante novoEstudante = new Estudante(
+                numeroMecanografico,
+                emailGerado,
+                passwordGerada,
+                nome,
+                nif,
+                morada,
+                dataNascimento,
+                null, // Curso a null nesta fase
+                anoInscricao // Usa o ano dinâmico do sistema!
+        );
+
+        // 4. Guarda no repositório com array tradicional
+        boolean sucesso = repositorio.adicionarEstudante(novoEstudante);
+
+        // 5. Dá o feedback final
+        if (sucesso) {
+            view.mostrarMensagem("Estudante registado com sucesso no ano letivo " + anoInscricao + "!");
+            view.mostrarMensagem("Nº Mecanográfico: " + numeroMecanografico);
+            view.mostrarMensagem("Email: " + emailGerado);
+            view.mostrarMensagem("Password: " + passwordGerada);
+        } else {
+            view.mostrarMensagem("Erro: O sistema atingiu o limite máximo de estudantes.");
         }
     }
 }

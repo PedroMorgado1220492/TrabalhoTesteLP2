@@ -1,36 +1,28 @@
+// Ficheiro: view/EstudanteView.java
 package view;
 
 import java.util.Scanner;
-import controller.EstudanteController;
-import model.Estudante;
 
 public class EstudanteView {
+    private Scanner scanner;
 
-    private Scanner scanner = new Scanner(System.in);
+    public EstudanteView() {
+        this.scanner = new Scanner(System.in);
+    }
 
-    public int menuEstudante() {
-        System.out.println("\n===== MENU ESTUDANTE =====");
-        System.out.println("1 - Ver Dados");
-        System.out.println("2 - Ver Percurso Académico");
-        System.out.println("3 - Alterar Dados");
-        System.out.println("0 - Recuar");
+    public int mostrarMenuPrincipal() {
+        System.out.println("\n=== ÁREA DO ESTUDANTE ===");
+        System.out.println("1 - Ver Dados Pessoais");
+        System.out.println("2 - Atualizar Dados");
+        System.out.println("3 - Ver Percurso Académico");
+        System.out.println("4 - Sair / Logout");
         System.out.print("Opção: ");
-        return scanner.nextInt();
-    }
-
-    public void verDados(Estudante e) {
-        EstudanteController ec = new EstudanteController();
-        ec.verDados(e);
-    }
-
-    public void verPercurso(Estudante e, EstudanteController ec) {
-        ec.verPercurso(e);
-    }
-
-    public void alterarDados(Estudante e) {
+        int opcao = scanner.nextInt();
         scanner.nextLine();
-        System.out.print("Novo nome: ");
-        e.setNome(scanner.nextLine());
-        System.out.println("Dados atualizados.");
+        return opcao;
+    }
+
+    public void mostrarMensagem(String mensagem) {
+        System.out.println(">> " + mensagem);
     }
 }

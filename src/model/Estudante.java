@@ -1,30 +1,19 @@
+// Ficheiro: model/Estudante.java
 package model;
 
 public class Estudante extends Utilizador {
-
     private final int numeroMecanografico;
     private Curso curso;
     private final int anoPrimeiraInscricao;
     private int anoCurricular;
     private PercursoAcademico percursoAcademico;
 
-    public Estudante(int numeroMecanografico,
-                     String email,
-                     String password,
-                     String nome,
-                     String nif,
-                     String morada,
-                     String dataNascimento,
-                     Curso curso,
-                     int anoPrimeiraInscricao) {
-
+    public Estudante(int numeroMecanografico, String email, String password, String nome, String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao) {
         super(email, password, nome, nif, morada, dataNascimento);
-
         this.numeroMecanografico = numeroMecanografico;
         this.curso = curso;
         this.anoPrimeiraInscricao = anoPrimeiraInscricao;
-        this.anoCurricular = 1;
-
+        this.anoCurricular = 1; // Começa sempre no 1º ano
         this.percursoAcademico = new PercursoAcademico(this);
     }
 
