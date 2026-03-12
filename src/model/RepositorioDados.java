@@ -200,4 +200,41 @@ public class RepositorioDados {
         // Exemplo: 2026 * 10000 = 20260000. 20260000 + 1 = 20260001
         return (anoInscricao * 10000) + numeroSequencial;
     }
+
+    // ---------- MÉTODOS DE VERIFICAÇÃO (UNICIDADE) ----------
+
+    public boolean existeNif(String nif) {
+        for (int i = 0; i < totalGestores; i++) { if (gestores[i] != null && gestores[i].getNif().equals(nif)) return true; }
+        for (int i = 0; i < totalDocentes; i++) { if (docentes[i] != null && docentes[i].getNif().equals(nif)) return true; }
+        for (int i = 0; i < totalEstudantes; i++) { if (estudantes[i] != null && estudantes[i].getNif().equals(nif)) return true; }
+        return false;
+    }
+
+    public boolean existeSiglaDepartamento(String sigla) {
+        for (int i = 0; i < totalDepartamentos; i++) {
+            if (departamentos[i] != null && departamentos[i].getSigla().equalsIgnoreCase(sigla)) return true;
+        }
+        return false;
+    }
+
+    public boolean existeSiglaCurso(String sigla) {
+        for (int i = 0; i < totalCursos; i++) {
+            if (cursos[i] != null && cursos[i].getSigla().equalsIgnoreCase(sigla)) return true;
+        }
+        return false;
+    }
+
+    public boolean existeSiglaUC(String sigla) {
+        for (int i = 0; i < totalUcs; i++) {
+            if (ucs[i] != null && ucs[i].getSigla().equalsIgnoreCase(sigla)) return true;
+        }
+        return false;
+    }
+
+    public boolean existeSiglaDocente(String sigla) {
+        for (int i = 0; i < totalDocentes; i++) {
+            if (docentes[i] != null && docentes[i].getSigla().equalsIgnoreCase(sigla)) return true;
+        }
+        return false;
+    }
 }

@@ -44,7 +44,8 @@ public class GestorController {
                 case 4: gerirEstudantes(); break;
                 case 5: gerirDocentes(); break;
                 case 6: avancarAnoLetivo(); break;
-                case 7:
+                case 7: gerirRelatorios(); break;
+                case 8:
                     view.mostrarMensagem("A sair do Backoffice...");
                     aExecutar = false;
                     break;
@@ -85,7 +86,15 @@ public class GestorController {
             int opcao = view.mostrarMenuDepartamentos();
             switch (opcao) {
                 case 1:
-                    String sigla = view.pedirInputString("Sigla do Departamento");
+                    String sigla = "";
+                    while (true) {
+                        sigla = view.pedirInputString("Sigla do Departamento");
+                        if (repositorio.existeSiglaDepartamento(sigla)) {
+                            view.mostrarMensagem("Erro: Já existe um departamento com a sigla " + sigla + ".");
+                        } else {
+                            break;
+                        }
+                    }
                     String nome = view.pedirInputString("Nome do Departamento");
 
                     Departamento novoDep = new Departamento(sigla, nome);
@@ -149,7 +158,15 @@ public class GestorController {
                         break;
                     }
 
-                    String siglaCurso = view.pedirInputString("Sigla do Curso");
+                    String siglaCurso = "";
+                    while (true) {
+                        siglaCurso = view.pedirInputString("Sigla do Curso");
+                        if (repositorio.existeSiglaCurso(siglaCurso)) {
+                            view.mostrarMensagem("Erro: Já existe um curso com a sigla " + siglaCurso + ".");
+                        } else {
+                            break;
+                        }
+                    }
                     String nomeCurso = view.pedirInputString("Nome do Curso");
 
                     view.mostrarMensagem("--- Escolha o Departamento ---");
@@ -225,7 +242,15 @@ public class GestorController {
                         break;
                     }
 
-                    String siglaUc = view.pedirInputString("Sigla da UC");
+                    String siglaUc = "";
+                    while (true) {
+                        siglaUc = view.pedirInputString("Sigla da Unidade Curricular");
+                        if (repositorio.existeSiglaUC(siglaUc)) {
+                            view.mostrarMensagem("Erro: Já existe uma Unidade Curricular com a sigla " + siglaUc + ".");
+                        } else {
+                            break;
+                        }
+                    }
                     String nomeUc = view.pedirInputString("Nome da UC");
                     int anoCurricular = Integer.parseInt(view.pedirInputString("Ano Curricular (1, 2 ou 3)"));
 
@@ -329,8 +354,13 @@ public class GestorController {
                     String nif = "";
                     while (true) {
                         nif = view.pedirInputString("NIF (9 dígitos)");
-                        if (Validador.isNifValido(nif)) break;
-                        view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                        if (!Validador.isNifValido(nif)) {
+                            view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                        } else if (repositorio.existeNif(nif)) {
+                            view.mostrarMensagem("Erro: Já existe um utilizador registado com o NIF " + nif + ".");
+                        } else {
+                            break; // É válido e é único!
+                        }
                     }
 
                     String morada = view.pedirInputString("Morada");
@@ -425,7 +455,15 @@ public class GestorController {
 
             switch (escolha) {
                 case "1":
-                    String sigla = view.pedirInputString("Sigla do Docente (3 letras, ex: ABC)");
+                    String sigla = "";
+                    while (true) {
+                        sigla = view.pedirInputString("Sigla do Docente (3 letras, ex: aem)");
+                        if (repositorio.existeSiglaDocente(sigla)) {
+                            view.mostrarMensagem("Erro: Já existe um Docente com a sigla " + sigla + ".");
+                        } else {
+                            break;
+                        }
+                    }
 
                     String nome = "";
                     while (true) {
@@ -437,8 +475,13 @@ public class GestorController {
                     String nif = "";
                     while (true) {
                         nif = view.pedirInputString("NIF (9 dígitos)");
-                        if (Validador.isNifValido(nif)) break;
-                        view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                        if (!Validador.isNifValido(nif)) {
+                            view.mostrarMensagem("Erro: O NIF deve conter exatamente 9 dígitos numéricos.");
+                        } else if (repositorio.existeNif(nif)) {
+                            view.mostrarMensagem("Erro: Já existe um utilizador registado com o NIF " + nif + ".");
+                        } else {
+                            break; // É válido e é único!
+                        }
                     }
 
                     String morada = view.pedirInputString("Morada");
@@ -504,6 +547,100 @@ public class GestorController {
                     }
                     break;
                 case "4":
+                    aExecutar = false;
+                    break;
+                default:
+                    view.mostrarMensagem("Opção inválida.");
+            }
+        }
+    }
+
+    /**
+     * Submenu de Relatórios: Permite extrair informações cruzadas e hierárquicas
+     * do Repositório (Alunos por Curso, UCs por Curso, etc).
+     */
+    private void gerirRelatorios() {
+        boolean aExecutar = true;
+        while (aExecutar) {
+            String escolha = view.pedirInputString("\n--- RELATÓRIOS E LISTAGENS ---\n" +
+                    "1 - Alunos agrupados por Curso\n" +
+                    "2 - Alunos agrupados por UC\n" +
+                    "3 - UCs agrupadas por Curso\n" +
+                    "4 - Cursos agrupados por Departamento\n" +
+                    "5 - Recuar\nOpção");
+
+            switch (escolha) {
+                case "1": // Alunos por Curso
+                    view.mostrarMensagem("\n--- ALUNOS POR CURSO ---");
+                    for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+                        Curso c = repositorio.getCursos()[i];
+                        view.mostrarMensagem("\n[" + c.getSigla() + "] " + c.getNome() + ":");
+                        boolean temAlunos = false;
+                        for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
+                            Estudante e = repositorio.getEstudantes()[j];
+                            if (e.getCurso() != null && e.getCurso().getSigla().equals(c.getSigla())) {
+                                view.mostrarMensagem("  -> " + e.getNumeroMecanografico() + " - " + e.getNome());
+                                temAlunos = true;
+                            }
+                        }
+                        if (!temAlunos) view.mostrarMensagem("  (Nenhum aluno inscrito)");
+                    }
+                    break;
+
+                case "2": // Alunos por UC
+                    view.mostrarMensagem("\n--- ALUNOS POR UNIDADE CURRICULAR ---");
+                    for (int i = 0; i < repositorio.getTotalUcs(); i++) {
+                        UnidadeCurricular uc = repositorio.getUcs()[i];
+                        view.mostrarMensagem("\n[" + uc.getSigla() + "] " + uc.getNome() + ":");
+                        boolean temAlunosUc = false;
+                        // Procura alunos cujo Curso contenha esta UC
+                        for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
+                            Estudante e = repositorio.getEstudantes()[j];
+                            if (e.getCurso() != null) {
+                                for (int k = 0; k < e.getCurso().getTotalUCs(); k++) {
+                                    if (e.getCurso().getUnidadesCurriculares()[k].getSigla().equals(uc.getSigla())) {
+                                        view.mostrarMensagem("  -> " + e.getNumeroMecanografico() + " - " + e.getNome());
+                                        temAlunosUc = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!temAlunosUc) view.mostrarMensagem("  (Nenhum aluno inscrito)");
+                    }
+                    break;
+
+                case "3": // UCs por Curso
+                    view.mostrarMensagem("\n--- UCs POR CURSO ---");
+                    for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+                        Curso c = repositorio.getCursos()[i];
+                        view.mostrarMensagem("\nCURSO: " + c.getNome());
+                        if (c.getTotalUCs() == 0) {
+                            view.mostrarMensagem("  (Sem UCs registadas)");
+                        } else {
+                            for (int j = 0; j < c.getTotalUCs(); j++) {
+                                view.mostrarMensagem("  -> " + c.getUnidadesCurriculares()[j].getSigla() + " - " + c.getUnidadesCurriculares()[j].getNome());
+                            }
+                        }
+                    }
+                    break;
+
+                case "4": // Cursos por Departamento
+                    view.mostrarMensagem("\n--- CURSOS POR DEPARTAMENTO ---");
+                    for (int i = 0; i < repositorio.getTotalDepartamentos(); i++) {
+                        Departamento d = repositorio.getDepartamentos()[i];
+                        view.mostrarMensagem("\nDEPARTAMENTO: " + d.getNome());
+                        if (d.getTotalCursos() == 0) {
+                            view.mostrarMensagem("  (Sem Cursos registados)");
+                        } else {
+                            for (int j = 0; j < d.getTotalCursos(); j++) {
+                                view.mostrarMensagem("  -> " + d.getCursos()[j].getSigla() + " - " + d.getCursos()[j].getNome());
+                            }
+                        }
+                    }
+                    break;
+
+                case "5":
                     aExecutar = false;
                     break;
                 default:

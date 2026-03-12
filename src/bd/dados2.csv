@@ -1,0 +1,35 @@
+Tipo;Coluna1;Coluna2;Coluna3;Coluna4;Coluna5;Coluna6;Coluna7;Coluna8;Coluna9
+GESTOR;admin@issmf.ipp.pt;admin123;Administrador Principal;111222333;Rua Central 1;01-01-1980
+GESTOR;gestor@issmf.ipp.pt;gestor123;Gestor Secundario;222333444;Avenida Brasil 2;15-06-1985
+DEPARTAMENTO;DEI;Departamento de Engenharia Informatica
+DEPARTAMENTO;DEM;Departamento de Engenharia Mecanica
+DEPARTAMENTO;DEE;Departamento de Engenharia Eletrotecnica
+DOCENTE;RPS;rps@issmf.ipp.pt;pass123;Rui Pedro Silva;999888777;Rua Escura 1;10-05-1970
+DOCENTE;MFT;mft@issmf.ipp.pt;pass123;Maria Fernanda Tavares;888777666;Praca Nova 2;22-11-1975
+DOCENTE;JCP;jcp@issmf.ipp.pt;pass123;Joao Carlos Pinto;777666555;Rua Direita 3;05-03-1982
+DOCENTE;ALP;alp@issmf.ipp.pt;pass123;Ana Luisa Pereira;666555444;Largo da Fonte 4;18-09-1980
+CURSO;LEI;Licenciatura em Engenharia Informatica;DEI
+CURSO;LEM;Licenciatura em Engenharia Mecanica;DEM
+CURSO;LEE;Licenciatura em Engenharia Eletrotecnica;DEE
+UC;PRG1;Programacao I;1;RPS;LEI
+UC;MAT1;Matematica I;1;ALP;LEI
+UC;BDAD;Bases de Dados;2;MFT;LEI
+UC;MEC1;Mecanica Aplicada I;1;JCP;LEM
+UC;TER1;Termodinamica;2;JCP;LEM
+UC;ELE1;Eletromagnetismo;1;ALP;LEE
+ESTUDANTE;20250001;20250001@issmf.ipp.pt;aluno123;Pedro Miguel Costa;123456789;Rua da Boavista 10;10-01-2005;2025;LEI
+ESTUDANTE;20250002;20250002@issmf.ipp.pt;aluno123;Sara Gomes;234567890;Rua das Flores 22;20-02-2005;2025;LEI
+ESTUDANTE;20240001;20240001@issmf.ipp.pt;aluno123;Tiago Sousa;345678901;Avenida dos Aliados 5;15-05-2004;2024;LEI
+ESTUDANTE;20250003;20250003@issmf.ipp.pt;aluno123;Marta Dias;456789012;Praca da Batalha 8;08-08-2004;2025;LEM
+ESTUDANTE;20240002;20240002@issmf.ipp.pt;aluno123;Joao Ferreira;567890123;Rua de Santa Catarina 12;30-12-2003;2024;LEM
+ESTUDANTE;20250004;20250004@issmf.ipp.pt;aluno123;Ines Almeida;678901234;Rua do Almada 15;25-04-2005;2025;LEE
+NOTA;20250001;PRG1;14.5;16.0;0.0
+NOTA;20250001;MAT1;12.0;0.0;0.0
+NOTA;20250002;PRG1;10.5;11.0;0.0
+NOTA;20240001;BDAD;15.0;17.5;0.0
+NOTA;20250003;MEC1;18.0;19.0;0.0
+NOTA;20240002;TER1;9.0;10.5;0.0
+NOTA;20250004;ELE1;13.0;14.0;0.0
+HISTORICO;20240001;PRG1;2024;13.0;14.0;15.0
+HISTORICO;20240001;MAT1;2024;11.0;12.5;0.0
+HISTORICO;20240002;MEC1;2024;16.0;14.0;15.0
