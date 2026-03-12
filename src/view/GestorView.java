@@ -1,15 +1,23 @@
-// Ficheiro: view/GestorView.java
 package view;
 
 import java.util.Scanner;
 
 public class GestorView {
+
+    // ---------- ATRIBUTOS ----------
     private Scanner scanner;
 
+    // ---------- CONSTRUTOR ----------
     public GestorView() {
         this.scanner = new Scanner(System.in);
     }
 
+    // ---------- MÉTODOS DE APRESENTAÇÃO E LEITURA ----------
+
+    /**
+     * Apresenta o menu principal do painel de administração (Backoffice).
+     * @return A opção numérica selecionada.
+     */
     public int mostrarMenuPrincipalGestor() {
         System.out.println("\n=== BACKOFFICE - GESTOR ===");
         System.out.println("1 - Gerir Departamentos");
@@ -20,11 +28,17 @@ public class GestorView {
         System.out.println("6 - Avançar Ano Letivo");
         System.out.println("7 - Voltar / Logout");
         System.out.print("Opção: ");
-        int opcao = scanner.nextInt();
-        scanner.nextLine(); // Limpar buffer
-        return opcao;
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
+    /**
+     * Apresenta o submenu de gestão de Departamentos.
+     * @return A opção numérica selecionada.
+     */
     public int mostrarMenuDepartamentos() {
         System.out.println("\n--- GERIR DEPARTAMENTOS ---");
         System.out.println("1 - Adicionar Departamento");
@@ -32,11 +46,17 @@ public class GestorView {
         System.out.println("3 - Listar Departamentos");
         System.out.println("4 - Recuar");
         System.out.print("Opção: ");
-        int opcao = scanner.nextInt();
-        scanner.nextLine();
-        return opcao;
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
+    /**
+     * Apresenta o submenu de gestão de Cursos.
+     * @return A opção numérica selecionada.
+     */
     public int mostrarMenuCursos() {
         System.out.println("\n--- GERIR CURSOS ---");
         System.out.println("1 - Adicionar Curso");
@@ -44,11 +64,17 @@ public class GestorView {
         System.out.println("3 - Listar Cursos");
         System.out.println("4 - Recuar");
         System.out.print("Opção: ");
-        int opcao = scanner.nextInt();
-        scanner.nextLine();
-        return opcao;
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
+    /**
+     * Apresenta o submenu de gestão de Unidades Curriculares.
+     * @return A opção numérica selecionada.
+     */
     public int mostrarMenuUCs() {
         System.out.println("\n--- GERIR UNIDADES CURRICULARES ---");
         System.out.println("1 - Adicionar Unidade Curricular");
@@ -56,11 +82,17 @@ public class GestorView {
         System.out.println("3 - Listar Unidades Curriculares");
         System.out.println("4 - Recuar");
         System.out.print("Opção: ");
-        int opcao = scanner.nextInt();
-        scanner.nextLine(); // Limpar o buffer
-        return opcao;
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
+    /**
+     * Apresenta o submenu de gestão de Estudantes.
+     * @return A opção numérica selecionada.
+     */
     public int mostrarMenuEstudantes() {
         System.out.println("\n--- GERIR ESTUDANTES ---");
         System.out.println("1 - Adicionar Estudante");
@@ -68,16 +100,27 @@ public class GestorView {
         System.out.println("3 - Listar Estudantes");
         System.out.println("4 - Recuar");
         System.out.print("Opção: ");
-        int opcao = scanner.nextInt();
-        scanner.nextLine(); // Limpar o buffer
-        return opcao;
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
+    /**
+     * Pede ao gestor que insira texto através da consola.
+     * @param mensagem Texto de pedido de informação.
+     * @return A string inserida.
+     */
     public String pedirInputString(String mensagem) {
         System.out.print(mensagem + ": ");
         return scanner.nextLine();
     }
 
+    /**
+     * Apresenta uma mensagem de sistema/feedback ao gestor.
+     * @param mensagem Texto a apresentar.
+     */
     public void mostrarMensagem(String mensagem) {
         System.out.println(">> " + mensagem);
     }

@@ -1,42 +1,57 @@
-// Ficheiro: utils/Validador.java
 package utils;
 
 public class Validador {
 
-    // Valida se tem pelo menos duas palavras e apenas letras (incluindo acentos) e espaços
+    // ---------- CONSTRUTOR ----------
+    /**
+     * Construtor privado para evitar instanciação.
+     * Esta é uma classe utilitária estática.
+     */
+    private Validador() {}
+
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Valida se um nome contém pelo menos o primeiro e último nome (separados por espaço)
+     * e se é constituído unicamente por letras (incluindo acentuadas).
+     * * @param nome Nome a validar.
+     * @return true se o nome for válido, false caso contrário.
+     */
     public static boolean isNomeValido(String nome) {
         if (nome == null || nome.trim().isEmpty()) {
             return false;
         }
 
-        // Verifica se tem pelo menos um espaço no meio para separar o nome do sobrenome
         String[] partes = nome.trim().split(" ");
         if (partes.length < 2) {
             return false;
         }
 
-        // Regex: Aceita letras minúsculas, maiúsculas, letras com acentos (português) e espaços
         return nome.matches("^[a-zA-ZÀ-ÿ\\s]+$");
     }
 
-    // Valida se tem exatamente 9 dígitos numéricos
+    /**
+     * Valida se o Número de Identificação Fiscal (NIF) contém exatamente 9 dígitos numéricos.
+     * * @param nif NIF a validar.
+     * @return true se o NIF for válido, false caso contrário.
+     */
     public static boolean isNifValido(String nif) {
         if (nif == null) {
             return false;
         }
-        // Regex: Exatamente 9 números de 0 a 9
         return nif.matches("^[0-9]{9}$");
     }
 
-    // Valida o padrão DD-MM-AAAA
+    /**
+     * Valida se a data de nascimento obedece rigorosamente ao padrão DD-MM-AAAA
+     * e se os dias/meses inseridos se encontram em limites lógicos padrão.
+     * * @param data Data a validar.
+     * @return true se a data possuir um formato correto, false caso contrário.
+     */
     public static boolean isDataNascimentoValida(String data) {
         if (data == null) {
             return false;
         }
-        // Regex: 
-        // Dia: 01-09, 10-29 ou 30-31
-        // Mês: 01-09 ou 10-12
-        // Ano: 4 dígitos numéricos
         return data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$");
     }
 }

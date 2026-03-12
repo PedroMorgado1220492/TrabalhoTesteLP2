@@ -1,21 +1,19 @@
-// Ficheiro: model/Departamento.java
 package model;
 
 public class Departamento {
 
+    // ---------- ATRIBUTOS ----------
     private String sigla;
     private String nome;
     private Docente docenteResponsavel;
 
-    // Arrays em vez de ArrayList
     private Curso[] cursos;
     private int totalCursos;
 
+    // ---------- CONSTRUTOR ----------
     public Departamento(String sigla, String nome) {
         this.sigla = sigla;
         this.nome = nome;
-
-        // Vamos assumir um máximo de 10 cursos por departamento
         this.cursos = new Curso[10];
         this.totalCursos = 0;
     }
@@ -32,13 +30,19 @@ public class Departamento {
     public void setNome(String nome) { this.nome = nome; }
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
 
-    // ---------- MÉTODOS PARA ADICIONAR AOS ARRAYS ----------
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Associa um novo Curso a este Departamento.
+     * * @param curso O Curso a ser associado.
+     * @return true se foi adicionado com sucesso, false se o limite departamental foi atingido.
+     */
     public boolean adicionarCurso(Curso curso) {
         if (totalCursos < cursos.length) {
             cursos[totalCursos] = curso;
             totalCursos++;
             return true;
         }
-        return false; // Array cheio
+        return false;
     }
 }

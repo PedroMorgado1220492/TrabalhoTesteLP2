@@ -1,7 +1,8 @@
-// Ficheiro: model/Utilizador.java
 package model;
 
 public abstract class Utilizador {
+
+    // ---------- ATRIBUTOS ----------
     protected String email;
     protected String password;
     protected String nome;
@@ -9,6 +10,7 @@ public abstract class Utilizador {
     protected String morada;
     protected String dataNascimento;
 
+    // ---------- CONSTRUTOR ----------
     public Utilizador(String email, String password, String nome, String nif, String morada, String dataNascimento) {
         this.email = email;
         this.password = password;

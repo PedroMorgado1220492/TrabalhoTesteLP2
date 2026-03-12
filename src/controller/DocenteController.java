@@ -5,16 +5,25 @@ import view.DocenteView;
 import utils.Validador;
 
 public class DocenteController {
+
+    // ---------- ATRIBUTOS ----------
     private DocenteView view;
     private Docente docenteLogado;
     private RepositorioDados repositorio;
 
+    // ---------- CONSTRUTOR ----------
     public DocenteController(Docente docenteLogado, RepositorioDados repositorio) {
         this.view = new DocenteView();
         this.docenteLogado = docenteLogado;
         this.repositorio = repositorio;
     }
 
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Inicia o ciclo principal do Docente autenticado, permitindo a consulta
+     * de dados pessoais e o lançamento de avaliações.
+     */
     public void iniciarMenu() {
         boolean aExecutar = true;
         while (aExecutar) {
@@ -27,7 +36,7 @@ public class DocenteController {
                     atualizarDadosDocente();
                     break;
                 case 3:
-                    gerirAvaliacoes(); // Agora ligamos à lógica real
+                    gerirAvaliacoes();
                     break;
                 case 4:
                     view.mostrarMensagem("A sair da conta de Docente...");
@@ -39,6 +48,9 @@ public class DocenteController {
         }
     }
 
+    /**
+     * Apresenta a ficha com as informações de registo do Docente no sistema.
+     */
     private void verDadosDocente() {
         view.mostrarMensagem("\n--- FICHA DE DOCENTE ---");
         view.mostrarMensagem("Sigla: " + docenteLogado.getSigla());
@@ -49,6 +61,10 @@ public class DocenteController {
         view.mostrarMensagem("Data de Nascimento: " + docenteLogado.getDataNascimento());
     }
 
+    /**
+     * Gere o processo de seleção de Unidades Curriculares lecionadas pelo Docente,
+     * seleção de alunos nelas inscritos e posterior lançamento da nota.
+     */
     private void gerirAvaliacoes() {
         if (docenteLogado.getTotalUcsLecionadas() == 0) {
             view.mostrarMensagem("Atenção: Você não tem Unidades Curriculares atribuídas.");
@@ -57,12 +73,14 @@ public class DocenteController {
 
         view.mostrarMensagem("\n--- AS MINHAS UNIDADES CURRICULARES ---");
         UnidadeCurricular[] minhasUcs = docenteLogado.getUcsLecionadas();
+
         for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
             view.mostrarMensagem((i + 1) + " - " + minhasUcs[i].getNome() + " [" + minhasUcs[i].getSigla() + "]");
         }
 
         try {
             int escolhaUc = Integer.parseInt(view.pedirInputString("Escolha a UC (Número)")) - 1;
+
             if (escolhaUc < 0 || escolhaUc >= docenteLogado.getTotalUcsLecionadas()) {
                 view.mostrarMensagem("Opção inválida.");
                 return;
@@ -114,8 +132,16 @@ public class DocenteController {
         }
     }
 
+    /**
+     * Consulta a quantidade de notas que já foram registadas para um aluno
+     * numa específica Unidade Curricular.
+     * * @param est O Estudante a analisar.
+     * @param uc A Unidade Curricular a procurar.
+     * @return O número de notas já lançadas.
+     */
     private int obterQuantidadeNotas(Estudante est, UnidadeCurricular uc) {
         if (est.getAvaliacoes() == null) return 0;
+
         for (Avaliacao a : est.getAvaliacoes()) {
             if (a != null && a.getUnidadeCurricular().getSigla().equals(uc.getSigla())) {
                 return a.getTotalAvaliacoesLancadas();
@@ -124,12 +150,15 @@ public class DocenteController {
         return 0;
     }
 
+    /**
+     * Permite a alteração iterativa dos dados pessoais do Docente autenticado.
+     */
     private void atualizarDadosDocente() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuAtualizarDados();
             switch (opcao) {
-                case 1: // Alterar Nome
+                case 1:
                     String novoNome = "";
                     while (true) {
                         novoNome = view.pedirInputString("Introduza o novo Nome (Nome e Sobrenome)");
@@ -139,7 +168,7 @@ public class DocenteController {
                     docenteLogado.setNome(novoNome);
                     view.mostrarMensagem("Nome atualizado!");
                     break;
-                case 2: // Alterar NIF
+                case 2:
                     String novoNif = "";
                     while (true) {
                         novoNif = view.pedirInputString("Introduza o novo NIF (9 dígitos)");
@@ -149,11 +178,11 @@ public class DocenteController {
                     docenteLogado.setNif(novoNif);
                     view.mostrarMensagem("NIF atualizado!");
                     break;
-                case 3: // Morada
+                case 3:
                     docenteLogado.setMorada(view.pedirInputString("Introduza a nova Morada"));
                     view.mostrarMensagem("Morada atualizada!");
                     break;
-                case 4: // Password
+                case 4:
                     String antiga = view.pedirInputString("Password Atual");
                     if (antiga.equals(docenteLogado.getPassword())) {
                         String nova = view.pedirInputString("Nova Password");

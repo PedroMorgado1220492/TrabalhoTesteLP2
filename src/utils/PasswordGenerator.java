@@ -2,6 +2,20 @@ package utils;
 
 public class PasswordGenerator {
 
+    // ---------- CONSTRUTOR ----------
+    /**
+     * Construtor privado para evitar instanciação.
+     * Esta é uma classe utilitária estática.
+     */
+    private PasswordGenerator() {}
+
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Gera uma palavra-passe aleatória de 8 caracteres alfanuméricos.
+     * Utilizada no primeiro registo de estudantes e docentes.
+     * * @return A palavra-passe gerada.
+     */
     public static String generatePassword() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder password = new StringBuilder();

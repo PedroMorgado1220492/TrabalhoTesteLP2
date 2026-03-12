@@ -1,21 +1,19 @@
-// Ficheiro: model/Avaliacao.java
 package model;
 
 public class Avaliacao {
+
+    // ---------- ATRIBUTOS ----------
     private Estudante estudante;
     private UnidadeCurricular unidadeCurricular;
     private int anoAvaliacao;
-
-    // Array fixo para no máximo 3 avaliações
     private double[] resultadosAvaliacoes;
     private int totalAvaliacoesLancadas;
 
+    // ---------- CONSTRUTOR ----------
     public Avaliacao(Estudante estudante, UnidadeCurricular unidadeCurricular, int anoAvaliacao) {
         this.estudante = estudante;
         this.unidadeCurricular = unidadeCurricular;
         this.anoAvaliacao = anoAvaliacao;
-
-        // Regra de negócio: máximo 3 avaliações
         this.resultadosAvaliacoes = new double[3];
         this.totalAvaliacoesLancadas = 0;
     }
@@ -23,22 +21,32 @@ public class Avaliacao {
     // ---------- GETTERS ----------
     public Estudante getEstudante() { return estudante; }
     public UnidadeCurricular getUnidadeCurricular() { return unidadeCurricular; }
+    public UnidadeCurricular getUc() { return unidadeCurricular; } // Mantido para retrocompatibilidade
     public int getAnoAvaliacao() { return anoAvaliacao; }
     public double[] getResultadosAvaliacoes() { return resultadosAvaliacoes; }
     public int getTotalAvaliacoesLancadas() { return totalAvaliacoesLancadas; }
-    public UnidadeCurricular getUc() {return unidadeCurricular;
-    }
-    // ---------- MÉTODOS ÚTEIS ----------
+
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Adiciona um novo resultado (nota) ao array de avaliações do aluno nesta UC.
+     * Permite um máximo de 3 notas por avaliação.
+     * * @param nota Valor da avaliação a registar.
+     * @return true se a nota foi adicionada com sucesso, false se o limite de notas foi atingido.
+     */
     public boolean adicionarResultado(double nota) {
         if (totalAvaliacoesLancadas < resultadosAvaliacoes.length) {
             resultadosAvaliacoes[totalAvaliacoesLancadas] = nota;
             totalAvaliacoesLancadas++;
-            return true; // Sucesso ao lançar nota
+            return true;
         }
-        return false; // Já lançou as 3 avaliações
+        return false;
     }
 
-    // Calcula a média usando apenas as notas que já foram lançadas
+    /**
+     * Calcula a média aritmética das notas que já foram lançadas nesta avaliação.
+     * * @return O valor da média ponderada, ou 0.0 se não existirem notas.
+     */
     public double calcularMedia() {
         if (totalAvaliacoesLancadas == 0) {
             return 0.0;

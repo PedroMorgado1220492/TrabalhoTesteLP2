@@ -1,23 +1,23 @@
-// Ficheiro: model/UnidadeCurricular.java
 package model;
 
 public class UnidadeCurricular {
+
+    // ---------- ATRIBUTOS ----------
     private String sigla;
     private String nome;
     private int anoCurricular;
-    private Docente docenteResponsavel; // Apenas um docente é responsável
+    private Docente docenteResponsavel;
 
-    // Uma unidade curricular pode estar registada em vários cursos
     private Curso[] cursos;
     private int totalCursos;
 
+    // ---------- CONSTRUTOR ----------
     public UnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel) {
         this.sigla = sigla;
         this.nome = nome;
         this.anoCurricular = anoCurricular;
         this.docenteResponsavel = docenteResponsavel;
 
-        // Vamos assumir que uma UC pode estar em até 10 cursos diferentes
         this.cursos = new Curso[10];
         this.totalCursos = 0;
     }
@@ -36,13 +36,19 @@ public class UnidadeCurricular {
     public void setAnoCurricular(int anoCurricular) { this.anoCurricular = anoCurricular; }
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
 
-    // ---------- MÉTODOS ÚTEIS ----------
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Regista esta Unidade Curricular como pertencente a um dado Curso.
+     * * @param curso O Curso ao qual a UC passa a estar associada.
+     * @return true se a associação for bem sucedida, false se o limite de cursos for atingido.
+     */
     public boolean adicionarCurso(Curso curso) {
         if (totalCursos < cursos.length) {
             cursos[totalCursos] = curso;
             totalCursos++;
             return true;
         }
-        return false; // Limite de cursos atingido
+        return false;
     }
 }

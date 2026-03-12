@@ -1,49 +1,81 @@
-// Ficheiro: model/RepositorioDados.java
 package model;
 
 public class RepositorioDados {
-    // Arrays fixos para guardar os dados em memória
+
+    // ---------- ATRIBUTOS ----------
+    private int anoAtual;
+
     private Estudante[] estudantes;
     private int totalEstudantes;
 
     private Gestor[] gestores;
     private int totalGestores;
 
-    private Docente[] docentes = new Docente[100];
-    private int totalDocentes = 0;
+    private Docente[] docentes;
+    private int totalDocentes;
 
-    private Departamento[] departamentos = new Departamento[20]; // Máximo 20 departamentos
-    private int totalDepartamentos = 0;
+    private Departamento[] departamentos;
+    private int totalDepartamentos;
 
-    private Curso[] cursos = new Curso[50]; // Máximo 50 cursos
-    private int totalCursos = 0;
+    private Curso[] cursos;
+    private int totalCursos;
 
-    private UnidadeCurricular[] ucs = new UnidadeCurricular[150]; // Limite genérico para o sistema
-    private int totalUcs = 0;
+    private UnidadeCurricular[] ucs;
+    private int totalUcs;
 
-    private int anoAtual;
-
+    // ---------- CONSTRUTOR ----------
     public RepositorioDados() {
-        // Inicializamos os arrays com um tamanho máximo razoável
+        this.anoAtual = 2026;
+
         this.estudantes = new Estudante[1000];
         this.totalEstudantes = 0;
 
         this.gestores = new Gestor[10];
         this.totalGestores = 0;
 
-        this.anoAtual = 2026; // O sistema arranca em 2026 [cite: 4]
+        this.docentes = new Docente[100];
+        this.totalDocentes = 0;
 
+        this.departamentos = new Departamento[20];
+        this.totalDepartamentos = 0;
 
+        this.cursos = new Curso[50];
+        this.totalCursos = 0;
+
+        this.ucs = new UnidadeCurricular[150];
+        this.totalUcs = 0;
     }
 
-    // Métodos para adicionar dados aos arrays
+    // ---------- GETTERS ----------
+    public int getAnoAtual() { return anoAtual; }
+
+    public Estudante[] getEstudantes() { return estudantes; }
+    public int getTotalEstudantes() { return totalEstudantes; }
+
+    public Gestor[] getGestores() { return gestores; }
+    public int getTotalGestores() { return totalGestores; }
+
+    public Docente[] getDocentes() { return docentes; }
+    public int getTotalDocentes() { return totalDocentes; }
+
+    public Departamento[] getDepartamentos() { return departamentos; }
+    public int getTotalDepartamentos() { return totalDepartamentos; }
+
+    public Curso[] getCursos() { return cursos; }
+    public int getTotalCursos() { return totalCursos; }
+
+    public UnidadeCurricular[] getUcs() { return ucs; }
+    public int getTotalUcs() { return totalUcs; }
+
+    // ---------- MÉTODOS DE ADIÇÃO (CRUD BASE) ----------
+
     public boolean adicionarEstudante(Estudante estudante) {
         if (totalEstudantes < estudantes.length) {
             estudantes[totalEstudantes] = estudante;
             totalEstudantes++;
             return true;
         }
-        return false; // Array cheio
+        return false;
     }
 
     public boolean adicionarGestor(Gestor gestor) {
@@ -73,18 +105,6 @@ public class RepositorioDados {
         return false;
     }
 
-    public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
-        if (totalUcs < ucs.length) {
-            ucs[totalUcs] = uc;
-            totalUcs++;
-            return true;
-        }
-        return false;
-    }
-
-    public Departamento[] getDepartamentos() { return departamentos; }
-    public int getTotalDepartamentos() { return totalDepartamentos; }
-
     public boolean adicionarCurso(Curso curso) {
         if (totalCursos < cursos.length) {
             cursos[totalCursos] = curso;
@@ -94,76 +114,90 @@ public class RepositorioDados {
         return false;
     }
 
-    public int getAnoAtual() {
-        return anoAtual;
+    public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
+        if (totalUcs < ucs.length) {
+            ucs[totalUcs] = uc;
+            totalUcs++;
+            return true;
+        }
+        return false;
     }
 
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Executa o processo de transição de ano letivo.
+     * Incrementa o ano letivo global, verifica o aproveitamento de cada estudante para
+     * possível progressão de ano e arquiva as avaliações correntes no histórico permanente.
+     */
     public void avancarAno() {
-        this.anoAtual++; // Exemplo: Passa de 2026 para 2027
+        this.anoAtual++;
 
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante est = estudantes[i];
-
             if (est != null) {
-                // 1. Verifica a regra dos 60% e atualiza o ano de frequência (se aplicável)
                 if (est.temAproveitamentoParaProgredir()) {
                     if (est.getAnoFrequencia() < 3) {
                         est.setAnoFrequencia(est.getAnoFrequencia() + 1);
                     } else {
-                    // TERMINOU O CURSO!
-                    System.out.println(">> Parabéns! O aluno " + est.getNome() + " concluiu o curso!");
+                        System.out.println(">> Parabéns! O aluno " + est.getNome() + " concluiu o curso!");
+                    }
                 }
 
-                }
-
-                // 2. ARQUIVAR DADOS: Independentemente de ter passado ou reprovado,
-                // o ano letivo acabou. As notas vão para o histórico e o array atual é limpo.
+                // As notas vão para o histórico e o array atual é limpo.
                 est.arquivarAvaliacoes();
             }
         }
-
         System.out.println(">> Sucesso: O ano letivo avançou para " + this.anoAtual + "!");
     }
 
+    /**
+     * Verifica as credenciais fornecidas iterando por todas as coleções de utilizadores.
+     * * @param email Email de login.
+     * @param password Palavra-passe de login.
+     * @return O objeto Utilizador correspondente se a autenticação for bem-sucedida, null caso contrário.
+     */
     public Utilizador autenticar(String email, String password) {
-        // 1. Procurar nos Gestores
         for (int i = 0; i < totalGestores; i++) {
             if (gestores[i].getEmail().equals(email) && gestores[i].getPassword().equals(password)) {
                 return gestores[i];
             }
         }
 
-        // 2. Procurar nos Docentes
         for (int i = 0; i < totalDocentes; i++) {
             if (docentes[i].getEmail().equals(email) && docentes[i].getPassword().equals(password)) {
                 return docentes[i];
             }
         }
 
-        // 3. Procurar nos Estudantes
         for (int i = 0; i < totalEstudantes; i++) {
             if (estudantes[i].getEmail().equals(email) && estudantes[i].getPassword().equals(password)) {
                 return estudantes[i];
             }
         }
 
-        // Se chegou aqui e não encontrou ninguém, devolve null (login falhou)
         return null;
     }
 
-    // Getters para os contadores e arrays
-    public Estudante[] getEstudantes() { return estudantes; }
-    public int getTotalEstudantes() { return totalEstudantes; }
+    /**
+     * Gera um número mecanográfico baseado no ano de inscrição e num número sequencial.
+     * Formato: YYYYXXXX (ex: 20260001, 20260002).
+     * @param anoInscricao Ano letivo de ingresso do estudante.
+     * @return O número mecanográfico gerado.
+     */
+    public int gerarNumeroMecanografico(int anoInscricao) {
+        int contadorAno = 0;
 
-    public Docente[] getDocentes() { return docentes; }
-    public int getTotalDocentes() { return totalDocentes; }
+        // Percorre todos os estudantes para ver quantos se inscreveram neste ano específico
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].getAnoPrimeiraInscricao() == anoInscricao) {
+                contadorAno++;
+            }
+        }
 
-    public UnidadeCurricular[] getUcs() { return ucs; }
-    public int getTotalUcs() { return totalUcs; }
+        int numeroSequencial = contadorAno + 1; // O próximo aluno a entrar
 
-    public Gestor[] getGestores() {return gestores;}
-    public int getTotalGestores() {return totalGestores;}
-
-    public Curso[] getCursos() { return cursos; }
-    public int getTotalCursos() { return totalCursos; }
+        // Exemplo: 2026 * 10000 = 20260000. 20260000 + 1 = 20260001
+        return (anoInscricao * 10000) + numeroSequencial;
+    }
 }

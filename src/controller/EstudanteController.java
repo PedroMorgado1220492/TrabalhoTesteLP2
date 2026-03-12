@@ -6,16 +6,25 @@ import model.Estudante;
 import model.RepositorioDados;
 
 public class EstudanteController {
+
+    // ---------- ATRIBUTOS ----------
     private EstudanteView view;
     private Estudante estudanteLogado;
     private RepositorioDados repositorio;
 
+    // ---------- CONSTRUTOR ----------
     public EstudanteController(Estudante estudanteLogado, RepositorioDados repositorio) {
         this.view = new EstudanteView();
         this.estudanteLogado = estudanteLogado;
         this.repositorio = repositorio;
     }
 
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Inicia o ciclo principal do Estudante autenticado, dando acesso
+     * à consulta do percurso, histórico e atualização de dados.
+     */
     public void iniciarMenu() {
         boolean aExecutar = true;
         while (aExecutar) {
@@ -43,8 +52,9 @@ public class EstudanteController {
         }
     }
 
-    // --- MÉTODOS DE AÇÃO (FORA DO SWITCH E DO INICIARMENU) ---
-
+    /**
+     * Mostra em formato de tabela as avaliações e as respetivas notas do ano letivo corrente.
+     */
     private void verPercursoAcademico() {
         view.mostrarMensagem("\n--- PERCURSO ACADÉMICO ---");
 
@@ -55,7 +65,6 @@ public class EstudanteController {
 
         Avaliacao[] notas = estudanteLogado.getAvaliacoes();
 
-        // Cabeçalho da tabela
         view.mostrarMensagem(String.format("%-15s | %-15s | %-10s", "UC", "MÉDIA", "ESTADO"));
         view.mostrarMensagem("---------------------------------------------------------");
 
@@ -73,6 +82,10 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Mostra em formato de tabela o histórico de todas as UCs concluídas
+     * (ou reprovadas) em anos letivos anteriores.
+     */
     private void verHistoricoCompleto() {
         view.mostrarMensagem("\n--- HISTÓRICO COMPLETO DE AVALIAÇÕES (ANOS ANTERIORES) ---");
 
@@ -83,7 +96,6 @@ public class EstudanteController {
 
         Avaliacao[] historico = estudanteLogado.getHistoricoAvaliacoes();
 
-        // Cabeçalho da tabela (Adicionámos o ANO)
         view.mostrarMensagem(String.format("%-15s | %-10s | %-15s | %-10s", "UC", "ANO LETIVO", "MÉDIA", "ESTADO"));
         view.mostrarMensagem("-----------------------------------------------------------------");
 
@@ -91,7 +103,6 @@ public class EstudanteController {
             Avaliacao av = historico[i];
             if (av != null) {
                 double media = av.calcularMedia();
-                // No histórico não há "Em frequência", ou passou ou chumbou.
                 String estado = (media >= 9.5) ? "APROVADO" : "REPROVADO";
 
                 view.mostrarMensagem(String.format("%-15s | %-10d | %-15.2f | %-10s",
@@ -103,6 +114,9 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Apresenta no ecrã todos os dados pessoais e académicos do estudante.
+     */
     private void verDadosEstudante() {
         view.mostrarMensagem("\n--- FICHA DE ESTUDANTE ---");
         view.mostrarMensagem("Nº Mecanográfico: " + estudanteLogado.getNumeroMecanografico());
@@ -120,6 +134,9 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Permite a alteração iterativa dos dados pessoais do estudante autenticado.
+     */
     private void atualizarDadosEstudante() {
         boolean aExecutar = true;
         while (aExecutar) {

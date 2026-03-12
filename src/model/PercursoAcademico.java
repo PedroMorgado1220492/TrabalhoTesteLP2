@@ -1,17 +1,17 @@
-// Ficheiro: model/PercursoAcademico.java
 package model;
 
 public class PercursoAcademico {
+
+    // ---------- ATRIBUTOS ----------
     private Estudante estudante;
 
-    // Assumindo um curso de 3 anos com 5 UCs por ano = 15 UCs no máximo
     private UnidadeCurricular[] ucsInscrito;
     private int totalUcsInscrito;
 
-    // Guardamos um objeto de Avaliacao para cada UC
     private Avaliacao[] avaliacoes;
     private int totalAvaliacoes;
 
+    // ---------- CONSTRUTOR ----------
     public PercursoAcademico(Estudante estudante) {
         this.estudante = estudante;
 
@@ -29,16 +29,27 @@ public class PercursoAcademico {
     public Avaliacao[] getAvaliacoes() { return avaliacoes; }
     public int getTotalAvaliacoes() { return totalAvaliacoes; }
 
-    // ---------- MÉTODOS ÚTEIS ----------
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Regista a inscrição do estudante numa nova Unidade Curricular.
+     * * @param uc Unidade Curricular onde pretende inscrever-se.
+     * @return true se a inscrição for bem sucedida, false se tiver atingido o limite do curso.
+     */
     public boolean inscreverEmUc(UnidadeCurricular uc) {
         if (totalUcsInscrito < ucsInscrito.length) {
             ucsInscrito[totalUcsInscrito] = uc;
             totalUcsInscrito++;
             return true;
         }
-        return false; // Já atingiu o limite de UCs do curso
+        return false;
     }
 
+    /**
+     * Associa um registo de avaliação de uma UC ao percurso do estudante.
+     * * @param avaliacao Objeto contendo as notas da UC.
+     * @return true se registada com sucesso, false se o limite de avaliações foi atingido.
+     */
     public boolean registarAvaliacao(Avaliacao avaliacao) {
         if (totalAvaliacoes < avaliacoes.length) {
             avaliacoes[totalAvaliacoes] = avaliacao;

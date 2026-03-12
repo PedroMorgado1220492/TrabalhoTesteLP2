@@ -7,6 +7,21 @@ import java.io.IOException;
 
 public class ImportadorCSV {
 
+    // ---------- CONSTRUTOR ----------
+    /**
+     * Construtor privado para evitar instanciação.
+     * Esta é uma classe utilitária estática.
+     */
+    private ImportadorCSV() {}
+
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    /**
+     * Lê e reconstrói as entidades a partir de um ficheiro CSV estruturado.
+     * O ficheiro deve obedecer à sintaxe definida pelo ExportadorCSV.
+     * * @param caminho Caminho ou nome do ficheiro (ex: "dados.csv").
+     * @param repositorio Repositorio central onde os dados instanciados serão guardados.
+     */
     public static void importarDados(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha;
@@ -24,17 +39,14 @@ public class ImportadorCSV {
                         break;
 
                     case "DEPARTAMENTO":
-                        // DEPARTAMENTO;sigla;nome
                         repositorio.adicionarDepartamento(new Departamento(dados[1], dados[2]));
                         break;
 
                     case "DOCENTE":
-                        // DOCENTE;sigla;email;pass;nome;nif;morada;dataNasc
                         repositorio.adicionarDocente(new Docente(dados[1], dados[2], dados[3], dados[4], dados[5], dados[6], dados[7]));
                         break;
 
                     case "CURSO":
-                        // CURSO;sigla;nome;siglaDep
                         Departamento dep = procurarDepartamento(dados[3], repositorio);
                         if (dep != null) {
                             repositorio.adicionarCurso(new Curso(dados[1], dados[2], dep));
@@ -42,7 +54,6 @@ public class ImportadorCSV {
                         break;
 
                     case "UC":
-                        // UC;sigla;nome;ano;siglaDocente;siglaCurso
                         Docente doc = procurarDocente(dados[4], repositorio);
                         Curso cursoUC = procurarCurso(dados[5], repositorio);
                         if (doc != null && cursoUC != null) {
@@ -54,9 +65,7 @@ public class ImportadorCSV {
                         break;
 
                     case "ESTUDANTE":
-                        // ESTUDANTE;numMec;email;pass;nome;nif;morada;dataNasc;anoInsc;siglaCurso
                         Curso cursoEst = (dados.length > 9) ? procurarCurso(dados[9], repositorio) : null;
-
                         Estudante est = new Estudante(
                                 Integer.parseInt(dados[1]), dados[2], dados[3], dados[4],
                                 dados[5], dados[6], dados[7], cursoEst, Integer.parseInt(dados[8])
@@ -65,29 +74,23 @@ public class ImportadorCSV {
                         break;
 
                     case "NOTA":
-                        // Formato: NOTA;numMecanografico;siglaUC;nota1;nota2;nota3
                         int numMec = Integer.parseInt(dados[1]);
                         String siglaUC = dados[2];
 
-                        // 1. Procurar o estudante no repositório
                         Estudante estNota = procurarEstudante(numMec, repositorio);
-                        // 2. Procurar a UC no repositório
                         UnidadeCurricular ucNota = procurarUC(siglaUC, repositorio);
 
                         if (estNota != null && ucNota != null) {
-                            // Criamos ou obtemos a avaliação para este aluno e UC
-                            // Passamos o ano atual do repositório ou um valor padrão
                             for (int i = 3; i <= 5; i++) {
                                 double valorNota = Double.parseDouble(dados[i]);
-                                // Só adicionamos se a nota for maior que 0 (ou seja, se foi lançada)
                                 if (valorNota > 0) {
                                     estNota.adicionarNota(ucNota, valorNota, repositorio.getAnoAtual());
                                 }
                             }
                         }
                         break;
+
                     case "HISTORICO":
-                        // Formato: HISTORICO;numMecanografico;siglaUC;anoAvaliacao;nota1;nota2;nota3
                         int numMecHist = Integer.parseInt(dados[1]);
                         String siglaUCHist = dados[2];
                         int anoAvaliacao = Integer.parseInt(dados[3]);
@@ -96,7 +99,6 @@ public class ImportadorCSV {
                         UnidadeCurricular ucHist = procurarUC(siglaUCHist, repositorio);
 
                         if (estHist != null && ucHist != null) {
-                            // Cria a avaliação com o ano passado e injeta as notas
                             Avaliacao avaliacaoAntiga = new Avaliacao(estHist, ucHist, anoAvaliacao);
                             for (int i = 4; i <= 6; i++) {
                                 double valorNota = Double.parseDouble(dados[i]);
@@ -104,8 +106,6 @@ public class ImportadorCSV {
                                     avaliacaoAntiga.adicionarResultado(valorNota);
                                 }
                             }
-
-                            // Adiciona diretamente ao array de histórico (precisas de criar este método no Estudante.java)
                             estHist.adicionarAoHistorico(avaliacaoAntiga);
                         }
                         break;
@@ -116,7 +116,8 @@ public class ImportadorCSV {
         }
     }
 
-    // Métodos Auxiliares de Procura (Essenciais para ligar os dados)
+    // ---------- MÉTODOS AUXILIARES PRIVADOS ----------
+
     private static Departamento procurarDepartamento(String sigla, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalDepartamentos(); i++) {
             if (repo.getDepartamentos()[i].getSigla().equalsIgnoreCase(sigla)) {
