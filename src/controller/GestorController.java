@@ -562,12 +562,13 @@ public class GestorController {
     private void gerirRelatorios() {
         boolean aExecutar = true;
         while (aExecutar) {
-            String escolha = view.pedirInputString("\n--- RELATÓRIOS E LISTAGENS ---\n" +
+            String escolha = view.pedirInputString("\n--- LISTAGENS E ESTATÍSTICAS ---\n" +
                     "1 - Alunos agrupados por Curso\n" +
                     "2 - Alunos agrupados por UC\n" +
                     "3 - UCs agrupadas por Curso\n" +
                     "4 - Cursos agrupados por Departamento\n" +
-                    "5 - Recuar\nOpção");
+                    "5 - Ver Estatísticas Globais (Novo)\n" +
+                    "6 - Recuar\nOpção");
 
             switch (escolha) {
                 case "1": // Alunos por Curso
@@ -640,7 +641,24 @@ public class GestorController {
                     }
                     break;
 
-                case "5":
+                case "5": // Estatísticas
+                    view.mostrarMensagem("\n--- ESTATÍSTICAS GLOBAIS DO ISSMF ---");
+
+                    double mediaGlobal = utils.Estatisticas.calcularMediaGlobalInstituicao(repositorio);
+                    view.mostrarMensagem("Média Global da Instituição: " + mediaGlobal + " valores.");
+
+                    String melhorAluno = utils.Estatisticas.identificarMelhorAluno(repositorio);
+                    view.mostrarMensagem("Melhor Aluno(a): " + melhorAluno);
+
+                    Curso cursoTop = utils.Estatisticas.obterCursoComMaisAlunos(repositorio);
+                    if (cursoTop != null) {
+                        view.mostrarMensagem("Curso mais popular: " + cursoTop.getNome());
+                    } else {
+                        view.mostrarMensagem("Curso mais popular: Dados insuficientes.");
+                    }
+                    break;
+
+                case "6":
                     aExecutar = false;
                     break;
                 default:
