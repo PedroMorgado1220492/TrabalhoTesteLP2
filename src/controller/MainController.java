@@ -114,6 +114,10 @@ public class MainController {
                     ExportadorCSV.exportarDados("dados.csv", repositorio);
                     aExecutar = false;
                     break;
+                case 6:
+                    view.mostrarMensagem("A encerrar o sistema sem guardar dados...");
+                    aExecutar = false;
+                    break;
                 default:
                     view.mostrarMensagem("Opção inválida.");
             }
