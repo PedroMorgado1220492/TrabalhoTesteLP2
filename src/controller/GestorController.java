@@ -8,8 +8,6 @@ import model.Curso;
 import model.UnidadeCurricular;
 import model.Docente;
 import model.Estudante;
-import utils.EmailGenerator;
-import utils.PasswordGenerator;
 import utils.Validador;
 
 public class GestorController {
@@ -97,7 +95,8 @@ public class GestorController {
                     }
                     String nome = view.pedirInputString("Nome do Departamento");
 
-                    Departamento novoDep = new Departamento(sigla, nome);
+                    // Delegação da criação ao Modelo (Gestor)
+                    Departamento novoDep = gestorAtivo.criarDepartamento(sigla, nome);
                     if (repositorio.adicionarDepartamento(novoDep)) {
                         view.mostrarMensagem("Departamento '" + nome + "' guardado com sucesso!");
                     } else {
@@ -181,7 +180,8 @@ public class GestorController {
                         break;
                     }
 
-                    Curso novoCurso = new Curso(siglaCurso, nomeCurso, deps[escolhaIndex]);
+                    // Delegação da criação ao Modelo (Gestor)
+                    Curso novoCurso = gestorAtivo.criarCurso(siglaCurso, nomeCurso, deps[escolhaIndex]);
                     if (repositorio.adicionarCurso(novoCurso)) {
                         view.mostrarMensagem("Curso '" + nomeCurso + "' adicionado com sucesso!");
                     } else {
@@ -278,7 +278,8 @@ public class GestorController {
                     }
                     Curso cursoAssociado = cursos[escolhaCurso];
 
-                    UnidadeCurricular novaUc = new UnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
+                    // Delegação da criação ao Modelo (Gestor)
+                    UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
                     if (repositorio.adicionarUnidadeCurricular(novaUc)) {
                         cursoAssociado.adicionarUnidadeCurricular(novaUc);
                         novaUc.adicionarCurso(cursoAssociado);
@@ -384,10 +385,10 @@ public class GestorController {
 
                     int anoInscricao = repositorio.getAnoAtual();
                     int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
-                    String passwordGerada = PasswordGenerator.generatePassword();
 
+                    // Delegação da criação ao Modelo (Gestor). O Gestor gera a password lá dentro.
                     Estudante novoEstudante = gestorAtivo.criarEstudante(
-                            numeroMecanografico, passwordGerada, nome, nif, morada, dataNascimento, cursos[escolhaCurso], anoInscricao
+                            numeroMecanografico, nome, nif, morada, dataNascimento, cursos[escolhaCurso], anoInscricao
                     );
 
                     if (repositorio.adicionarEstudante(novoEstudante)) {
@@ -493,13 +494,12 @@ public class GestorController {
                         view.mostrarMensagem("Erro: A data deve respeitar o formato DD-MM-AAAA.");
                     }
 
-                    String emailGerado = EmailGenerator.gerarEmailDocente(sigla);
-                    String passwordGerada = PasswordGenerator.generatePassword();
-
-                    Docente novoDocente = new Docente(sigla, emailGerado, passwordGerada, nome, nif, morada, dataNascimento);
+                    // Delegação da criação ao Modelo (Gestor). O email e password são gerados lá dentro.
+                    Docente novoDocente = gestorAtivo.criarDocente(sigla, nome, nif, morada, dataNascimento);
 
                     if (repositorio.adicionarDocente(novoDocente)) {
-                        view.mostrarMensagem("Docente '" + nome + "' registado com sucesso! Email: " + emailGerado);
+                        // Extraímos o email diretamente do objeto recém-criado para mostrar a mensagem
+                        view.mostrarMensagem("Docente '" + nome + "' registado com sucesso! Email: " + novoDocente.getEmail());
                     } else {
                         view.mostrarMensagem("Erro: Limite de docentes atingido.");
                     }

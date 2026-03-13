@@ -1,6 +1,7 @@
 package model;
 
 import utils.EmailGenerator;
+import utils.PasswordGenerator;
 
 public class Gestor extends Utilizador {
 
@@ -9,23 +10,44 @@ public class Gestor extends Utilizador {
         super(email, password, nome, nif, morada, dataNascimento);
     }
 
-    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO (FÁBRICA DE OBJETOS) ----------
 
     /**
-     * Lógica de negócio: O Gestor tem o privilégio de instanciar um novo Estudante
-     * no sistema com os dados recolhidos, gerando automaticamente o email institucional.
-     * * @param numeroMecanografico Identificador único gerado pelo sistema.
-     * @param password Password inicial gerada pelo sistema.
-     * @param nome Nome completo do estudante.
-     * @param nif NIF do estudante.
-     * @param morada Morada do estudante.
-     * @param dataNascimento Data de nascimento no formato DD-MM-AAAA.
-     * @param curso Objeto do Curso ao qual será inscrito.
-     * @param anoPrimeiraInscricao Ano letivo de ingresso.
-     * @return Uma nova instância da classe Estudante.
+     * Instancia um novo Estudante gerando automaticamente as suas credenciais.
      */
-    public Estudante criarEstudante(int numeroMecanografico, String password, String nome, String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao) {
+    public Estudante criarEstudante(int numeroMecanografico, String nome, String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao) {
         String emailGerado = EmailGenerator.gerarEmailEstudante(numeroMecanografico);
-        return new Estudante(numeroMecanografico, emailGerado, password, nome, nif, morada, dataNascimento, curso, anoPrimeiraInscricao);
+        String passwordGerada = PasswordGenerator.generatePassword();
+        return new Estudante(numeroMecanografico, emailGerado, passwordGerada, nome, nif, morada, dataNascimento, curso, anoPrimeiraInscricao);
+    }
+
+    /**
+     * Instancia um novo Docente gerando automaticamente o email com base na sigla e a password.
+     */
+    public Docente criarDocente(String sigla, String nome, String nif, String morada, String dataNascimento) {
+        String emailGerado = EmailGenerator.gerarEmailDocente(sigla);
+        String passwordGerada = PasswordGenerator.generatePassword();
+        return new Docente(sigla, emailGerado, passwordGerada, nome, nif, morada, dataNascimento);
+    }
+
+    /**
+     * Instancia um novo Departamento.
+     */
+    public Departamento criarDepartamento(String sigla, String nome) {
+        return new Departamento(sigla, nome);
+    }
+
+    /**
+     * Instancia um novo Curso associando-o desde logo a um Departamento.
+     */
+    public Curso criarCurso(String sigla, String nome, Departamento departamento) {
+        return new Curso(sigla, nome, departamento);
+    }
+
+    /**
+     * Instancia uma nova Unidade Curricular associando-lhe o respetivo Docente Responsável.
+     */
+    public UnidadeCurricular criarUnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel) {
+        return new UnidadeCurricular(sigla, nome, anoCurricular, docenteResponsavel);
     }
 }
