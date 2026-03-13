@@ -51,4 +51,22 @@ public class Curso {
         }
         return false;
     }
+
+    /**
+     * Verifica se o curso ainda tem vagas para UCs num determinado ano curricular.
+     * Regra de negócio: Máximo de 5 UCs por ano.
+     * @param anoCurricular O ano a verificar (1, 2 ou 3).
+     * @return true se ainda tiver menos de 5 UCs, false se o limite foi atingido.
+     */
+    public boolean podeAdicionarUcNoAno(int anoCurricular) {
+        int contadorUcsNesteAno = 0;
+
+        for (int i = 0; i < totalUCs; i++) {
+            if (unidadesCurriculares[i].getAnoCurricular() == anoCurricular) {
+                contadorUcsNesteAno++;
+            }
+        }
+
+        return contadorUcsNesteAno < 5;
+    }
 }

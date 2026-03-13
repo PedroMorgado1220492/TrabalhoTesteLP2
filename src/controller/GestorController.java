@@ -200,12 +200,29 @@ public class GestorController {
                     }
 
                     if (cursoEditar != null) {
-                        String novoNomeCurso = view.pedirInputString("Novo Nome (deixe em branco para manter '" + cursoEditar.getNome() + "')");
-                        if (!novoNomeCurso.trim().isEmpty()) {
-                            cursoEditar.setNome(novoNomeCurso);
-                            view.mostrarMensagem("Curso atualizado com sucesso!");
+                        // Verificar se tem UCs, Professores ou Estudantes alocados
+                        boolean bloqueado = false;
+                        if (cursoEditar.getTotalUCs() > 0) {
+                            bloqueado = true;
+                        }
+                        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+                            Estudante e = repositorio.getEstudantes()[i];
+                            if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(cursoEditar.getSigla())) {
+                                bloqueado = true;
+                                break;
+                            }
+                        }
+
+                        if (bloqueado) {
+                            view.mostrarMensagem("Erro: O curso já tem estudantes ou professores alocados. O sistema proíbe a sua alteração!");
                         } else {
-                            view.mostrarMensagem("Nenhuma alteração efetuada.");
+                            String novoNomeCurso = view.pedirInputString("Novo Nome (deixe em branco para manter '" + cursoEditar.getNome() + "')");
+                            if (!novoNomeCurso.trim().isEmpty()) {
+                                cursoEditar.setNome(novoNomeCurso);
+                                view.mostrarMensagem("Curso atualizado com sucesso!");
+                            } else {
+                                view.mostrarMensagem("Nenhuma alteração efetuada.");
+                            }
                         }
                     } else {
                         view.mostrarMensagem("Erro: Curso não encontrado.");
@@ -278,6 +295,12 @@ public class GestorController {
                     }
                     Curso cursoAssociado = cursos[escolhaCurso];
 
+                    // Limita a quantidade de UCs a 5 UCs por ano
+                    if (!cursoAssociado.podeAdicionarUcNoAno(anoCurricular)) {
+                        view.mostrarMensagem("Erro: O curso " + cursoAssociado.getSigla() + " já atingiu o máximo de 5 UCs no " + anoCurricular + "º ano!");
+                        break; // Aborta a criação e volta ao menu
+                    }
+
                     // Delegação da criação ao Modelo (Gestor)
                     UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
                     if (repositorio.adicionarUnidadeCurricular(novaUc)) {
@@ -288,7 +311,57 @@ public class GestorController {
                         view.mostrarMensagem("UC '" + nomeUc + "' criada com sucesso!");
                     }
                     break;
-                case 2: // --- ALTERAR UC ---
+
+                case 2: // --- ASSOCIAR UC EXISTENTE A OUTRO CURSO ---
+                    String siglaPartilha = view.pedirInputString("Introduza a Sigla da UC existente que quer partilhar");
+                    UnidadeCurricular ucPartilhar = null;
+                    for (int i = 0; i < repositorio.getTotalUcs(); i++) {
+                        if (repositorio.getUcs()[i].getSigla().equalsIgnoreCase(siglaPartilha)) {
+                            ucPartilhar = repositorio.getUcs()[i];
+                            break;
+                        }
+                    }
+
+                    if (ucPartilhar == null) {
+                        view.mostrarMensagem("Erro: UC não encontrada.");
+                        break;
+                    }
+
+                    view.mostrarMensagem("\n--- Escolha o novo Curso para associar à UC ---");
+                    Curso[] cursosPartilha = repositorio.getCursos();
+                    for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+                        view.mostrarMensagem((i + 1) + " - " + cursosPartilha[i].getNome() + " (" + cursosPartilha[i].getSigla() + ")");
+                    }
+                    int indexCurso = Integer.parseInt(view.pedirInputString("Número do Curso")) - 1;
+                    if (indexCurso < 0 || indexCurso >= repositorio.getTotalCursos()) {
+                        view.mostrarMensagem("Curso inválido."); break;
+                    }
+                    Curso cursoAlvo = cursosPartilha[indexCurso];
+
+                    // Verifica se UC já existe no Curso
+                    boolean jaExiste = false;
+                    for(int i=0; i < cursoAlvo.getTotalUCs(); i++) {
+                        if (cursoAlvo.getUnidadesCurriculares()[i].getSigla().equalsIgnoreCase(ucPartilhar.getSigla())) {
+                            jaExiste = true; break;
+                        }
+                    }
+                    if (jaExiste) {
+                        view.mostrarMensagem("Erro: Esta UC já pertence a este Curso.");
+                        break;
+                    }
+
+                    // Verifica regra das 5 UCs
+                    if (!cursoAlvo.podeAdicionarUcNoAno(ucPartilhar.getAnoCurricular())) {
+                        view.mostrarMensagem("Erro: O Curso " + cursoAlvo.getSigla() + " já atingiu o máximo de 5 UCs no " + ucPartilhar.getAnoCurricular() + "º ano!");
+                        break;
+                    }
+
+                    cursoAlvo.adicionarUnidadeCurricular(ucPartilhar);
+                    ucPartilhar.adicionarCurso(cursoAlvo);
+                    view.mostrarMensagem("Sucesso! A Unidade Curricular de " + ucPartilhar.getNome() + " foi partilhada com " + cursoAlvo.getSigla() + ".");
+                    break;
+
+                case 3: // --- ALTERAR UC ---
                     String siglaBusca = view.pedirInputString("Introduza a Sigla da UC a alterar");
                     UnidadeCurricular ucEditar = null;
 
@@ -318,14 +391,14 @@ public class GestorController {
                         view.mostrarMensagem("Erro: UC não encontrada.");
                     }
                     break;
-                case 3:
+                case 4:
                     view.mostrarMensagem("\n--- LISTA DE UCs ---");
                     UnidadeCurricular[] ucs = repositorio.getUcs();
                     for (int i = 0; i < repositorio.getTotalUcs(); i++) {
                         view.mostrarMensagem("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() + " | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 5: aExecutar = false; break;
             }
         }
     }
@@ -459,7 +532,9 @@ public class GestorController {
                     String sigla = "";
                     while (true) {
                         sigla = view.pedirInputString("Sigla do Docente (3 letras, ex: aem)");
-                        if (repositorio.existeSiglaDocente(sigla)) {
+                        if (sigla.length() != 3 || !sigla.matches("^[A-Z]{3}$")) {
+                            view.mostrarMensagem("Erro: A sigla tem de ser constituída exatamente por 3 letras do alfabeto.");
+                        } else if (repositorio.existeSiglaDocente(sigla)) {
                             view.mostrarMensagem("Erro: Já existe um Docente com a sigla " + sigla + ".");
                         } else {
                             break;

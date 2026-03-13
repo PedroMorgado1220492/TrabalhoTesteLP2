@@ -78,10 +78,11 @@ public class GestorView {
      */
     public int mostrarMenuUCs() {
         System.out.println("\n--- GERIR UNIDADES CURRICULARES ---");
-        System.out.println("1 - Adicionar Unidade Curricular");
-        System.out.println("2 - Alterar Unidade Curricular");
-        System.out.println("3 - Listar Unidades Curriculares");
-        System.out.println("4 - Recuar");
+        System.out.println("1 - Criar Nova Unidade Curricular");
+        System.out.println("2 - Associar UC Existente a outro Curso (Partilhar)");
+        System.out.println("3 - Alterar Unidade Curricular");
+        System.out.println("4 - Listar Unidades Curriculares");
+        System.out.println("5 - Recuar");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
