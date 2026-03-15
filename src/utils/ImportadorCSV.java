@@ -19,7 +19,7 @@ public class ImportadorCSV {
     /**
      * Lê e reconstrói as entidades a partir de um ficheiro CSV estruturado.
      * O ficheiro deve obedecer à sintaxe definida pelo ExportadorCSV.
-     * * @param caminho Caminho ou nome do ficheiro (ex: "dados.csv").
+     * @param caminho Caminho ou nome do ficheiro (ex: "dados.csv").
      * @param repositorio Repositorio central onde os dados instanciados serão guardados.
      */
     public static void importarDados(String caminho, RepositorioDados repositorio) {
@@ -49,7 +49,11 @@ public class ImportadorCSV {
                     case "CURSO":
                         Departamento dep = procurarDepartamento(dados[3], repositorio);
                         if (dep != null) {
-                            repositorio.adicionarCurso(new Curso(dados[1], dados[2], dep));
+                            Curso novoCurso = new Curso(dados[1], dados[2], dep);
+                            if (repositorio.adicionarCurso(novoCurso)) {
+                                // CORREÇÃO: Avisar o departamento de que ele tem este curso!
+                                dep.adicionarCurso(novoCurso);
+                            }
                         }
                         break;
 
@@ -59,7 +63,11 @@ public class ImportadorCSV {
                         if (doc != null && cursoUC != null) {
                             UnidadeCurricular novaUc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
                             if (repositorio.adicionarUnidadeCurricular(novaUc)) {
+                                // CORREÇÃO: Restabelecer as amarrações em todas as direções!
                                 cursoUC.adicionarUnidadeCurricular(novaUc);
+                                novaUc.adicionarCurso(cursoUC);
+                                doc.adicionarUcResponsavel(novaUc);
+                                doc.adicionarUcLecionada(novaUc);
                             }
                         }
                         break;
@@ -120,7 +128,7 @@ public class ImportadorCSV {
 
     private static Departamento procurarDepartamento(String sigla, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalDepartamentos(); i++) {
-            if (repo.getDepartamentos()[i].getSigla().equalsIgnoreCase(sigla)) {
+            if (repo.getDepartamentos()[i] != null && repo.getDepartamentos()[i].getSigla().equalsIgnoreCase(sigla)) {
                 return repo.getDepartamentos()[i];
             }
         }
@@ -129,7 +137,7 @@ public class ImportadorCSV {
 
     private static Curso procurarCurso(String sigla, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalCursos(); i++) {
-            if (repo.getCursos()[i].getSigla().equalsIgnoreCase(sigla)) {
+            if (repo.getCursos()[i] != null && repo.getCursos()[i].getSigla().equalsIgnoreCase(sigla)) {
                 return repo.getCursos()[i];
             }
         }
@@ -138,7 +146,7 @@ public class ImportadorCSV {
 
     private static Docente procurarDocente(String sigla, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalDocentes(); i++) {
-            if (repo.getDocentes()[i].getSigla().equalsIgnoreCase(sigla)) {
+            if (repo.getDocentes()[i] != null && repo.getDocentes()[i].getSigla().equalsIgnoreCase(sigla)) {
                 return repo.getDocentes()[i];
             }
         }
@@ -147,7 +155,7 @@ public class ImportadorCSV {
 
     private static Estudante procurarEstudante(int numMec, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-            if (repo.getEstudantes()[i].getNumeroMecanografico() == numMec) {
+            if (repo.getEstudantes()[i] != null && repo.getEstudantes()[i].getNumeroMecanografico() == numMec) {
                 return repo.getEstudantes()[i];
             }
         }
@@ -156,7 +164,7 @@ public class ImportadorCSV {
 
     private static UnidadeCurricular procurarUC(String sigla, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalUcs(); i++) {
-            if (repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) {
+            if (repo.getUcs()[i] != null && repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) {
                 return repo.getUcs()[i];
             }
         }

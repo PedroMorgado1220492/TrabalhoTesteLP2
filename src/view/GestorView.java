@@ -110,6 +110,28 @@ public class GestorView {
     }
 
     /**
+     * Apresenta o submenu de visualização de Relatórios e Estatísticas.
+     * @return A opção numérica selecionada.
+     */
+
+    public int mostrarMenuRelatorios() {
+        System.out.println("\n--- RELATÓRIOS E ESTATÍSTICAS ---");
+        System.out.println("1 - Alunos agrupados por Curso");
+        System.out.println("2 - Alunos agrupados por UC");
+        System.out.println("3 - UCs agrupadas por Curso");
+        System.out.println("4 - Cursos agrupados por Departamento");
+        System.out.println("5 - Ver Estatísticas Globais da Faculdade");
+        System.out.println("6 - Recuar");
+        System.out.print("Opção: ");
+
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
      * Pede ao gestor que insira texto através da consola.
      * @param mensagem Texto de pedido de informação.
      * @return A string inserida.

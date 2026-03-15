@@ -23,7 +23,8 @@ public class DocenteView {
         System.out.println("1 - Ver Dados Pessoais");
         System.out.println("2 - Atualizar Dados");
         System.out.println("3 - Adicionar Avaliação a Aluno");
-        System.out.println("4 - Sair / Logout");
+        System.out.println("4 - Ver as Minhas Estatísticas"); // <--- NOVA OPÇÃO
+        System.out.println("5 - Sair / Logout");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());

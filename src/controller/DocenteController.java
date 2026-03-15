@@ -39,6 +39,9 @@ public class DocenteController {
                     gerirAvaliacoes();
                     break;
                 case 4:
+                    mostrarEstatisticasDocente();
+                    break;
+                case 5:
                     view.mostrarMensagem("A sair da conta de Docente...");
                     aExecutar = false;
                     break;
@@ -199,5 +202,23 @@ public class DocenteController {
                     view.mostrarMensagem("Opção inválida.");
             }
         }
+    }
+    /**
+     * Utiliza a classe utilitária de Estatísticas enviando como filtro
+     * o Docente logado, garantindo que ele só vê os seus próprios dados.
+     */
+    private void mostrarEstatisticasDocente() {
+        view.mostrarMensagem("\n--- AS MINHAS ESTATÍSTICAS ---");
+
+        if (docenteLogado.getTotalUcsLecionadas() == 0) {
+            view.mostrarMensagem("Ainda não tem Unidades Curriculares atribuídas para gerar estatísticas.");
+            return;
+        }
+
+        double mediaUcs = utils.Estatisticas.calcularMediaUCsDocente(docenteLogado, repositorio);
+        int totalAlunos = utils.Estatisticas.contarAlunosAvaliadosDoDocente(docenteLogado, repositorio);
+
+        view.mostrarMensagem("Média de notas nas suas UCs: " + mediaUcs + " valores.");
+        view.mostrarMensagem("Total de alunos avaliados por si: " + totalAlunos + " alunos.");
     }
 }

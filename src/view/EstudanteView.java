@@ -24,7 +24,7 @@ public class EstudanteView {
         System.out.println("2 - Atualizar Dados");
         System.out.println("3 - Ver Avaliações do Ano Atual");
         System.out.println("4 - Ver Histórico Completo");
-        System.out.println("5 - Sair");
+        System.out.println("5 - Recuar");
         System.out.print("Escolha uma opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());

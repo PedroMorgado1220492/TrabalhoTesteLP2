@@ -235,7 +235,7 @@ public class GestorController {
                     } else {
                         Curso[] cursos = repositorio.getCursos();
                         for (int i = 0; i < repositorio.getTotalCursos(); i++) {
-                            view.mostrarMensagem("- " + cursos[i].getSigla() + " (" + cursos[i].getDepartamento().getSigla() + ")");
+                            view.mostrarMensagem("- " + cursos[i].getSigla() + " - " + cursos[i].getNome() + " (" + cursos[i].getDepartamento().getSigla() + ")");
                         }
                     }
                     break;
@@ -529,24 +529,32 @@ public class GestorController {
 
             switch (escolha) {
                 case "1":
-                    String sigla = "";
-                    while (true) {
-                        sigla = view.pedirInputString("Sigla do Docente (3 letras, ex: aem)");
-                        if (sigla.length() != 3 || !sigla.matches("^[A-Z]{3}$")) {
-                            view.mostrarMensagem("Erro: A sigla tem de ser constituída exatamente por 3 letras do alfabeto.");
-                        } else if (repositorio.existeSiglaDocente(sigla)) {
-                            view.mostrarMensagem("Erro: Já existe um Docente com a sigla " + sigla + ".");
-                        } else {
-                            break;
-                        }
-                    }
-
                     String nome = "";
                     while (true) {
                         nome = view.pedirInputString("Nome do Docente (Nome e Sobrenome)");
                         if (Validador.isNomeValido(nome)) break;
                         view.mostrarMensagem("Erro: O nome deve conter pelo menos nome e sobrenome.");
                     }
+
+                    // Geração Automática da Sigla
+                    String siglaGerada = "";
+                    char primeiraLetra = nome.trim().toUpperCase().charAt(0);
+                    String alfabeto = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+                    while (true) {
+                        // Escolhe 2 letras aleatórias do alfabeto
+                        char let1 = alfabeto.charAt((int)(Math.random() * alfabeto.length()));
+                        char let2 = alfabeto.charAt((int)(Math.random() * alfabeto.length()));
+
+                        siglaGerada = "" + primeiraLetra + let1 + let2;
+
+                        // Garante que o sistema não gera uma sigla que já pertença a outro professor
+                        if (!repositorio.existeSiglaDocente(siglaGerada)) {
+                            break;
+                        }
+                    }
+                    view.mostrarMensagem("Sigla gerada automaticamente pelo sistema: " + siglaGerada);
+                    // -----------------------------------------------
 
                     String nif = "";
                     while (true) {
@@ -556,7 +564,7 @@ public class GestorController {
                         } else if (repositorio.existeNif(nif)) {
                             view.mostrarMensagem("Erro: Já existe um utilizador registado com o NIF " + nif + ".");
                         } else {
-                            break; // É válido e é único!
+                            break;
                         }
                     }
 
@@ -569,16 +577,15 @@ public class GestorController {
                         view.mostrarMensagem("Erro: A data deve respeitar o formato DD-MM-AAAA.");
                     }
 
-                    // Delegação da criação ao Modelo (Gestor). O email e password são gerados lá dentro.
-                    Docente novoDocente = gestorAtivo.criarDocente(sigla, nome, nif, morada, dataNascimento);
+                    Docente novoDocente = gestorAtivo.criarDocente(siglaGerada, nome, nif, morada, dataNascimento);
 
                     if (repositorio.adicionarDocente(novoDocente)) {
-                        // Extraímos o email diretamente do objeto recém-criado para mostrar a mensagem
                         view.mostrarMensagem("Docente '" + nome + "' registado com sucesso! Email: " + novoDocente.getEmail());
                     } else {
                         view.mostrarMensagem("Erro: Limite de docentes atingido.");
                     }
                     break;
+
                 case "2": // --- ALTERAR DOCENTE ---
                     String siglaDoc = view.pedirInputString("Introduza a Sigla do Docente a alterar");
                     Docente docEditar = null;
