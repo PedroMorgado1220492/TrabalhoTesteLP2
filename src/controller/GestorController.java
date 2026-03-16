@@ -43,7 +43,7 @@ public class GestorController {
                 case 5: gerirDocentes(); break;
                 case 6: avancarAnoLetivo(); break;
                 case 7: gerirRelatorios(); break;
-                case 8:
+                case 0:
                     view.mostrarMensagem("A sair do Backoffice...");
                     aExecutar = false;
                     break;
@@ -67,8 +67,9 @@ public class GestorController {
         String confirmacao = view.pedirInputString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N)");
 
         if (confirmacao.equalsIgnoreCase("S")) {
-            repositorio.avancarAno();
-            view.mostrarMensagem("Sucesso! Bem-vindo ao ano letivo de " + repositorio.getAnoAtual() + ".");
+            String relatorio = repositorio.avancarAno();
+            view.mostrarMensagem("\n--- RELATÓRIO DE TRANSIÇÃO ---");
+            view.mostrarMensagem(relatorio);
         } else {
             view.mostrarMensagem("Operação cancelada. Mantemo-nos em " + repositorio.getAnoAtual() + ".");
         }
@@ -137,7 +138,7 @@ public class GestorController {
                         }
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -235,11 +236,25 @@ public class GestorController {
                     } else {
                         Curso[] cursos = repositorio.getCursos();
                         for (int i = 0; i < repositorio.getTotalCursos(); i++) {
-                            view.mostrarMensagem("- " + cursos[i].getSigla() + " - " + cursos[i].getNome() + " (" + cursos[i].getDepartamento().getSigla() + ")");
+                            Curso c = cursos[i];
+                            int totalAlunosInscritos = 0;
+
+                            // Conta os alunos que pertencem a este curso
+                            for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
+                                Estudante e = repositorio.getEstudantes()[j];
+                                if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(c.getSigla())) {
+                                    totalAlunosInscritos++;
+                                }
+                            }
+
+                            view.mostrarMensagem("- " + c.getSigla() + " : " + c.getNome() +
+                                    "\n      Departamento: " + c.getDepartamento().getSigla() +
+                                    " | UCs Associadas: " + c.getTotalUCs() + "/15" +
+                                    " | Alunos Inscritos: " + totalAlunosInscritos + "\n");
                         }
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -395,10 +410,10 @@ public class GestorController {
                     view.mostrarMensagem("\n--- LISTA DE UCs ---");
                     UnidadeCurricular[] ucs = repositorio.getUcs();
                     for (int i = 0; i < repositorio.getTotalUcs(); i++) {
-                        view.mostrarMensagem("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() + " | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
+                        view.mostrarMensagem("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() + " | Ano: " + ucs[i].getAnoCurricular() + "º | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
                     }
                     break;
-                case 5: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -457,6 +472,7 @@ public class GestorController {
                     }
 
                     int anoInscricao = repositorio.getAnoAtual();
+                    view.mostrarMensagem("A inscrever o aluno no 1º Ano Curricular (Ano letivo: " + anoInscricao + ").");
                     int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
 
                     // Delegação da criação ao Modelo (Gestor). O Gestor gera a password lá dentro.
@@ -513,7 +529,7 @@ public class GestorController {
                         view.mostrarMensagem("- " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -628,7 +644,7 @@ public class GestorController {
                         }
                     }
                     break;
-                case "4":
+                case "0":
                     aExecutar = false;
                     break;
                 default:
@@ -650,7 +666,7 @@ public class GestorController {
                     "3 - UCs agrupadas por Curso\n" +
                     "4 - Cursos agrupados por Departamento\n" +
                     "5 - Ver Estatísticas Globais (Novo)\n" +
-                    "6 - Recuar\nOpção");
+                    "0 - Recuar\nOpção");
 
             switch (escolha) {
                 case "1": // Alunos por Curso
@@ -740,7 +756,7 @@ public class GestorController {
                     }
                     break;
 
-                case "6":
+                case "0":
                     aExecutar = false;
                     break;
                 default:
