@@ -39,9 +39,12 @@ public class DocenteController {
                     gerirAvaliacoes();
                     break;
                 case 4:
-                    mostrarEstatisticasDocente();
+                    lancarNotasEmLote();
                     break;
                 case 5:
+                    mostrarEstatisticasDocente();
+                    break;
+                case 6:
                     view.mostrarMensagem("A sair da conta de Docente...");
                     aExecutar = false;
                     break;
@@ -242,5 +245,98 @@ public class DocenteController {
 
         view.mostrarMensagem("Média de notas nas suas UCs: " + mediaUcs + " valores.");
         view.mostrarMensagem("Total de alunos avaliados por si: " + totalAlunos + " alunos.");
+    }
+    /**
+     * Permite ao Docente lançar notas a todos os alunos de uma UC de forma contínua.
+     */
+    private void lancarNotasEmLote() {
+        if (docenteLogado.getTotalUcsLecionadas() == 0) {
+            view.mostrarMensagem("Ainda não tem Unidades Curriculares atribuídas.");
+            return;
+        }
+
+        // 1. ESCOLHER A UC
+        view.mostrarMensagem("\n--- LANÇAMENTO CONTÍNUO DE NOTAS ---");
+        for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
+            model.UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
+            view.mostrarMensagem((i + 1) + " - " + uc.getNome() + " [" + uc.getSigla() + "]");
+        }
+
+        int escolhaUC;
+        try {
+            escolhaUC = Integer.parseInt(view.pedirInputString("Escolha a UC (Número)")) - 1;
+        } catch (NumberFormatException e) {
+            view.mostrarMensagem("Entrada inválida. Operação cancelada.");
+            return;
+        }
+
+        if (escolhaUC < 0 || escolhaUC >= docenteLogado.getTotalUcsLecionadas()) {
+            view.mostrarMensagem("UC inválida.");
+            return;
+        }
+
+        model.UnidadeCurricular ucSelecionada = docenteLogado.getUcsLecionadas()[escolhaUC];
+
+        // 2. OBTER A TURMA (ALUNOS INSCRITOS)
+        model.Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
+
+        if (alunosDaUC.length == 0) {
+            view.mostrarMensagem("Não existem alunos inscritos a esta Unidade Curricular neste momento.");
+            return;
+        }
+
+        view.mostrarMensagem("\n>> A iniciar lançamento de notas para " + ucSelecionada.getNome() + "...");
+        view.mostrarMensagem(">> Dica: Pressione ENTER sem digitar nada para saltar um aluno.");
+
+        int notasLancadasComSucesso = 0;
+
+        // 3. CICLO CONTÍNUO ALUNO A ALUNO
+        for (int i = 0; i < alunosDaUC.length; i++) {
+            model.Estudante aluno = alunosDaUC[i];
+
+            // Verifica logo se este aluno já tem as 3 notas máximas
+            int proximaNota = aluno.obterNumeroProximaAvaliacao(ucSelecionada.getSigla());
+            if (proximaNota > 3) {
+                view.mostrarMensagem("\n- " + aluno.getNome() + " (" + aluno.getNumeroMecanografico() + ") -> Já tem as 3 avaliações máximas. A saltar...");
+                continue;
+            }
+
+
+            String prompt = "\n[" + (i + 1) + "/" + alunosDaUC.length + "] Avaliação (" + proximaNota + "/3) para " + aluno.getNome() + " (ou ENTER para saltar)";
+
+            boolean notaInseridaComSucesso = false;
+
+            while (!notaInseridaComSucesso) {
+                String input = view.pedirInputString(prompt);
+
+                if (input.trim().isEmpty()) {
+                    view.mostrarMensagem(">> Aluno saltado.");
+                    break;
+                }
+
+                try {
+                    double nota = Double.parseDouble(input);
+                    if (nota < 0.0 || nota > 20.0) {
+                        view.mostrarMensagem(">> Erro: A nota deve estar entre 0.0 e 20.0. Tente novamente.");
+                    } else {
+                        // Grava a nota no aluno
+                        boolean sucesso = aluno.adicionarNota(ucSelecionada, nota, repositorio.getAnoAtual());
+                        if (sucesso) {
+                            view.mostrarMensagem(">> Sucesso! Nota de " + nota + " guardada.");
+                            notasLancadasComSucesso++;
+                        } else {
+                            view.mostrarMensagem(">> Erro inesperado ao guardar a nota.");
+                        }
+                        notaInseridaComSucesso = true;
+                    }
+
+                } catch (NumberFormatException e) {
+                    view.mostrarMensagem(">> Erro: Formato inválido (use . para decimais, ex: 14.5). Tente novamente.");
+                }
+            }
+        }
+
+        // 4. RESUMO FINAL
+        view.mostrarMensagem("\n>> Pauta concluída! " + notasLancadasComSucesso + " nota(s) lançada(s) com sucesso na turma.");
     }
 }
