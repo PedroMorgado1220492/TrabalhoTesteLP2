@@ -80,6 +80,20 @@ public class EstudanteController {
                         estado));
             }
         }
+
+        view.mostrarMensagem("\n--- AS MINHAS DISCIPLINAS ATUAIS (Ano Letivo: " + repositorio.getAnoAtual() + ") ---");
+
+        model.PercursoAcademico pa = estudanteLogado.getPercursoAcademico();
+
+        if (pa.getTotalUcsInscrito() == 0) {
+            view.mostrarMensagem("Ainda não tem inscrições ativas para este ano letivo.");
+            return;
+        }
+
+        for (int i = 0; i < pa.getTotalUcsInscrito(); i++) {
+            model.UnidadeCurricular uc = pa.getUcsInscrito()[i];
+            view.mostrarMensagem("- [" + uc.getSigla() + "] " + uc.getNome() + " (Ano Curricular: " + uc.getAnoCurricular() + "º Ano)");
+        }
     }
 
     /**

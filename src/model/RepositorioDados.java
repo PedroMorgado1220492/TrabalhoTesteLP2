@@ -126,28 +126,19 @@ public class RepositorioDados {
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
     /**
-     * Executa o processo de transição de ano letivo.
-     * Incrementa o ano letivo global, verifica o aproveitamento de cada estudante para
-     * possível progressão de ano e arquiva as avaliações correntes no histórico permanente.
+     * Avança o ano letivo do sistema e manda todos os estudantes processarem o seu fim de ano.
      */
     public void avancarAno() {
         this.anoAtual++;
 
+        // Diz a cada estudante (um a um) para arquivar as notas e auto-matricular-se
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante est = estudantes[i];
             if (est != null) {
-                if (est.temAproveitamentoParaProgredir()) {
-                    if (est.getAnoFrequencia() < 3) {
-                        est.setAnoFrequencia(est.getAnoFrequencia() + 1);
-                    } else {
-                        System.out.println(">> Parabéns! O aluno " + est.getNome() + " concluiu o curso!");
-                    }
-                }
-
-                // As notas vão para o histórico e o array atual é limpo.
-                est.arquivarAvaliacoes();
+                est.processarFimDeAno();
             }
         }
+
         System.out.println(">> Sucesso: O ano letivo avançou para " + this.anoAtual + "!");
     }
 
@@ -199,6 +190,27 @@ public class RepositorioDados {
 
         // Exemplo: 2026 * 10000 = 20260000. 20260000 + 1 = 20260001
         return (anoInscricao * 10000) + numeroSequencial;
+    }
+
+    /**
+     * Devolve um array com o tamanho exato dos alunos inscritos numa determinada UC.
+     */
+    public Estudante[] obterEstudantesPorUC(String siglaUC) {
+        int contador = 0;
+        // 1. Contar quantos alunos estão inscritos
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].estaInscrito(siglaUC)) contador++;
+        }
+
+        // 2. Criar array à medida e preencher
+        Estudante[] inscritos = new Estudante[contador];
+        int index = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].estaInscrito(siglaUC)) {
+                inscritos[index++] = estudantes[i];
+            }
+        }
+        return inscritos;
     }
 
     // ---------- MÉTODOS DE VERIFICAÇÃO (UNICIDADE) ----------

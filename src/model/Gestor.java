@@ -16,9 +16,23 @@ public class Gestor extends Utilizador {
      * Instancia um novo Estudante gerando automaticamente as suas credenciais.
      */
     public Estudante criarEstudante(int numeroMecanografico, String nome, String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao) {
-        String emailGerado = EmailGenerator.gerarEmailEstudante(numeroMecanografico);
-        String passwordGerada = PasswordGenerator.generatePassword();
-        return new Estudante(numeroMecanografico, emailGerado, passwordGerada, nome, nif, morada, dataNascimento, curso, anoPrimeiraInscricao);
+        String emailGerado = utils.EmailGenerator.gerarEmailEstudante(numeroMecanografico);
+        String passwordGerada = utils.PasswordGenerator.generatePassword();
+
+        Estudante novoEstudante = new Estudante(numeroMecanografico, emailGerado, passwordGerada, nome, nif, morada, dataNascimento, curso, anoPrimeiraInscricao);
+
+        // --- AUTO-ALOCAÇÃO (INSCRIÇÃO NAS UCs DE 1º ANO) ---
+        if (curso != null && novoEstudante.getPercursoAcademico() != null) {
+            for (int i = 0; i < curso.getTotalUCs(); i++) {
+                UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+                // Se a disciplina for de 1º ano, o aluno fica logo inscrito!
+                if (uc.getAnoCurricular() == 1) {
+                    novoEstudante.getPercursoAcademico().inscreverEmUc(uc);
+                }
+            }
+        }
+
+        return novoEstudante;
     }
 
     /**

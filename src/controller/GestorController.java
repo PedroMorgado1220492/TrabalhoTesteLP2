@@ -644,16 +644,9 @@ public class GestorController {
     private void gerirRelatorios() {
         boolean aExecutar = true;
         while (aExecutar) {
-            String escolha = view.pedirInputString("\n--- LISTAGENS E ESTATÍSTICAS ---\n" +
-                    "1 - Alunos agrupados por Curso\n" +
-                    "2 - Alunos agrupados por UC\n" +
-                    "3 - UCs agrupadas por Curso\n" +
-                    "4 - Cursos agrupados por Departamento\n" +
-                    "5 - Ver Estatísticas Globais (Novo)\n" +
-                    "6 - Recuar\nOpção");
-
-            switch (escolha) {
-                case "1": // Alunos por Curso
+            int opcao = view.mostrarMenuRelatorios();
+            switch (opcao) {
+                case 1: // Alunos por Curso
                     view.mostrarMensagem("\n--- ALUNOS POR CURSO ---");
                     for (int i = 0; i < repositorio.getTotalCursos(); i++) {
                         Curso c = repositorio.getCursos()[i];
@@ -670,7 +663,7 @@ public class GestorController {
                     }
                     break;
 
-                case "2": // Alunos por UC
+                case 2: // Alunos por UC
                     view.mostrarMensagem("\n--- ALUNOS POR UNIDADE CURRICULAR ---");
                     for (int i = 0; i < repositorio.getTotalUcs(); i++) {
                         UnidadeCurricular uc = repositorio.getUcs()[i];
@@ -693,22 +686,24 @@ public class GestorController {
                     }
                     break;
 
-                case "3": // UCs por Curso
-                    view.mostrarMensagem("\n--- UCs POR CURSO ---");
+                case 3: // UCs por Curso
+                    view.mostrarMensagem("\n--- UNIDADES CURRICULARES POR CURSO ---");
                     for (int i = 0; i < repositorio.getTotalCursos(); i++) {
                         Curso c = repositorio.getCursos()[i];
-                        view.mostrarMensagem("\nCURSO: " + c.getNome());
+                        view.mostrarMensagem("\n[" + c.getSigla() + "] " + c.getNome() + ":");
+
                         if (c.getTotalUCs() == 0) {
-                            view.mostrarMensagem("  (Sem UCs registadas)");
+                            view.mostrarMensagem("  (Nenhuma UC registada neste curso)");
                         } else {
                             for (int j = 0; j < c.getTotalUCs(); j++) {
-                                view.mostrarMensagem("  -> " + c.getUnidadesCurriculares()[j].getSigla() + " - " + c.getUnidadesCurriculares()[j].getNome());
+                                UnidadeCurricular uc = c.getUnidadesCurriculares()[j];
+                                view.mostrarMensagem("  -> " + uc.getSigla() + " - " + uc.getNome() + " (Ano: " + uc.getAnoCurricular() + "º)");
                             }
                         }
                     }
                     break;
 
-                case "4": // Cursos por Departamento
+                case 4: // Cursos por Departamento
                     view.mostrarMensagem("\n--- CURSOS POR DEPARTAMENTO ---");
                     for (int i = 0; i < repositorio.getTotalDepartamentos(); i++) {
                         Departamento d = repositorio.getDepartamentos()[i];
@@ -723,7 +718,7 @@ public class GestorController {
                     }
                     break;
 
-                case "5": // Estatísticas
+                case 5: // Estatísticas
                     view.mostrarMensagem("\n--- ESTATÍSTICAS GLOBAIS DO ISSMF ---");
 
                     double mediaGlobal = utils.Estatisticas.calcularMediaGlobalInstituicao(repositorio);
@@ -740,7 +735,7 @@ public class GestorController {
                     }
                     break;
 
-                case "6":
+                case 6:
                     aExecutar = false;
                     break;
                 default:

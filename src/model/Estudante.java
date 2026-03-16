@@ -134,11 +134,73 @@ public class Estudante extends Utilizador {
         return aproveitamento >= 0.60;
     }
 
+    public boolean estaInscrito(String siglaUC) {
+        if (percursoAcademico == null) return false;
+        for (int i = 0; i < percursoAcademico.getTotalUcsInscrito(); i++) {
+            if (percursoAcademico.getUcsInscrito()[i].getSigla().equalsIgnoreCase(siglaUC)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     * Avança o ano curricular do estudante (Lógica simples de incremento).
+     * Processa o final do ano letivo para este estudante específico.
      */
-    public void avancarAno() {
-        anoCurricular++;
+    public void processarFimDeAno() {
+        if (curso == null || percursoAcademico == null) return;
+
+        // 1. Descobrir quais cadeiras ele chumbou (para repetir)
+        UnidadeCurricular[] ucsParaRepetir = new UnidadeCurricular[20];
+        int totalRepetir = 0;
+
+        for (int j = 0; j < percursoAcademico.getTotalUcsInscrito(); j++) {
+            UnidadeCurricular uc = percursoAcademico.getUcsInscrito()[j];
+            if (!teveAprovacao(uc.getSigla())) {
+                ucsParaRepetir[totalRepetir++] = uc;
+            }
+        }
+
+        // 2. A LÓGICA DE PROGRESSÃO
+        if (temAproveitamentoParaProgredir()) {
+            if (anoFrequencia < 3) {
+                anoFrequencia++;
+            } else {
+                System.out.println(">> Parabéns! O aluno " + nome + " concluiu o curso!");
+            }
+        }
+
+        // 3. A LÓGICA DE ARQUIVO
+        arquivarAvaliacoes();
+
+        // 4. Limpar as inscrições do ano que acabou de terminar
+        percursoAcademico.limparInscricoesAtivas();
+
+        // 5. AUTO-MATRÍCULA: Primeiro, reinscrever nas que chumbou
+        for (int j = 0; j < totalRepetir; j++) {
+            percursoAcademico.inscreverEmUc(ucsParaRepetir[j]);
+        }
+
+        // 6. AUTO-MATRÍCULA: Inscrever nas cadeiras novas do seu ano atual
+        for (int j = 0; j < curso.getTotalUCs(); j++) {
+            UnidadeCurricular ucCurso = curso.getUnidadesCurriculares()[j];
+            if (ucCurso.getAnoCurricular() == anoFrequencia) {
+                if (!estaInscrito(ucCurso.getSigla())) {
+                    percursoAcademico.inscreverEmUc(ucCurso);
+                }
+            }
+        }
+    }
+
+    public boolean teveAprovacao(String siglaUC) {
+        if (percursoAcademico == null) return false;
+        for (int i = 0; i < percursoAcademico.getTotalAvaliacoes(); i++) {
+            Avaliacao av = percursoAcademico.getAvaliacoes()[i];
+            if (av.getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                return av.calcularMedia() >= 9.5;
+            }
+        }
+        return false; // Se não tem nota lançada, reprova automaticamente.
     }
 
     @Override

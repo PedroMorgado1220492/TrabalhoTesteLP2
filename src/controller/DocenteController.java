@@ -94,42 +94,24 @@ public class DocenteController {
 
             view.mostrarMensagem("\n--- ALUNOS INSCRITOS EM " + cursoDaUc.getNome() + " ---");
 
-            Estudante[] todosEstudantes = repositorio.getEstudantes();
-            Estudante[] alunosDoCurso = new Estudante[100];
+
             int totalAlunosEncontrados = 0;
 
-            for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-                if (todosEstudantes[i] != null && todosEstudantes[i].getCurso() != null &&
-                        todosEstudantes[i].getCurso().getSigla().equals(cursoDaUc.getSigla())) {
-                    alunosDoCurso[totalAlunosEncontrados] = todosEstudantes[i];
-                    totalAlunosEncontrados++;
-                    view.mostrarMensagem(totalAlunosEncontrados + " - " + todosEstudantes[i].getNome());
-                }
+            Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
+
+            if (alunosDaUC.length == 0) {
+                view.mostrarMensagem("Não existem alunos inscritos a esta Unidade Curricular.");
+                return;
             }
 
-            if (totalAlunosEncontrados == 0) {
-                view.mostrarMensagem("Não existem alunos inscritos neste curso.");
-                return;
+            for (int i = 0; i < alunosDaUC.length; i++) {
+                view.mostrarMensagem((i + 1) + " - " + alunosDaUC[i].getNome() + " (" + alunosDaUC[i].getNumeroMecanografico() + ")");
             }
 
             int escolhaAluno = Integer.parseInt(view.pedirInputString("Escolha o Aluno (Número)")) - 1;
-            if (escolhaAluno < 0 || escolhaAluno >= totalAlunosEncontrados) {
-                view.mostrarMensagem("Aluno inválido.");
-                return;
-            }
+            view.mostrarMensagem("Aluno inválido.");
+            return;
 
-            Estudante alunoSelecionado = alunosDoCurso[escolhaAluno];
-            view.mostrarMensagem("\nLançar nota para: " + alunoSelecionado.getNome());
-            view.mostrarMensagem("Notas já lançadas: " + this.obterQuantidadeNotas(alunoSelecionado, ucSelecionada) + "/3");
-
-            double nota = Double.parseDouble(view.pedirInputString("Introduza a nota (0-20)"));
-
-            if (nota < 0 || nota > 20) {
-                view.mostrarMensagem("Erro: A nota deve ser entre 0 e 20.");
-            } else {
-                alunoSelecionado.adicionarNota(ucSelecionada, nota, repositorio.getAnoAtual());
-                view.mostrarMensagem("Sucesso! Nota registada no sistema.");
-            }
         } catch (Exception e) {
             view.mostrarMensagem("Erro na introdução de dados. Operação cancelada.");
         }

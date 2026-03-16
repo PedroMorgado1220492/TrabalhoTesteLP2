@@ -79,7 +79,7 @@ public class GestorView {
     public int mostrarMenuUCs() {
         System.out.println("\n--- GERIR UNIDADES CURRICULARES ---");
         System.out.println("1 - Criar Nova Unidade Curricular");
-        System.out.println("2 - Associar UC Existente a outro Curso (Partilhar)");
+        System.out.println("2 - Associar UC Existente a outro Curso");
         System.out.println("3 - Alterar Unidade Curricular");
         System.out.println("4 - Listar Unidades Curriculares");
         System.out.println("5 - Recuar");
@@ -130,6 +130,8 @@ public class GestorView {
             return -1;
         }
     }
+
+
 
     /**
      * Pede ao gestor que insira texto através da consola.
