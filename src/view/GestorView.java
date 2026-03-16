@@ -27,7 +27,7 @@ public class GestorView {
         System.out.println("5 - Gerir Docentes");
         System.out.println("6 - Avançar Ano Letivo");
         System.out.println("7 - Listagens e Relatórios");
-        System.out.println("8 - Voltar / Logout");
+        System.out.println("0 - Voltar / Logout");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
@@ -45,7 +45,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Departamento");
         System.out.println("2 - Alterar Departamento");
         System.out.println("3 - Listar Departamentos");
-        System.out.println("4 - Recuar");
+        System.out.println("0 - Voltar");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
@@ -63,7 +63,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Curso");
         System.out.println("2 - Alterar Curso");
         System.out.println("3 - Listar Cursos");
-        System.out.println("4 - Recuar");
+        System.out.println("0 - Voltar");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
@@ -82,7 +82,7 @@ public class GestorView {
         System.out.println("2 - Associar UC Existente a outro Curso (Partilhar)");
         System.out.println("3 - Alterar Unidade Curricular");
         System.out.println("4 - Listar Unidades Curriculares");
-        System.out.println("5 - Recuar");
+        System.out.println("0 - Voltar");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
@@ -100,7 +100,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Estudante");
         System.out.println("2 - Alterar Estudante");
         System.out.println("3 - Listar Estudantes");
-        System.out.println("4 - Recuar");
+        System.out.println("0 - Voltar");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
@@ -121,7 +121,7 @@ public class GestorView {
         System.out.println("3 - UCs agrupadas por Curso");
         System.out.println("4 - Cursos agrupados por Departamento");
         System.out.println("5 - Ver Estatísticas Globais da Faculdade");
-        System.out.println("6 - Recuar");
+        System.out.println("0 - Voltar");
         System.out.print("Opção: ");
 
         try {
