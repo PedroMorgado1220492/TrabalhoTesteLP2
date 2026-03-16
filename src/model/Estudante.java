@@ -67,23 +67,36 @@ public class Estudante extends Utilizador {
      * @param nota Valor da nota (0 a 20).
      * @param anoAtual Ano letivo em que a nota é lançada.
      */
-    public void adicionarNota(UnidadeCurricular uc, double nota, int anoAtual) {
+    /**
+     * Descobre qual é o número da avaliação que o aluno vai fazer a seguir (1, 2 ou 3).
+     */
+    public int obterNumeroProximaAvaliacao(String siglaUC) {
         for (int i = 0; i < totalAvaliacoes; i++) {
-            if (avaliacoes[i].getUc().getSigla().equals(uc.getSigla())) {
-                boolean sucesso = avaliacoes[i].adicionarResultado(nota);
-                if (!sucesso) {
-                    System.out.println("Erro: Já foram lançadas as 3 notas máximas para esta UC.");
-                }
-                return;
+            if (avaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                return avaliacoes[i].getTotalAvaliacoesLancadas() + 1;
+            }
+        }
+        return 1;
+    }
+
+    /**
+     * Regista uma nova nota. Agora devolve um boolean em vez de ser void.
+     */
+    public boolean adicionarNota(UnidadeCurricular uc, double nota, int anoAtual) {
+        for (int i = 0; i < totalAvaliacoes; i++) {
+            if (avaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(uc.getSigla())) {
+                return avaliacoes[i].adicionarResultado(nota);
             }
         }
 
         if (totalAvaliacoes < avaliacoes.length) {
             Avaliacao novaAvaliacao = new Avaliacao(this, uc, anoAtual);
-            novaAvaliacao.adicionarResultado(nota);
+            boolean sucesso = novaAvaliacao.adicionarResultado(nota);
             avaliacoes[totalAvaliacoes] = novaAvaliacao;
             totalAvaliacoes++;
+            return sucesso;
         }
+        return false;
     }
 
     /**
@@ -116,21 +129,26 @@ public class Estudante extends Utilizador {
     }
 
     /**
-     * Verifica se o estudante tem aproveitamento suficiente para progredir de ano letivo.
-     * A regra define que o rácio de avaliações positivas (>= 9.5) deve ser de pelo menos 60%.
-     * * @return true se o estudante cumpre os requisitos de progressão, false caso contrário.
+     * Regra dos 60%: O rácio é calculado com base nas cadeiras em que ESTÁ INSCRITO,
+     * e não apenas nas cadeiras em que teve notas lançadas.
      */
     public boolean temAproveitamentoParaProgredir() {
-        if (totalAvaliacoes == 0) return false;
+        if (percursoAcademico == null || percursoAcademico.getTotalUcsInscrito() == 0) {
+            return false;
+        }
 
         int positivas = 0;
-        for (int i = 0; i < totalAvaliacoes; i++) {
-            if (avaliacoes[i].calcularMedia() >= 9.5) {
+        int totalInscritas = percursoAcademico.getTotalUcsInscrito();
+
+        // Verifica quantas das cadeiras INSCRITAS o aluno efetivamente passou
+        for (int i = 0; i < totalInscritas; i++) {
+            UnidadeCurricular uc = percursoAcademico.getUcsInscrito()[i];
+            if (teveAprovacao(uc.getSigla())) {
                 positivas++;
             }
         }
 
-        double aproveitamento = (double) positivas / totalAvaliacoes;
+        double aproveitamento = (double) positivas / totalInscritas;
         return aproveitamento >= 0.60;
     }
 
@@ -184,23 +202,42 @@ public class Estudante extends Utilizador {
         // 6. AUTO-MATRÍCULA: Inscrever nas cadeiras novas do seu ano atual
         for (int j = 0; j < curso.getTotalUCs(); j++) {
             UnidadeCurricular ucCurso = curso.getUnidadesCurriculares()[j];
+
             if (ucCurso.getAnoCurricular() == anoFrequencia) {
-                if (!estaInscrito(ucCurso.getSigla())) {
+                if (!estaInscrito(ucCurso.getSigla()) && !jaConcluiuUC(ucCurso.getSigla())) {
                     percursoAcademico.inscreverEmUc(ucCurso);
                 }
             }
         }
     }
 
+    /**
+     * Verifica se o aluno teve nota positiva a uma determinada UC no ano corrente.
+     */
     public boolean teveAprovacao(String siglaUC) {
-        if (percursoAcademico == null) return false;
-        for (int i = 0; i < percursoAcademico.getTotalAvaliacoes(); i++) {
-            Avaliacao av = percursoAcademico.getAvaliacoes()[i];
+        for (int i = 0; i < this.totalAvaliacoes; i++) {
+            Avaliacao av = this.avaliacoes[i];
+
             if (av.getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
                 return av.calcularMedia() >= 9.5;
             }
         }
-        return false; // Se não tem nota lançada, reprova automaticamente.
+        return false; // Se não encontrou a nota lançada, reprova automaticamente.
+    }
+
+    /**
+     * Verifica se o aluno já concluiu com sucesso esta UC num ano anterior (Histórico).
+     */
+    public boolean jaConcluiuUC(String siglaUC) {
+        for (int i = 0; i < totalHistorico; i++) {
+            Avaliacao avHist = historicoAvaliacoes[i];
+            if (avHist.getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                if (avHist.calcularMedia() >= 9.5) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

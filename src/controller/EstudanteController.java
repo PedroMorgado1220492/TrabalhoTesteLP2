@@ -40,9 +40,6 @@ public class EstudanteController {
                     verPercursoAcademico();
                     break;
                 case 4:
-                    verHistoricoCompleto();
-                    break;
-                case 5:
                     view.mostrarMensagem("A sair da conta de Estudante...");
                     aExecutar = false;
                     break;
@@ -53,46 +50,88 @@ public class EstudanteController {
     }
 
     /**
-     * Mostra em formato de tabela as avaliações e as respetivas notas do ano letivo corrente.
+     * Mostra o plano de estudos completo do aluno cruzando as UCs do curso,
+     * as inscrições atuais e o histórico de aprovações, agrupado por Ano Curricular.
      */
     private void verPercursoAcademico() {
+        model.Curso curso = estudanteLogado.getCurso();
+        if (curso == null) {
+            view.mostrarMensagem("Não tem nenhum curso associado.");
+            return;
+        }
+
         view.mostrarMensagem("\n--- PERCURSO ACADÉMICO ---");
 
-        if (estudanteLogado.getTotalAvaliacoes() == 0) {
-            view.mostrarMensagem("Ainda não tens notas lançadas em nenhuma Unidade Curricular.");
-            return;
-        }
+        // O curso tem a duração de 3 anos
+        for (int ano = 1; ano <= 3; ano++) {
+            view.mostrarMensagem("\n--- || " + ano + "º ano ||---");
 
-        Avaliacao[] notas = estudanteLogado.getAvaliacoes();
+            boolean temUcNoAno = false;
 
-        view.mostrarMensagem(String.format("%-15s | %-15s | %-10s", "UC", "MÉDIA", "ESTADO"));
-        view.mostrarMensagem("---------------------------------------------------------");
+            // Para cada ano, procuramos no curso inteiro as UCs correspondentes
+            for (int i = 0; i < curso.getTotalUCs(); i++) {
+                model.UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
 
-        for (int i = 0; i < estudanteLogado.getTotalAvaliacoes(); i++) {
-            Avaliacao av = notas[i];
-            if (av != null) {
-                double media = av.calcularMedia();
-                String estado = (media >= 9.5) ? "APROVADO" : "EM FREQUÊNCIA";
+                // Só processa a UC se ela pertencer ao bloco do ano atual
+                if (uc.getAnoCurricular() == ano) {
+                    temUcNoAno = true;
 
-                view.mostrarMensagem(String.format("%-15s | %-15.2f | %-10s",
-                        av.getUnidadeCurricular().getSigla(),
-                        media,
-                        estado));
+                    String sigla = uc.getSigla();
+                    String nome = uc.getNome();
+                    String status = "Não Inscrito";
+
+                    // 1. Verifica se está INSCRITO neste ano letivo (inclui cadeiras em atraso)
+                    if (estudanteLogado.estaInscrito(sigla)) {
+                        boolean temNota = false;
+                        double notaAtual = 0.0;
+
+                        // Procura se o professor já lhe lançou alguma nota ESTE ano
+                        for (int j = 0; j < estudanteLogado.getTotalAvaliacoes(); j++) {
+                            if (estudanteLogado.getAvaliacoes()[j].getUnidadeCurricular().getSigla().equalsIgnoreCase(sigla)) {
+                                temNota = true;
+                                notaAtual = estudanteLogado.getAvaliacoes()[j].calcularMedia();
+                                break;
+                            }
+                        }
+
+                        if (temNota) {
+                            double notaFinal = Math.round(notaAtual * 100.0) / 100.0;
+                            status = "Inscrito -> " + notaFinal;
+                        } else {
+                            status = "Inscrito -> Ainda Sem Avaliação";
+                        }
+
+                    } else {
+                        // 2. Se NÃO está inscrito hoje, verifica se já fez a cadeira no passado (Histórico)
+                        boolean feitoNoPassado = false;
+                        double notaHistorico = 0.0;
+
+                        for (int j = 0; j < estudanteLogado.getTotalHistorico(); j++) {
+                            model.Avaliacao avHist = estudanteLogado.getHistoricoAvaliacoes()[j];
+                            if (avHist.getUnidadeCurricular().getSigla().equalsIgnoreCase(sigla)) {
+                                double mediaAntiga = avHist.calcularMedia();
+                                if (mediaAntiga >= 9.5) {
+                                    feitoNoPassado = true;
+                                    notaHistorico = mediaAntiga;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (feitoNoPassado) {
+                            double notaFinalHist = Math.round(notaHistorico * 100.0) / 100.0;
+                            status = "Concluído -> " + notaFinalHist;
+                        }
+                    }
+
+                    // 3. Imprime a linha formatada
+                    view.mostrarMensagem(">> >> - [" + sigla + "] " + nome + " (Ano: " + ano + "º) -> " + status);
+                }
             }
-        }
 
-        view.mostrarMensagem("\n--- AS MINHAS DISCIPLINAS ATUAIS (Ano Letivo: " + repositorio.getAnoAtual() + ") ---");
-
-        model.PercursoAcademico pa = estudanteLogado.getPercursoAcademico();
-
-        if (pa.getTotalUcsInscrito() == 0) {
-            view.mostrarMensagem("Ainda não tem inscrições ativas para este ano letivo.");
-            return;
-        }
-
-        for (int i = 0; i < pa.getTotalUcsInscrito(); i++) {
-            model.UnidadeCurricular uc = pa.getUcsInscrito()[i];
-            view.mostrarMensagem("- [" + uc.getSigla() + "] " + uc.getNome() + " (Ano Curricular: " + uc.getAnoCurricular() + "º Ano)");
+            if (!temUcNoAno) {
+                view.mostrarMensagem(">> >> (Nenhuma UC registada para este ano)");
+            }
         }
     }
 
@@ -143,6 +182,7 @@ public class EstudanteController {
 
         if (estudanteLogado.getCurso() != null) {
             view.mostrarMensagem("Curso: " + estudanteLogado.getCurso().getNome() + " (" + estudanteLogado.getCurso().getSigla() + ")");
+            view.mostrarMensagem("Ano Frequência: " + estudanteLogado.getAnoFrequencia() + "º Ano");
         } else {
             view.mostrarMensagem("Curso: Aluno ainda não inscrito em nenhum curso.");
         }

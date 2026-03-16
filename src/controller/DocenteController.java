@@ -70,50 +70,90 @@ public class DocenteController {
      */
     private void gerirAvaliacoes() {
         if (docenteLogado.getTotalUcsLecionadas() == 0) {
-            view.mostrarMensagem("Atenção: Você não tem Unidades Curriculares atribuídas.");
+            view.mostrarMensagem("Ainda não tem Unidades Curriculares atribuídas.");
             return;
         }
 
+        // 1. ESCOLHER A UC
         view.mostrarMensagem("\n--- AS MINHAS UNIDADES CURRICULARES ---");
-        UnidadeCurricular[] minhasUcs = docenteLogado.getUcsLecionadas();
-
         for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
-            view.mostrarMensagem((i + 1) + " - " + minhasUcs[i].getNome() + " [" + minhasUcs[i].getSigla() + "]");
+            model.UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
+            view.mostrarMensagem((i + 1) + " - " + uc.getNome() + " [" + uc.getSigla() + "]");
         }
 
+        int escolhaUC;
         try {
-            int escolhaUc = Integer.parseInt(view.pedirInputString("Escolha a UC (Número)")) - 1;
+            escolhaUC = Integer.parseInt(view.pedirInputString("Escolha a UC (Número)")) - 1;
+        } catch (NumberFormatException e) {
+            view.mostrarMensagem("Entrada inválida. Digite um número.");
+            return;
+        }
 
-            if (escolhaUc < 0 || escolhaUc >= docenteLogado.getTotalUcsLecionadas()) {
-                view.mostrarMensagem("Opção inválida.");
-                return;
-            }
+        if (escolhaUC < 0 || escolhaUC >= docenteLogado.getTotalUcsLecionadas()) {
+            view.mostrarMensagem("UC inválida.");
+            return;
+        }
 
-            UnidadeCurricular ucSelecionada = minhasUcs[escolhaUc];
-            Curso cursoDaUc = ucSelecionada.getCursos()[0];
+        model.UnidadeCurricular ucSelecionada = docenteLogado.getUcsLecionadas()[escolhaUC];
 
-            view.mostrarMensagem("\n--- ALUNOS INSCRITOS EM " + cursoDaUc.getNome() + " ---");
+        // 2. OBTER APENAS OS ALUNOS INSCRITOS NESTA CADEIRA
+        model.Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
 
+        if (alunosDaUC.length == 0) {
+            view.mostrarMensagem("Não existem alunos inscritos a esta Unidade Curricular neste momento.");
+            return;
+        }
 
-            int totalAlunosEncontrados = 0;
+        // 3. ESCOLHER O ALUNO
+        view.mostrarMensagem("\n--- ALUNOS INSCRITOS EM " + ucSelecionada.getNome() + " ---");
+        for (int i = 0; i < alunosDaUC.length; i++) {
+            view.mostrarMensagem((i + 1) + " - " + alunosDaUC[i].getNome() + " (" + alunosDaUC[i].getNumeroMecanografico() + ")");
+        }
 
-            Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
+        int escolhaAluno;
+        try {
+            escolhaAluno = Integer.parseInt(view.pedirInputString("Escolha o Aluno (Número)")) - 1;
+        } catch (NumberFormatException e) {
+            view.mostrarMensagem("Entrada inválida.");
+            return;
+        }
 
-            if (alunosDaUC.length == 0) {
-                view.mostrarMensagem("Não existem alunos inscritos a esta Unidade Curricular.");
-                return;
-            }
-
-            for (int i = 0; i < alunosDaUC.length; i++) {
-                view.mostrarMensagem((i + 1) + " - " + alunosDaUC[i].getNome() + " (" + alunosDaUC[i].getNumeroMecanografico() + ")");
-            }
-
-            int escolhaAluno = Integer.parseInt(view.pedirInputString("Escolha o Aluno (Número)")) - 1;
+        if (escolhaAluno < 0 || escolhaAluno >= alunosDaUC.length) {
             view.mostrarMensagem("Aluno inválido.");
             return;
+        }
 
-        } catch (Exception e) {
-            view.mostrarMensagem("Erro na introdução de dados. Operação cancelada.");
+        model.Estudante alunoSelecionado = alunosDaUC[escolhaAluno];
+
+        // 4. LANÇAR A NOTA
+
+        int proximaNota = alunoSelecionado.obterNumeroProximaAvaliacao(ucSelecionada.getSigla());
+
+        if (proximaNota > 3) {
+            view.mostrarMensagem(">> Erro: O aluno " + alunoSelecionado.getNome() + " já tem as 3 avaliações máximas lançadas para esta UC.");
+            return;
+        }
+
+        double nota;
+        try {
+            String mensagemInput = "Introduza a avaliação (0.0 a 20.0) para " + alunoSelecionado.getNome() + " (" + proximaNota + "/3)";
+            nota = Double.parseDouble(view.pedirInputString(mensagemInput));
+        } catch (NumberFormatException e) {
+            view.mostrarMensagem("Formato de nota inválido (use . para decimais, ex: 14.5).");
+            return;
+        }
+
+        if (nota < 0.0 || nota > 20.0) {
+            view.mostrarMensagem("Erro: A nota deve estar compreendida entre 0.0 e 20.0.");
+            return;
+        }
+
+        boolean sucesso = alunoSelecionado.adicionarNota(ucSelecionada, nota, repositorio.getAnoAtual());
+
+        if (sucesso) {
+            view.mostrarMensagem(">> Sucesso! Nota de " + nota + " lançada ao aluno " + alunoSelecionado.getNome() + " na UC de " + ucSelecionada.getSigla() + ".");
+        } else {
+            view.mostrarMensagem(">> Erro ao guardar a nota. A operação falhou.");
         }
     }
 

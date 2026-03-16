@@ -74,10 +74,23 @@ public class ImportadorCSV {
 
                     case "ESTUDANTE":
                         Curso cursoEst = (dados.length > 9) ? procurarCurso(dados[9], repositorio) : null;
+
                         Estudante est = new Estudante(
                                 Integer.parseInt(dados[1]), dados[2], dados[3], dados[4],
                                 dados[5], dados[6], dados[7], cursoEst, Integer.parseInt(dados[8])
                         );
+
+                        // Auto-inscrição durante a importação ---
+                        if (cursoEst != null && est.getPercursoAcademico() != null) {
+                            for (int i = 0; i < cursoEst.getTotalUCs(); i++) {
+                                UnidadeCurricular uc = cursoEst.getUnidadesCurriculares()[i];
+
+                                // Inscreve o aluno nas UCs correspondentes ao seu Ano de Frequência (que por defeito é 1)
+                                if (uc.getAnoCurricular() == est.getAnoFrequencia()) {
+                                    est.getPercursoAcademico().inscreverEmUc(uc);
+                                }
+                            }
+                        }
                         repositorio.adicionarEstudante(est);
                         break;
 
