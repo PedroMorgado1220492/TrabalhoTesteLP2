@@ -130,8 +130,10 @@ public class RepositorioDados {
      * Incrementa o ano letivo global, verifica o aproveitamento de cada estudante para
      * possível progressão de ano e arquiva as avaliações correntes no histórico permanente.
      */
-    public void avancarAno() {
+    public String avancarAno() {
         this.anoAtual++;
+        int alunosAprovados = 0;
+        int alunosFinalistas = 0;
 
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante est = estudantes[i];
@@ -139,16 +141,18 @@ public class RepositorioDados {
                 if (est.temAproveitamentoParaProgredir()) {
                     if (est.getAnoFrequencia() < 3) {
                         est.setAnoFrequencia(est.getAnoFrequencia() + 1);
+                        alunosAprovados++;
                     } else {
-                        System.out.println(">> Parabéns! O aluno " + est.getNome() + " concluiu o curso!");
+                        alunosFinalistas++; // Terminou o 3º ano
                     }
                 }
-
-                // As notas vão para o histórico e o array atual é limpo.
                 est.arquivarAvaliacoes();
             }
         }
-        System.out.println(">> Sucesso: O ano letivo avançou para " + this.anoAtual + "!");
+
+        return "Ano letivo avançou para " + this.anoAtual + ".\n" +
+                "Alunos que transitaram de ano: " + alunosAprovados + "\n" +
+                "Alunos que concluíram o curso: " + alunosFinalistas;
     }
 
     /**
@@ -159,19 +163,19 @@ public class RepositorioDados {
      */
     public Utilizador autenticar(String email, String password) {
         for (int i = 0; i < totalGestores; i++) {
-            if (gestores[i].getEmail().equals(email) && gestores[i].getPassword().equals(password)) {
+            if (gestores[i].getEmail().equalsIgnoreCase(email) && gestores[i].getPassword().equals(password)) {
                 return gestores[i];
             }
         }
 
         for (int i = 0; i < totalDocentes; i++) {
-            if (docentes[i].getEmail().equals(email) && docentes[i].getPassword().equals(password)) {
+            if (docentes[i].getEmail().equalsIgnoreCase(email) && docentes[i].getPassword().equals(password)) {
                 return docentes[i];
             }
         }
 
         for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i].getEmail().equals(email) && estudantes[i].getPassword().equals(password)) {
+            if (estudantes[i].getEmail().equalsIgnoreCase(email) && estudantes[i].getPassword().equals(password)) {
                 return estudantes[i];
             }
         }
@@ -199,6 +203,31 @@ public class RepositorioDados {
 
         // Exemplo: 2026 * 10000 = 20260000. 20260000 + 1 = 20260001
         return (anoInscricao * 10000) + numeroSequencial;
+    }
+
+    /**
+     * Devolve uma lista de estudantes filtrada pelo curso e pelo ano curricular em que se encontram.
+     * @param siglaCurso A sigla do curso a procurar.
+     * @param anoCurricular O ano letivo/curricular do aluno (ex: 1, 2, ou 3).
+     * @return Array de Estudantes (sem espaços nulos) correspondentes ao filtro.
+     */
+    public Estudante[] getEstudantesPorCursoEAno(String siglaCurso, int anoCurricular) {
+        Estudante[] filtrados = new Estudante[this.totalEstudantes];
+        int count = 0;
+
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante est = estudantes[i];
+            if (est != null && est.getCurso() != null) {
+                if (est.getCurso().getSigla().equalsIgnoreCase(siglaCurso) && est.getAnoFrequencia() == anoCurricular) {
+                    filtrados[count] = est;
+                    count++;
+                }
+            }
+        }
+
+        Estudante[] resultadoFinal = new Estudante[count];
+        System.arraycopy(filtrados, 0, resultadoFinal, 0, count);
+        return resultadoFinal;
     }
 
     // ---------- MÉTODOS DE VERIFICAÇÃO (UNICIDADE) ----------
