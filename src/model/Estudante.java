@@ -67,23 +67,24 @@ public class Estudante extends Utilizador {
      * @param nota Valor da nota (0 a 20).
      * @param anoAtual Ano letivo em que a nota é lançada.
      */
-    public void adicionarNota(UnidadeCurricular uc, double nota, int anoAtual) {
+    public boolean adicionarNota(UnidadeCurricular uc, double nota, int anoAtual) {
+        // Verifica se já existe uma avaliação para esta UC neste ano
         for (int i = 0; i < totalAvaliacoes; i++) {
-            if (avaliacoes[i].getUc().getSigla().equals(uc.getSigla())) {
-                boolean sucesso = avaliacoes[i].adicionarResultado(nota);
-                if (!sucesso) {
-                    System.out.println("Erro: Já foram lançadas as 3 notas máximas para esta UC.");
-                }
-                return;
+            if (avaliacoes[i].getUc().getSigla().equalsIgnoreCase(uc.getSigla())) {
+                // Tenta adicionar ao array interno de notas (máx 3). Devolve o resultado.
+                return avaliacoes[i].adicionarResultado(nota);
             }
         }
 
+        // Se é a primeira nota desta UC
         if (totalAvaliacoes < avaliacoes.length) {
             Avaliacao novaAvaliacao = new Avaliacao(this, uc, anoAtual);
             novaAvaliacao.adicionarResultado(nota);
             avaliacoes[totalAvaliacoes] = novaAvaliacao;
             totalAvaliacoes++;
+            return true;
         }
+        return false;
     }
 
     /**
@@ -121,17 +122,31 @@ public class Estudante extends Utilizador {
      * * @return true se o estudante cumpre os requisitos de progressão, false caso contrário.
      */
     public boolean temAproveitamentoParaProgredir() {
-        if (totalAvaliacoes == 0) return false;
+        if (curso == null || totalAvaliacoes == 0) return false;
 
         int positivas = 0;
         for (int i = 0; i < totalAvaliacoes; i++) {
+            // Se a média daquela avaliação for >= 9.5, conta como positiva
             if (avaliacoes[i].calcularMedia() >= 9.5) {
                 positivas++;
             }
         }
 
-        double aproveitamento = (double) positivas / totalAvaliacoes;
-        return aproveitamento >= 0.60;
+        // Descobrir quantas UCs existem no curso para o ano que o aluno está a frequentar
+        int totalUcsDoAno = 0;
+        for (int i = 0; i < curso.getTotalUCs(); i++) {
+            if (curso.getUnidadesCurriculares()[i].getAnoCurricular() == this.anoFrequencia) {
+                totalUcsDoAno++;
+            }
+        }
+
+        if (totalUcsDoAno == 0) return false; // Prevenção de divisão por zero
+
+        // Calcula o rácio real
+        double aproveitamento = (double) positivas / totalUcsDoAno;
+
+        // O enunciado exige "mais que 60% de aproveitamento"
+        return aproveitamento > 0.60;
     }
 
     /**
