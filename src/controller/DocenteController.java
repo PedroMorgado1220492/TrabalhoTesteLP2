@@ -92,33 +92,33 @@ public class DocenteController {
             UnidadeCurricular ucSelecionada = minhasUcs[escolhaUc];
             Curso cursoDaUc = ucSelecionada.getCursos()[0];
 
-            view.mostrarMensagem("\n--- ALUNOS INSCRITOS EM " + cursoDaUc.getNome() + " ---");
+            // Descobre o ano da UC selecionada para saber que alunos deve procurar
+            int anoDaUc = ucSelecionada.getAnoCurricular();
 
-            Estudante[] todosEstudantes = repositorio.getEstudantes();
-            Estudante[] alunosDoCurso = new Estudante[100];
-            int totalAlunosEncontrados = 0;
+            view.mostrarMensagem("\n--- ALUNOS DO " + anoDaUc + "º ANO INSCRITOS EM " + cursoDaUc.getNome() + " ---");
 
-            for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-                if (todosEstudantes[i] != null && todosEstudantes[i].getCurso() != null &&
-                        todosEstudantes[i].getCurso().getSigla().equals(cursoDaUc.getSigla())) {
-                    alunosDoCurso[totalAlunosEncontrados] = todosEstudantes[i];
-                    totalAlunosEncontrados++;
-                    view.mostrarMensagem(totalAlunosEncontrados + " - " + todosEstudantes[i].getNome());
-                }
-            }
+            // O Controller agora apenas pede os dados ao Repositório (Cumpre MVC perfeitamente)
+            Estudante[] alunosEncontrados = repositorio.getEstudantesPorCursoEAno(cursoDaUc.getSigla(), anoDaUc);
 
-            if (totalAlunosEncontrados == 0) {
-                view.mostrarMensagem("Não existem alunos inscritos neste curso.");
+            if (alunosEncontrados.length == 0) {
+                view.mostrarMensagem("Não existem alunos do " + anoDaUc + "º ano inscritos neste curso.");
                 return;
             }
 
+            // Lista os alunos encontrados
+            for (int i = 0; i < alunosEncontrados.length; i++) {
+                view.mostrarMensagem((i + 1) + " - " + alunosEncontrados[i].getNome());
+            }
+
             int escolhaAluno = Integer.parseInt(view.pedirInputString("Escolha o Aluno (Número)")) - 1;
-            if (escolhaAluno < 0 || escolhaAluno >= totalAlunosEncontrados) {
+
+            if (escolhaAluno < 0 || escolhaAluno >= alunosEncontrados.length) {
                 view.mostrarMensagem("Aluno inválido.");
                 return;
             }
 
-            Estudante alunoSelecionado = alunosDoCurso[escolhaAluno];
+            Estudante alunoSelecionado = alunosEncontrados[escolhaAluno];
+
             view.mostrarMensagem("\nLançar nota para: " + alunoSelecionado.getNome());
             view.mostrarMensagem("Notas já lançadas: " + this.obterQuantidadeNotas(alunoSelecionado, ucSelecionada) + "/3");
 
@@ -127,8 +127,14 @@ public class DocenteController {
             if (nota < 0 || nota > 20) {
                 view.mostrarMensagem("Erro: A nota deve ser entre 0 e 20.");
             } else {
-                alunoSelecionado.adicionarNota(ucSelecionada, nota, repositorio.getAnoAtual());
-                view.mostrarMensagem("Sucesso! Nota registada no sistema.");
+                // Implementação da correção das 3 notas. O Controller reage ao booleano.
+                boolean sucesso = alunoSelecionado.adicionarNota(ucSelecionada, nota, repositorio.getAnoAtual());
+
+                if (sucesso) {
+                    view.mostrarMensagem("Sucesso! Nota registada no sistema.");
+                } else {
+                    view.mostrarMensagem("Erro: Não é possível lançar mais notas. O limite de 3 avaliações para esta UC foi atingido.");
+                }
             }
         } catch (Exception e) {
             view.mostrarMensagem("Erro na introdução de dados. Operação cancelada.");
