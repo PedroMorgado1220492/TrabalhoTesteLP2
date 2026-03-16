@@ -1,6 +1,5 @@
 Tipo;Coluna1;Coluna2;Coluna3;Coluna4;Coluna5;Coluna6;Coluna7;Coluna8;Coluna9
-GESTOR;admin@issmf.ipp.pt;admin123;Administrador Principal;111222333;Rua Central 1;01-01-1980
-GESTOR;gestor@issmf.ipp.pt;gestor123;Gestor Secundario;222333444;Avenida Brasil 2;15-06-1985
+GESTOR;backoffice@issmf.ipp.pt;admin123;Administrador Principal;111222333;Rua Central 1;01-01-1980
 DEPARTAMENTO;DEI;Departamento de Engenharia Informatica
 DEPARTAMENTO;DEM;Departamento de Engenharia Mecanica
 DEPARTAMENTO;DEE;Departamento de Engenharia Eletrotecnica
