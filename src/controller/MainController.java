@@ -72,8 +72,17 @@ public class MainController {
                     criarEstudanteSemLogin();
                     break;
                 case 3:
-                    repositorio.avancarAno();
-                    view.mostrarMensagem("Sucesso! O sistema avançou para o ano letivo de " + repositorio.getAnoAtual());
+                    view.mostrarMensagem("\n--- TRANSIÇÃO DE ANO LETIVO ---");
+
+                    int proximoAno = repositorio.getAnoAtual() + 1;
+                    String confirmacao = view.pedirInputString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N)");
+
+                    if (confirmacao.equalsIgnoreCase("S")) {
+                        repositorio.avancarAno();
+                        view.mostrarMensagem("Sucesso! O sistema avançou para o ano letivo de " + repositorio.getAnoAtual() + ".");
+                    } else {
+                        view.mostrarMensagem("Operação cancelada. Mantemo-nos em " + repositorio.getAnoAtual() + ".");
+                    }
                     break;
                 case 4:
                     view.mostrarMensagem("\n--- IMPORTAR BASE DE DADOS ---");
@@ -191,7 +200,21 @@ public class MainController {
                 nif, morada, dataNascimento, cursoEscolhido, anoInscricao
         );
 
+        // --- Auto-Matrícula ---
+        if (novoEstudante.getCurso() != null && novoEstudante.getPercursoAcademico() != null) {
+            Curso cursoDoAluno = novoEstudante.getCurso();
+
+            for (int i = 0; i < cursoDoAluno.getTotalUCs(); i++) {
+                model.UnidadeCurricular uc = cursoDoAluno.getUnidadesCurriculares()[i];
+
+                if (uc.getAnoCurricular() == novoEstudante.getAnoFrequencia()) {
+                    novoEstudante.getPercursoAcademico().inscreverEmUc(uc);
+                }
+            }
+        }
+
         boolean sucesso = repositorio.adicionarEstudante(novoEstudante);
+
 
         if (sucesso) {
             view.mostrarMensagem("\nEstudante registado com sucesso no ano letivo " + anoInscricao + "!");

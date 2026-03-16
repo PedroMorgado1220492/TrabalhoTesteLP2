@@ -58,7 +58,14 @@ public class ExportadorCSV {
 
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
                 Estudante e = repo.getEstudantes()[i];
-                String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "N/A";
+
+                String siglaCurso;
+                if (e.getCurso() != null) {
+                    siglaCurso = e.getCurso().getSigla();
+                } else {
+                    siglaCurso = "N/A";
+                }
+
                 pw.println("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" + e.getPassword() + ";" +
                         e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
                         e.getAnoPrimeiraInscricao() + ";" + siglaCurso);

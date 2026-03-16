@@ -156,7 +156,13 @@ public class EstudanteController {
             Avaliacao av = historico[i];
             if (av != null) {
                 double media = av.calcularMedia();
-                String estado = (media >= 9.5) ? "APROVADO" : "REPROVADO";
+
+                String estado;
+                if (media >= 9.5) {
+                    estado = "APROVADO";
+                } else {
+                    estado = "REPROVADO";
+                }
 
                 view.mostrarMensagem(String.format("%-15s | %-10d | %-15.2f | %-10s",
                         av.getUnidadeCurricular().getSigla(),

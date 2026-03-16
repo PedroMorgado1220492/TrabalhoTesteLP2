@@ -73,7 +73,13 @@ public class ImportadorCSV {
                         break;
 
                     case "ESTUDANTE":
-                        Curso cursoEst = (dados.length > 9) ? procurarCurso(dados[9], repositorio) : null;
+                        Curso cursoEst;
+
+                        if (dados.length > 9) {
+                            cursoEst = procurarCurso(dados[9], repositorio);
+                        } else {
+                            cursoEst = null;
+                        }
 
                         Estudante est = new Estudante(
                                 Integer.parseInt(dados[1]), dados[2], dados[3], dados[4],

@@ -509,7 +509,14 @@ public class GestorController {
                     view.mostrarMensagem("\n--- LISTA DE ESTUDANTES ---");
                     Estudante[] estudantes = repositorio.getEstudantes();
                     for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-                        String siglaCurso = (estudantes[i].getCurso() != null) ? estudantes[i].getCurso().getSigla() : "N/A";
+
+                        String siglaCurso;
+                        if (estudantes[i].getCurso() != null) {
+                            siglaCurso = estudantes[i].getCurso().getSigla();
+                        } else {
+                            siglaCurso = "N/A";
+                        }
+
                         view.mostrarMensagem("- " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
                     }
                     break;
@@ -668,21 +675,17 @@ public class GestorController {
                     for (int i = 0; i < repositorio.getTotalUcs(); i++) {
                         UnidadeCurricular uc = repositorio.getUcs()[i];
                         view.mostrarMensagem("\n[" + uc.getSigla() + "] " + uc.getNome() + ":");
-                        boolean temAlunosUc = false;
-                        // Procura alunos cujo Curso contenha esta UC
-                        for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
-                            Estudante e = repositorio.getEstudantes()[j];
-                            if (e.getCurso() != null) {
-                                for (int k = 0; k < e.getCurso().getTotalUCs(); k++) {
-                                    if (e.getCurso().getUnidadesCurriculares()[k].getSigla().equals(uc.getSigla())) {
-                                        view.mostrarMensagem("  -> " + e.getNumeroMecanografico() + " - " + e.getNome());
-                                        temAlunosUc = true;
-                                        break;
-                                    }
-                                }
+
+                        Estudante[] alunosInscritos = repositorio.obterEstudantesPorUC(uc.getSigla());
+
+                        if (alunosInscritos.length == 0) {
+                            view.mostrarMensagem("  (Nenhum aluno inscrito)");
+                        } else {
+                            for (int j = 0; j < alunosInscritos.length; j++) {
+                                Estudante e = alunosInscritos[j];
+                                view.mostrarMensagem("  -> " + e.getNumeroMecanografico() + " - " + e.getNome());
                             }
                         }
-                        if (!temAlunosUc) view.mostrarMensagem("  (Nenhum aluno inscrito)");
                     }
                     break;
 

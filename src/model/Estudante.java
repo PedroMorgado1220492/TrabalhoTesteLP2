@@ -242,6 +242,15 @@ public class Estudante extends Utilizador {
 
     @Override
     public String toString() {
-        return numeroMecanografico + " - " + nome + (curso != null ? " (" + curso.getNome() + ")" : "");
+        String infoCurso;
+
+        // Verificamos se o aluno tem um curso atribuído
+        if (curso != null) {
+            infoCurso = " (" + curso.getNome() + ")";
+        } else {
+            infoCurso = "";
+        }
+
+        return numeroMecanografico + " - " + nome + infoCurso;
     }
 }
