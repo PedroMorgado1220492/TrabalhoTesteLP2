@@ -97,7 +97,7 @@ public class MainController {
                             view.mostrarMensagem("Importação cancelada.");
                             break;
                         }
-
+                        caminhoFicheiro = "bd/" + caminhoFicheiro;
                         java.io.File ficheiro = new java.io.File(caminhoFicheiro);
                         if (ficheiro.exists() && !ficheiro.isDirectory()) {
                             break;
@@ -120,7 +120,7 @@ public class MainController {
                     break;
                 case 5:
                     view.mostrarMensagem("A guardar dados e a encerrar o sistema...");
-                    ExportadorCSV.exportarDados("dados.csv", repositorio);
+                    ExportadorCSV.exportarDados("bd/dados.csv", repositorio);
                     break;
                 case 0:
                     view.mostrarMensagem("A encerrar o sistema sem guardar dados...");
