@@ -25,7 +25,7 @@ public class DocenteView {
         System.out.println("3 - Adicionar Avaliação a Aluno Específico");
         System.out.println("4 - Adicionar Avaliação à Turma");
         System.out.println("5 - Ver as Minhas Estatísticas");
-        System.out.println("6 - Sair / Logout");
+        System.out.println("0 - Sair / Logout");
         System.out.print("Opção: ");
 
         try {
@@ -45,7 +45,7 @@ public class DocenteView {
         System.out.println("2 - Alterar NIF");
         System.out.println("3 - Alterar Morada");
         System.out.println("4 - Alterar Password");
-        System.out.println("5 - Recuar");
+        System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());

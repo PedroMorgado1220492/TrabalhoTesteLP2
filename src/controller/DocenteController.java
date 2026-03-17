@@ -44,7 +44,7 @@ public class DocenteController {
                 case 5:
                     mostrarEstatisticasDocente();
                     break;
-                case 6:
+                case 0:
                     view.mostrarMensagem("A sair da conta de Docente...");
                     aExecutar = false;
                     break;
@@ -220,7 +220,7 @@ public class DocenteController {
                         } else view.mostrarMensagem("As passwords não coincidem.");
                     } else view.mostrarMensagem("Password atual incorreta.");
                     break;
-                case 5:
+                case 0:
                     aExecutar = false;
                     break;
                 default:

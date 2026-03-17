@@ -121,9 +121,8 @@ public class MainController {
                 case 5:
                     view.mostrarMensagem("A guardar dados e a encerrar o sistema...");
                     ExportadorCSV.exportarDados("dados.csv", repositorio);
-                    aExecutar = false;
                     break;
-                case 6:
+                case 0:
                     view.mostrarMensagem("A encerrar o sistema sem guardar dados...");
                     aExecutar = false;
                     break;

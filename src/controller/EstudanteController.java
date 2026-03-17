@@ -39,7 +39,7 @@ public class EstudanteController {
                 case 3:
                     verPercursoAcademico();
                     break;
-                case 4:
+                case 0:
                     view.mostrarMensagem("A sair da conta de Estudante...");
                     aExecutar = false;
                     break;
@@ -236,7 +236,7 @@ public class EstudanteController {
                         } else view.mostrarMensagem("Passwords não coincidem.");
                     } else view.mostrarMensagem("Password incorreta.");
                     break;
-                case 5:
+                case 0:
                     aExecutar = false;
                     break;
                 default:

@@ -25,8 +25,8 @@ public class MainView {
         System.out.println("2 - Criar Estudante");
         System.out.println("3 - Avançar Ano");
         System.out.println("4 - Importar CSV");
-        System.out.println("5 - Sair e Guardar");
-        System.out.println("6 - Sair Sem Guardar");
+        System.out.println("5 - Guardar CSV");
+        System.out.println("0 - Sair Sem Guardar CSV");
         System.out.print("Opção: ");
 
         try {

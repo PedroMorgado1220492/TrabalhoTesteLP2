@@ -43,7 +43,7 @@ public class GestorController {
                 case 5: gerirDocentes(); break;
                 case 6: avancarAnoLetivo(); break;
                 case 7: gerirRelatorios(); break;
-                case 8:
+                case 0:
                     view.mostrarMensagem("A sair do Backoffice...");
                     aExecutar = false;
                     break;
@@ -137,7 +137,7 @@ public class GestorController {
                         }
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -239,7 +239,7 @@ public class GestorController {
                         }
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -398,7 +398,7 @@ public class GestorController {
                         view.mostrarMensagem("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() + " | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
                     }
                     break;
-                case 5: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -520,7 +520,7 @@ public class GestorController {
                         view.mostrarMensagem("- " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
                     }
                     break;
-                case 4: aExecutar = false; break;
+                case 0: aExecutar = false; break;
             }
         }
     }
@@ -532,10 +532,9 @@ public class GestorController {
     private void gerirDocentes() {
         boolean aExecutar = true;
         while (aExecutar) {
-            String escolha = view.pedirInputString("\n--- GERIR DOCENTES ---\n1 - Adicionar Docente\n2 - Alterar Docente\n3 - Listar Docentes\n4 - Recuar\nOpção");
-
-            switch (escolha) {
-                case "1":
+            int opcao = view.mostrarMenuDocentes();
+            switch (opcao) {
+                case 1:
                     String nome = "";
                     while (true) {
                         nome = view.pedirInputString("Nome do Docente (Nome e Sobrenome)");
@@ -593,7 +592,7 @@ public class GestorController {
                     }
                     break;
 
-                case "2": // --- ALTERAR DOCENTE ---
+                case 2: // --- ALTERAR DOCENTE ---
                     String siglaDoc = view.pedirInputString("Introduza a Sigla do Docente a alterar");
                     Docente docEditar = null;
 
@@ -624,7 +623,7 @@ public class GestorController {
                         view.mostrarMensagem("Erro: Docente não encontrado.");
                     }
                     break;
-                case "3": // --- LISTAR DOCENTES ---
+                case 3: // --- LISTAR DOCENTES ---
                     view.mostrarMensagem("\n--- LISTA DE DOCENTES ---");
                     if (repositorio.getTotalDocentes() == 0) {
                         view.mostrarMensagem("Não existem docentes registados.");
@@ -635,7 +634,7 @@ public class GestorController {
                         }
                     }
                     break;
-                case "4":
+                case 0:
                     aExecutar = false;
                     break;
                 default:
@@ -738,7 +737,7 @@ public class GestorController {
                     }
                     break;
 
-                case 6:
+                case 0:
                     aExecutar = false;
                     break;
                 default:
