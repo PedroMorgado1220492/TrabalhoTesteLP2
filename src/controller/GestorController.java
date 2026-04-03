@@ -43,6 +43,8 @@ public class GestorController {
                 case 5: gerirDocentes(); break;
                 case 6: avancarAnoLetivo(); break;
                 case 7: gerirRelatorios(); break;
+                case 8: listarAlunosComDividas(); break;
+                case 9: alterarPrecoCurso(); break;
                 case 0:
                     view.mostrarMensagem("A sair do Backoffice...");
                     aExecutar = false;

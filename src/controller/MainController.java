@@ -30,8 +30,8 @@ public class MainController {
                     view.mostrarMensagem("\n--- LOGIN DO SISTEMA ---");
                     String emailLogin = view.pedirInputString("Email").trim();
                     String passwordLogin = view.pedirInputString("Password").trim();
-
-                    String tipoUtilizador = ImportadorCSV.verificarLoginRapido("bd/logins.csv", emailLogin, passwordLogin);
+                    String passEncriptada = utils.Seguranca.encriptar(passwordLogin);
+                    String tipoUtilizador = model.dal.ImportadorCSV.verificarLoginRapido("bd/logins.csv", emailLogin, passEncriptada);
 
                     if (tipoUtilizador == null) {
                         view.mostrarMensagem("Erro: Email ou Password incorretos.");
@@ -39,11 +39,8 @@ public class MainController {
                     }
 
                     view.mostrarMensagem("Login validado (" + tipoUtilizador + "). A abrir ficheiros necessários...");
-
-                    // Carregamos a base completa para a RAM porque as relações precisam de estar estabelecidas
                     carregarBaseDeDadosCompleta();
 
-                    // Encaminhamento
                     if (tipoUtilizador.equals("GESTOR")) {
                         Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
                         view.mostrarMensagem("Bem-vindo Gestor!");
@@ -128,7 +125,7 @@ public class MainController {
     }
 
     private void criarEstudanteSemLogin() {
-        // ... (EXATAMENTE o mesmo código do criarEstudanteSemLogin que tu já tens. Não precisas de mexer na lógica de criação) ...
+
         view.mostrarMensagem("\n--- NOVO REGISTO DE ESTUDANTE ---");
 
         if (repositorio.getTotalCursos() == 0) {
@@ -180,11 +177,14 @@ public class MainController {
         Curso cursoEscolhido = cursos[escolhaCurso];
         int anoInscricao = repositorio.getAnoAtual();
         int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
-        String emailGerado = EmailGenerator.gerarEmailEstudante(numeroMecanografico);
-        String passwordGerada = PasswordGenerator.generatePassword();
+        String emailGerado = utils.EmailGenerator.gerarEmailEstudante(numeroMecanografico);
+        String passwordGerada = utils.PasswordGenerator.generatePassword();
 
-        Estudante novoEstudante = new Estudante(
-                numeroMecanografico, emailGerado, passwordGerada, nome,
+        // Encriptar para guardar na base de dados
+        String passGuardadaNoSistema = utils.Seguranca.encriptar(passwordGerada);
+
+        model.bll.Estudante novoEstudante = new model.bll.Estudante(
+                numeroMecanografico, emailGerado, passGuardadaNoSistema, nome,
                 nif, morada, dataNascimento, cursoEscolhido, anoInscricao
         );
 

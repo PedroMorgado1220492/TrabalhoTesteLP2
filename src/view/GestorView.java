@@ -27,6 +27,8 @@ public class GestorView {
         System.out.println("5 - Gerir Docentes");
         System.out.println("6 - Avançar Ano Letivo");
         System.out.println("7 - Listagens e Relatórios");
+        System.out.println("8 - Ver Alunos com Dívidas");
+        System.out.println("9 - Alterar Preço de Cursos");
         System.out.println("0 - Sair / Logout");
         System.out.print("Opção: ");
         try {
@@ -177,7 +179,7 @@ public class GestorView {
     public void mostrarListaDevedores(String[] devedores, int total) {
         System.out.println("\n--- LISTA DE DEVEDORES (PROPINAS) ---");
         if (total == 0) {
-            System.out.println("✅ Excelentes notícias! Nenhum aluno tem propinas em atraso.");
+            System.out.println("Nenhum aluno tem propinas em atraso.");
         } else {
             for (int i = 0; i < total; i++) {
                 System.out.println(devedores[i]);

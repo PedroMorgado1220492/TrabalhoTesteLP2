@@ -52,4 +52,21 @@ public class MainView {
     public void mostrarMensagem(String mensagem) {
         System.out.println(">> " + mensagem);
     }
+
+    /**
+     * Pede a password ocultando os caracteres.
+     * Se estiver a correr num IDE que não suporte ocultação, avisa o utilizador e usa o Scanner normal.
+     */
+    public String pedirPassword(String mensagem) {
+        java.io.Console console = System.console();
+
+        if (console != null) {
+            char[] passwordArray = console.readPassword(mensagem + ": ");
+            return new String(passwordArray);
+        } else {
+            System.out.println("[Aviso: A consola deste IDE não oculta texto. A password será visível]");
+            System.out.print(mensagem + ": ");
+            return scanner.nextLine();
+        }
+    }
 }

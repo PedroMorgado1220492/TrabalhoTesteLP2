@@ -1,7 +1,4 @@
 TIPO;EMAIL;PASSWORD
-GESTOR;backoffice@issmf.ipp.pt;admin123
-DOCENTE;abc@issmf.ipp.pt;prof123
-DOCENTE;xyz@issmf.ipp.pt;prof123
-DOCENTE;mno@issmf.ipp.pt;prof123
-ESTUDANTE;20260001@issmf.ipp.pt;aluno123
-ESTUDANTE;20260002@issmf.ipp.pt;aluno123
+GESTOR;backoffice@issmf.ipp.pt;240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+DOCENTE;abc@issmf.ipp.pt;6c7104b281f6274092bbf18cd86dd4dff138d67f5b3a37213ec910793b8e4e7e
+ESTUDANTE;20260001@issmf.ipp.pt;eb35f8fc32b851dc8b5c91ec676dd98bf70bb20755ebbc52d5b6e2773b07049b
