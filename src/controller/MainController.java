@@ -1,33 +1,22 @@
 package controller;
 
+import model.bll.*;
+import model.dal.ExportadorCSV;
+import model.dal.ImportadorCSV;
 import utils.*;
 import view.MainView;
-import model.RepositorioDados;
-import model.Estudante;
-import model.Utilizador;
-import model.Gestor;
-import model.Docente;
-import model.Curso;
+import model.dal.RepositorioDados;
 
 public class MainController {
 
-    // ---------- ATRIBUTOS ----------
     private MainView view;
     private RepositorioDados repositorio;
 
-    // ---------- CONSTRUTOR ----------
-    public MainController() {
-        this.view = new MainView();
-        this.repositorio = new RepositorioDados();
+    public MainController(MainView view, RepositorioDados repositorio) {
+        this.view = view;
+        this.repositorio = repositorio;
     }
 
-    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
-
-    /**
-     * Ponto de entrada principal da aplicação.
-     * Gere o menu inicial (Login, Registo, Avanço de Ano, Importação e Exportação)
-     * e encaminha o utilizador para os respetivos sub-controladores consoante o seu perfil.
-     */
     public void iniciarSistema() {
         boolean aExecutar = true;
         view.mostrarMensagem("Bem-vindo ao Sistema do ISSMF!");
@@ -39,40 +28,63 @@ public class MainController {
             switch (opcao) {
                 case 1:
                     view.mostrarMensagem("\n--- LOGIN DO SISTEMA ---");
-                    String emailLogin = view.pedirInputString("Email");
-                    String passwordLogin = view.pedirInputString("Password");
+                    String emailLogin = view.pedirInputString("Email").trim();
+                    String passwordLogin = view.pedirInputString("Password").trim();
 
-                    Utilizador utilizadorLogado = repositorio.autenticar(emailLogin, passwordLogin);
+                    String tipoUtilizador = ImportadorCSV.verificarLoginRapido("bd/logins.csv", emailLogin, passwordLogin);
 
-                    if (utilizadorLogado == null) {
+                    if (tipoUtilizador == null) {
                         view.mostrarMensagem("Erro: Email ou Password incorretos.");
-                    } else {
-                        view.mostrarMensagem("Login efetuado com sucesso!");
-
-                        if (utilizadorLogado instanceof Gestor) {
-                            view.mostrarMensagem("Bem-vindo Gestor: Backoffice");
-                            GestorController gc = new GestorController((Gestor) utilizadorLogado, repositorio);
-                            gc.iniciarMenuGestor();
-
-                        } else if (utilizadorLogado instanceof Docente) {
-                            Docente docenteLogado = (Docente) utilizadorLogado;
-                            view.mostrarMensagem("Bem-vindo Docente: " + docenteLogado.getSigla());
-                            DocenteController dc = new DocenteController(docenteLogado, repositorio);
-                            dc.iniciarMenu();
-
-                        } else if (utilizadorLogado instanceof Estudante) {
-                            Estudante estudanteLogado = (Estudante) utilizadorLogado;
-                            view.mostrarMensagem("Bem-vindo Estudante: " + estudanteLogado.getNumeroMecanografico());
-                            EstudanteController ec = new EstudanteController(estudanteLogado, repositorio);
-                            ec.iniciarMenu();
-                        }
+                        break;
                     }
+
+                    view.mostrarMensagem("Login validado (" + tipoUtilizador + "). A abrir ficheiros necessários...");
+
+                    // Carregamos a base completa para a RAM porque as relações precisam de estar estabelecidas
+                    carregarBaseDeDadosCompleta();
+
+                    // Encaminhamento
+                    if (tipoUtilizador.equals("GESTOR")) {
+                        Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
+                        view.mostrarMensagem("Bem-vindo Gestor!");
+                        new GestorController((Gestor) userLogado, repositorio).iniciarMenuGestor();
+
+                    } else if (tipoUtilizador.equals("DOCENTE")) {
+                        Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
+                        view.mostrarMensagem("Bem-vindo Docente!");
+                        new DocenteController((Docente) userLogado, repositorio).iniciarMenu();
+
+                    } else if (tipoUtilizador.equals("ESTUDANTE")) {
+                        Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
+                        view.mostrarMensagem("Bem-vindo Estudante!");
+                        new EstudanteController((Estudante) userLogado, repositorio).iniciarMenu();
+                    }
+
+                    // CORREÇÃO CRÍTICA: GRAVAR O TRABALHO ANTES DE APAGAR A RAM!
+                    ExportadorCSV.exportarDados("bd", repositorio);
+
+                    this.repositorio = new RepositorioDados();
+                    view.mostrarMensagem(">> Sessão encerrada. Dados guardados e memória libertada com sucesso.");
                     break;
+
                 case 2:
+                    view.mostrarMensagem("A preparar o sistema de registo...");
+                    // CORREÇÃO CRÍTICA: Carregar tudo para não reescrever o ficheiro só com 1 aluno!
+                    carregarBaseDeDadosCompleta();
+
                     criarEstudanteSemLogin();
+
+                    ExportadorCSV.exportarDados("bd", repositorio);
+                    this.repositorio = new RepositorioDados(); // Limpar a memória no fim
                     break;
+
                 case 3:
                     view.mostrarMensagem("\n--- TRANSIÇÃO DE ANO LETIVO ---");
+                    carregarBaseDeDadosCompleta();
+
+                    // --- VALIDAÇÃO AUTOMÁTICA DE 1º ANO ---
+                    validarArranqueDeCursos();
+                    // --------------------------------------
 
                     int proximoAno = repositorio.getAnoAtual() + 1;
                     String confirmacao = view.pedirInputString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N)");
@@ -80,52 +92,22 @@ public class MainController {
                     if (confirmacao.equalsIgnoreCase("S")) {
                         repositorio.avancarAno();
                         view.mostrarMensagem("Sucesso! O sistema avançou para o ano letivo de " + repositorio.getAnoAtual() + ".");
+                        ExportadorCSV.exportarDados("bd", repositorio);
                     } else {
                         view.mostrarMensagem("Operação cancelada. Mantemo-nos em " + repositorio.getAnoAtual() + ".");
                     }
+                    this.repositorio = new RepositorioDados(); // Limpar a memória
                     break;
+
                 case 4:
-                    view.mostrarMensagem("\n--- IMPORTAR BASE DE DADOS ---");
-                    view.mostrarMensagem("Dica: Se o ficheiro estiver na mesma pasta, digite apenas 'dados.csv'.");
-                    view.mostrarMensagem("Se estiver noutra pasta, digite o caminho completo.");
-                    String caminhoFicheiro = "";
-
-                    while (true) {
-                        caminhoFicheiro = view.pedirInputString("Caminho do ficheiro CSV (ou digite 'sair' para cancelar)");
-
-                        if (caminhoFicheiro.equalsIgnoreCase("sair")) {
-                            view.mostrarMensagem("Importação cancelada.");
-                            break;
-                        }
-                        caminhoFicheiro = "bd/" + caminhoFicheiro;
-                        java.io.File ficheiro = new java.io.File(caminhoFicheiro);
-                        if (ficheiro.exists() && !ficheiro.isDirectory()) {
-                            break;
-                        } else {
-                            view.mostrarMensagem("Erro: Ficheiro não encontrado! Verifique o caminho e tente novamente.");
-                        }
-                    }
-
-                    if (!caminhoFicheiro.equalsIgnoreCase("sair")) {
-                        view.mostrarMensagem("A iniciar importação do ficheiro: " + caminhoFicheiro);
-                        ImportadorCSV.importarDados(caminhoFicheiro, repositorio);
-
-                        view.mostrarMensagem("--- Resumo da Base de Dados ---");
-                        view.mostrarMensagem("Departamentos: " + repositorio.getTotalDepartamentos());
-                        view.mostrarMensagem("Cursos:        " + repositorio.getTotalCursos());
-                        view.mostrarMensagem("Docentes:      " + repositorio.getTotalDocentes());
-                        view.mostrarMensagem("Estudantes:    " + repositorio.getTotalEstudantes());
-                        view.mostrarMensagem("UCs:           " + repositorio.getTotalUcs());
-                    }
+                    view.mostrarMensagem("Não é necessário guardar manualmente. O sistema tem Auto-Save inteligente ao sair dos menus!");
                     break;
-                case 5:
-                    view.mostrarMensagem("A guardar dados e a encerrar o sistema...");
-                    ExportadorCSV.exportarDados("bd/dados.csv", repositorio);
-                    break;
+
                 case 0:
-                    view.mostrarMensagem("A encerrar o sistema sem guardar dados...");
+                    view.mostrarMensagem("A encerrar o sistema...");
                     aExecutar = false;
                     break;
+
                 default:
                     view.mostrarMensagem("Opção inválida.");
             }
@@ -133,10 +115,20 @@ public class MainController {
     }
 
     /**
-     * Lógica isolada para permitir o registo de um novo estudante no sistema
-     * a partir do ecrã público, sem necessidade de autenticação.
+     * Helper Method: Carrega todos os ficheiros de forma estruturada e interligada
      */
+    private void carregarBaseDeDadosCompleta() {
+        ImportadorCSV.importarGestores("bd/gestores.csv", repositorio);
+        ImportadorCSV.importarDepartamentos("bd/departamentos.csv", repositorio);
+        ImportadorCSV.importarCursos("bd/cursos.csv", repositorio);
+        ImportadorCSV.importarDocentes("bd/docentes.csv", repositorio);
+        ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
+        ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
+        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
+    }
+
     private void criarEstudanteSemLogin() {
+        // ... (EXATAMENTE o mesmo código do criarEstudanteSemLogin que tu já tens. Não precisas de mexer na lógica de criação) ...
         view.mostrarMensagem("\n--- NOVO REGISTO DE ESTUDANTE ---");
 
         if (repositorio.getTotalCursos() == 0) {
@@ -164,7 +156,7 @@ public class MainController {
         while (true) {
             dataNascimento = view.pedirInputString("Data de Nascimento (DD-MM-AAAA)");
             if (Validador.isDataNascimentoValida(dataNascimento)) break;
-            view.mostrarMensagem("Erro: A data deve respeitar estritamente o formato DD-MM-AAAA (ex: 15-04-2002).");
+            view.mostrarMensagem("Erro: A data deve respeitar estritamente o formato DD-MM-AAAA.");
         }
 
         view.mostrarMensagem("\n--- Escolha o Curso ---");
@@ -178,17 +170,14 @@ public class MainController {
             try {
                 String input = view.pedirInputString("Número do Curso");
                 escolhaCurso = Integer.parseInt(input) - 1;
-                if (escolhaCurso >= 0 && escolhaCurso < repositorio.getTotalCursos()) {
-                    break;
-                }
-                view.mostrarMensagem("Erro: Escolha um número de curso válido da lista.");
+                if (escolhaCurso >= 0 && escolhaCurso < repositorio.getTotalCursos()) break;
+                view.mostrarMensagem("Erro: Escolha um número válido.");
             } catch (NumberFormatException e) {
-                view.mostrarMensagem("Erro: Por favor, introduza apenas números.");
+                view.mostrarMensagem("Erro: Apenas números.");
             }
         }
 
         Curso cursoEscolhido = cursos[escolhaCurso];
-
         int anoInscricao = repositorio.getAnoAtual();
         int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
         String emailGerado = EmailGenerator.gerarEmailEstudante(numeroMecanografico);
@@ -199,30 +188,68 @@ public class MainController {
                 nif, morada, dataNascimento, cursoEscolhido, anoInscricao
         );
 
-        // --- Auto-Matrícula ---
         if (novoEstudante.getCurso() != null && novoEstudante.getPercursoAcademico() != null) {
-            Curso cursoDoAluno = novoEstudante.getCurso();
-
-            for (int i = 0; i < cursoDoAluno.getTotalUCs(); i++) {
-                model.UnidadeCurricular uc = cursoDoAluno.getUnidadesCurriculares()[i];
-
+            for (int i = 0; i < cursoEscolhido.getTotalUCs(); i++) {
+                UnidadeCurricular uc = cursoEscolhido.getUnidadesCurriculares()[i];
                 if (uc.getAnoCurricular() == novoEstudante.getAnoFrequencia()) {
                     novoEstudante.getPercursoAcademico().inscreverEmUc(uc);
                 }
             }
         }
 
-        boolean sucesso = repositorio.adicionarEstudante(novoEstudante);
-
-
-        if (sucesso) {
-            view.mostrarMensagem("\nEstudante registado com sucesso no ano letivo " + anoInscricao + "!");
-            view.mostrarMensagem("Nº Mecanográfico: " + numeroMecanografico);
-            view.mostrarMensagem("Email: " + emailGerado);
-            view.mostrarMensagem("Password: " + passwordGerada);
-            view.mostrarMensagem("Inscrito no Curso: " + cursoEscolhido.getNome());
+        if (repositorio.adicionarEstudante(novoEstudante)) {
+            view.mostrarMensagem("\nEstudante registado com sucesso no ano " + anoInscricao + "!");
+            view.mostrarMensagem("Nº Mec: " + numeroMecanografico + " | Email: " + emailGerado + " | Pass: " + passwordGerada);
         } else {
-            view.mostrarMensagem("Erro: O sistema atingiu o limite máximo de estudantes.");
+            view.mostrarMensagem("Erro: Limite máximo de estudantes atingido.");
+        }
+    }
+
+    /**
+     * Valida automaticamente se os cursos têm o mínimo de 5 alunos no 1º ano.
+     * Cursos com menos de 5 alunos no 1º ano são cancelados e os alunos removidos.
+     */
+    private void validarArranqueDeCursos() {
+        view.mostrarMensagem("\n>> A verificar o número mínimo de alunos (5) para as turmas de 1º ano...");
+
+        if (repositorio.getTotalCursos() == 0) return;
+
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            Curso curso = repositorio.getCursos()[i];
+            int inscritosPrimeiroAno = 0;
+
+            // Contar os alunos do 1º ano deste curso
+            for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
+                Estudante e = repositorio.getEstudantes()[j];
+                if (e != null && e.getCurso() != null) {
+                    if (e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoFrequencia() == 1) {
+                        inscritosPrimeiroAno++;
+                    }
+                }
+            }
+
+            // Aplicar a Regra
+            if (inscritosPrimeiroAno > 0 && inscritosPrimeiroAno < 5) {
+                view.mostrarMensagem("   [AVISO] " + curso.getSigla() + " cancelado no 1º ano! Apenas " + inscritosPrimeiroAno + " inscritos.");
+                anularMatriculasPrimeiroAno(curso.getSigla());
+            } else if (inscritosPrimeiroAno >= 5) {
+                view.mostrarMensagem("   [OK] " + curso.getSigla() + " aprovado para o 1º ano (" + inscritosPrimeiroAno + " inscritos).");
+            }
+        }
+        view.mostrarMensagem(">> Validação concluída!\n");
+    }
+
+    /**
+     * Remove os alunos do 1º ano de um curso que foi cancelado.
+     */
+    private void anularMatriculasPrimeiroAno(String siglaCurso) {
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            Estudante e = repositorio.getEstudantes()[i];
+
+            if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(siglaCurso) && e.getAnoFrequencia() == 1) {
+                repositorio.removerEstudante(e.getNumeroMecanografico());
+                i--; // Importante: recuar o índice porque o array encolheu após a remoção
+            }
         }
     }
 }

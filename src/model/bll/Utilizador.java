@@ -1,4 +1,4 @@
-package model;
+package model.bll;
 
 public abstract class Utilizador {
 

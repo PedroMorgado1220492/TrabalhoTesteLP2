@@ -1,4 +1,4 @@
-package model;
+package model.bll;
 
 public class PercursoAcademico {
 
@@ -63,7 +63,7 @@ public class PercursoAcademico {
      * Limpa as inscrições e notas do ano letivo atual para preparar o novo ano.
      */
     public void limparInscricoesAtivas() {
-        this.ucsInscrito = new UnidadeCurricular[20]; // Espaço de sobra para atrasos + novo ano
+        this.ucsInscrito = new UnidadeCurricular[20];
         this.totalUcsInscrito = 0;
         this.avaliacoes = new Avaliacao[20];
         this.totalAvaliacoes = 0;

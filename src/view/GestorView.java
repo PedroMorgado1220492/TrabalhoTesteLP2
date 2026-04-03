@@ -170,4 +170,49 @@ public class GestorView {
     public void mostrarMensagem(String mensagem) {
         System.out.println(">> " + mensagem);
     }
+
+    /**
+     * Mostra a lista final de alunos em dívida construída pelo controlador.
+     */
+    public void mostrarListaDevedores(String[] devedores, int total) {
+        System.out.println("\n--- LISTA DE DEVEDORES (PROPINAS) ---");
+        if (total == 0) {
+            System.out.println("✅ Excelentes notícias! Nenhum aluno tem propinas em atraso.");
+        } else {
+            for (int i = 0; i < total; i++) {
+                System.out.println(devedores[i]);
+            }
+        }
+    }
+
+    /**
+     * Imprime a lista de cursos e pede para escolher um para alterar a propina.
+     */
+    public int mostrarCursosParaPropina(model.bll.Curso[] cursos, int totalCursos) {
+        System.out.println("\n--- ATUALIZAR PREÇO DO CURSO (PROPINAS) ---");
+        System.out.println("Aviso: Esta alteração afetará APENAS os novos alunos que se inscreverem a partir de agora.");
+        System.out.println("Os alunos antigos manterão o valor (Direitos Adquiridos).\n");
+
+        for (int i = 0; i < totalCursos; i++) {
+            if (cursos[i] != null) {
+                System.out.println((i + 1) + " - " + cursos[i].getNome() + " (Preço Atual: " + cursos[i].getValorPropinaAnual() + "€)");
+            }
+        }
+
+        System.out.print("Escolha o número do curso: ");
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    public double pedirNovoPreco() {
+        System.out.print("Introduza a nova propina anual (€): ");
+        try {
+            return Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1.0;
+        }
+    }
 }

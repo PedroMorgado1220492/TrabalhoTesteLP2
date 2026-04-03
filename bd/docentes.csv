@@ -1,0 +1,4 @@
+TIPO;SIGLA;EMAIL;PASSWORD;NOME;NIF;MORADA;DATANASCIMENTO
+DOCENTE;ABC;abc@issmf.ipp.pt;prof123;Antonio Bernardo Costa;111222333;Rua A;01-01-1970
+DOCENTE;XYZ;xyz@issmf.ipp.pt;prof123;Xavier Ygor Zeca;444555666;Rua B;02-02-1975
+DOCENTE;MNO;mno@issmf.ipp.pt;prof123;Maria Nogueira Oliveira;777888999;Rua C;03-03-1980

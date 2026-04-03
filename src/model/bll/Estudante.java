@@ -1,4 +1,4 @@
-package model;
+package model.bll;
 
 public class Estudante extends Utilizador {
 
@@ -9,6 +9,9 @@ public class Estudante extends Utilizador {
     private int anoCurricular;
     private int anoFrequencia;
     private PercursoAcademico percursoAcademico;
+    private Propina[] propinas;
+    private int totalPropinas;
+    private double valorPropinaBase;
 
     // Arrays de Avaliações
     private Avaliacao[] avaliacoes;
@@ -32,7 +35,17 @@ public class Estudante extends Utilizador {
 
         this.historicoAvaliacoes = new Avaliacao[150];
         this.totalHistorico = 0;
+
+        this.propinas = new Propina[10];
+        this.totalPropinas = 0;
+
+        if (this.curso != null) {
+            this.valorPropinaBase = curso.getValorPropinaAnual();
+            adicionarPropina(anoPrimeiraInscricao, this.valorPropinaBase);
+        }
     }
+
+
 
     // ---------- GETTERS ----------
     public int getNumeroMecanografico() { return numeroMecanografico; }
@@ -46,6 +59,7 @@ public class Estudante extends Utilizador {
     public int getTotalAvaliacoes() { return this.totalAvaliacoes; }
     public Avaliacao[] getHistoricoAvaliacoes() { return historicoAvaliacoes; }
     public int getTotalHistorico() { return totalHistorico; }
+    public double getValorPropinaBase() { return valorPropinaBase; }
 
     // ---------- SETTERS ----------
     public void setNome(String nome) { this.nome = nome; }
@@ -57,6 +71,7 @@ public class Estudante extends Utilizador {
     public void setAnoFrequencia(int anoFrequencia) { this.anoFrequencia = anoFrequencia; }
     public void setPercursoAcademico(PercursoAcademico percursoAcademico) { this.percursoAcademico = percursoAcademico; }
     public void setDataNascimento(String dataNascimento) { this.dataNascimento = dataNascimento; }
+    public void setValorPropinaBase(double ValorPropinaBase) { this.valorPropinaBase = ValorPropinaBase; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
@@ -179,27 +194,18 @@ public class Estudante extends Utilizador {
             }
         }
 
-        // 2. A LÓGICA DE PROGRESSÃO
-        if (temAproveitamentoParaProgredir()) {
-            if (anoFrequencia < 3) {
-                anoFrequencia++;
-            } else {
-                System.out.println(">> Parabéns! O aluno " + nome + " concluiu o curso!");
-            }
-        }
-
-        // 3. A LÓGICA DE ARQUIVO
+        // 2. A LÓGICA DE ARQUIVO
         arquivarAvaliacoes();
 
-        // 4. Limpar as inscrições do ano que acabou de terminar
+        // 3. Limpar as inscrições do ano que acabou de terminar
         percursoAcademico.limparInscricoesAtivas();
 
-        // 5. AUTO-MATRÍCULA: Primeiro, reinscrever nas que chumbou
+        // 4. AUTO-MATRÍCULA: Primeiro, reinscrever nas que chumbou
         for (int j = 0; j < totalRepetir; j++) {
             percursoAcademico.inscreverEmUc(ucsParaRepetir[j]);
         }
 
-        // 6. AUTO-MATRÍCULA: Inscrever nas cadeiras novas do seu ano atual
+        // 5. AUTO-MATRÍCULA: Inscrever nas cadeiras novas do seu ano atual
         for (int j = 0; j < curso.getTotalUCs(); j++) {
             UnidadeCurricular ucCurso = curso.getUnidadesCurriculares()[j];
 
@@ -207,6 +213,16 @@ public class Estudante extends Utilizador {
                 if (!estaInscrito(ucCurso.getSigla()) && !jaConcluiuUC(ucCurso.getSigla())) {
                     percursoAcademico.inscreverEmUc(ucCurso);
                 }
+            }
+        }
+        // 6. A LÓGICA DE PROGRESSÃO (COM VALIDAÇÃO FINANCEIRA)
+        if (temDividas()) {
+            System.out.println(">> BLOQUEADO: O aluno " + nome + " não pode progredir de ano devido a propinas em atraso.");
+        } else if (temAproveitamentoParaProgredir()) {
+            if (anoFrequencia < 3) {
+                anoFrequencia++;
+            } else {
+                System.out.println(">> Parabéns! O aluno " + nome + " concluiu o curso!");
             }
         }
     }
@@ -252,5 +268,25 @@ public class Estudante extends Utilizador {
         }
 
         return numeroMecanografico + " - " + nome + infoCurso;
+    }
+
+    public void adicionarPropina(int anoLetivo, double valor) {
+        if (totalPropinas < propinas.length) {
+            propinas[totalPropinas++] = new Propina(anoLetivo, valor);
+        }
+    }
+
+    public Propina getPropinaDoAno(int ano) {
+        for (int i = 0; i < totalPropinas; i++) {
+            if (propinas[i].getAnoLetivo() == ano) return propinas[i];
+        }
+        return null;
+    }
+
+    public boolean temDividas() {
+        for (int i = 0; i < totalPropinas; i++) {
+            if (!propinas[i].isPagaTotalmente()) return true;
+        }
+        return false;
     }
 }

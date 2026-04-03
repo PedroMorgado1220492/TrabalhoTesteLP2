@@ -1,4 +1,6 @@
-package model;
+package model.dal;
+
+import model.bll.*;
 
 public class RepositorioDados {
 
@@ -246,6 +248,25 @@ public class RepositorioDados {
     public boolean existeSiglaDocente(String sigla) {
         for (int i = 0; i < totalDocentes; i++) {
             if (docentes[i] != null && docentes[i].getSigla().equalsIgnoreCase(sigla)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove um estudante do repositório através do seu número mecanográfico.
+     */
+    public boolean removerEstudante(int numMec) {
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i].getNumeroMecanografico() == numMec) {
+                // Deslocar todos os estudantes à direita uma casa para a esquerda
+                for (int j = i; j < totalEstudantes - 1; j++) {
+                    estudantes[j] = estudantes[j + 1];
+                }
+                // Limpar a última posição e reduzir o total
+                estudantes[totalEstudantes - 1] = null;
+                totalEstudantes--;
+                return true;
+            }
         }
         return false;
     }

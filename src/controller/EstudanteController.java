@@ -1,9 +1,11 @@
 package controller;
 
-import model.Avaliacao;
+import model.bll.Avaliacao;
+import model.bll.Curso;
+import model.bll.UnidadeCurricular;
 import view.EstudanteView;
-import model.Estudante;
-import model.RepositorioDados;
+import model.bll.Estudante;
+import model.dal.RepositorioDados;
 
 public class EstudanteController {
 
@@ -54,7 +56,7 @@ public class EstudanteController {
      * as inscrições atuais e o histórico de aprovações, agrupado por Ano Curricular.
      */
     private void verPercursoAcademico() {
-        model.Curso curso = estudanteLogado.getCurso();
+        Curso curso = estudanteLogado.getCurso();
         if (curso == null) {
             view.mostrarMensagem("Não tem nenhum curso associado.");
             return;
@@ -70,7 +72,7 @@ public class EstudanteController {
 
             // Para cada ano, procuramos no curso inteiro as UCs correspondentes
             for (int i = 0; i < curso.getTotalUCs(); i++) {
-                model.UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+                UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
 
                 // Só processa a UC se ela pertencer ao bloco do ano atual
                 if (uc.getAnoCurricular() == ano) {
@@ -107,7 +109,7 @@ public class EstudanteController {
                         double notaHistorico = 0.0;
 
                         for (int j = 0; j < estudanteLogado.getTotalHistorico(); j++) {
-                            model.Avaliacao avHist = estudanteLogado.getHistoricoAvaliacoes()[j];
+                            Avaliacao avHist = estudanteLogado.getHistoricoAvaliacoes()[j];
                             if (avHist.getUnidadeCurricular().getSigla().equalsIgnoreCase(sigla)) {
                                 double mediaAntiga = avHist.calcularMedia();
                                 if (mediaAntiga >= 9.5) {
@@ -242,6 +244,59 @@ public class EstudanteController {
                 default:
                     view.mostrarMensagem("Opção inválida.");
             }
+        }
+    }
+
+    private void gerirPropinas() {
+        model.bll.Propina propina = estudanteLogado.getPropinaDoAno(repositorio.getAnoAtual());
+
+        if (propina == null) {
+            view.mostrarMensagem("Erro: Nenhuma propina gerada para o ano letivo atual.");
+            return;
+        }
+
+        // 1. Mandar a View desenhar o extrato da propina
+        view.mostrarDetalhesPropina(
+                propina.getValorTotal(), propina.getValorPago(), propina.getValorEmDivida(),
+                propina.getHistoricoPagamentos(), propina.getTotalPagamentos(), propina.isPagaTotalmente()
+        );
+
+        if (propina.isPagaTotalmente()) return;
+
+        // 2. Mandar a View desenhar o menu e recolher a opção
+        double prestacaoFixa = propina.getValorTotal() / 10;
+        int opcao = view.mostrarOpcoesPagamento(propina.getValorEmDivida(), prestacaoFixa);
+
+        double valorAPagar = 0;
+
+        // 3. Processar a opção do utilizador
+        switch (opcao) {
+            case 1:
+                valorAPagar = propina.getValorEmDivida();
+                break;
+            case 2:
+                valorAPagar = Math.min(prestacaoFixa, propina.getValorEmDivida());
+                break;
+            case 3:
+                valorAPagar = view.pedirValorPagamento();
+                if (valorAPagar <= 0) {
+                    view.mostrarMensagem("Erro: Valor inválido.");
+                    return;
+                }
+                break;
+            case 0:
+                return;
+            default:
+                view.mostrarMensagem("Opção inválida.");
+                return;
+        }
+
+        // 4. Executar a ação no Model e Guardar
+        if (propina.registarPagamento(valorAPagar)) {
+            view.mostrarMensagem("Sucesso! Pagamento de " + valorAPagar + "€ registado.");
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.mostrarMensagem("Erro: Valor superior à dívida atual ou inválido.");
         }
     }
 }

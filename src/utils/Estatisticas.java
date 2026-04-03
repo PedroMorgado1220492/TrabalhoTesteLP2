@@ -1,10 +1,10 @@
 package utils;
 
-import model.RepositorioDados;
-import model.Estudante;
-import model.Curso;
-import model.Docente;
-import model.Avaliacao;
+import model.dal.RepositorioDados;
+import model.bll.Estudante;
+import model.bll.Curso;
+import model.bll.Docente;
+import model.bll.Avaliacao;
 
 public class Estatisticas {
 

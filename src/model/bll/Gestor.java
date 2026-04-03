@@ -1,4 +1,4 @@
-package model;
+package model.bll;
 
 import utils.EmailGenerator;
 import utils.PasswordGenerator;

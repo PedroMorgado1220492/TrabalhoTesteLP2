@@ -1,13 +1,13 @@
 package controller;
 
 import view.GestorView;
-import model.Gestor;
-import model.RepositorioDados;
-import model.Departamento;
-import model.Curso;
-import model.UnidadeCurricular;
-import model.Docente;
-import model.Estudante;
+import model.bll.Gestor;
+import model.dal.RepositorioDados;
+import model.bll.Departamento;
+import model.bll.Curso;
+import model.bll.UnidadeCurricular;
+import model.bll.Docente;
+import model.bll.Estudante;
 import utils.Validador;
 
 public class GestorController {
@@ -743,6 +743,107 @@ public class GestorController {
                 default:
                     view.mostrarMensagem("Opção inválida.");
             }
+        }
+    }
+    /**
+     * Valida se os cursos têm o mínimo de 5 alunos no 1º ano para poderem abrir.
+     * Cursos com menos de 5 alunos no 1º ano são cancelados e os alunos removidos.
+     */
+    private void validarArranqueDeCursos() {
+        view.mostrarMensagem("\n--- VALIDAÇÃO DE ARRANQUE DE CURSOS (1º ANO) ---");
+
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarMensagem("Não existem cursos registados no sistema.");
+            return;
+        }
+
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            model.bll.Curso curso = repositorio.getCursos()[i];
+            int inscritosPrimeiroAno = 0;
+
+            // 1. Contar os alunos do 1º ano inscritos neste curso
+            for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
+                model.bll.Estudante e = repositorio.getEstudantes()[j];
+                if (e != null && e.getCurso() != null) {
+                    if (e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoFrequencia() == 1) {
+                        inscritosPrimeiroAno++;
+                    }
+                }
+            }
+
+            // 2. Aplicar a Regra de Negócio
+            if (inscritosPrimeiroAno >= 5) {
+                view.mostrarMensagem("O " + curso.getSigla() + " vai abrir o 1º ano (" + inscritosPrimeiroAno + " alunos inscritos).");
+
+            } else if (inscritosPrimeiroAno > 0 && inscritosPrimeiroAno < 5) {
+                view.mostrarMensagem("O " + curso.getSigla() + "foi CANCELADO no 1º ano! Apenas " + inscritosPrimeiroAno + " alunos (Mínimo: 5).");
+                view.mostrarMensagem("   A anular as matrículas destes " + inscritosPrimeiroAno + " alunos...");
+
+                // Anular matrículas (remover os alunos do sistema)
+                anularMatriculasPrimeiroAno(curso.getSigla());
+
+            } else {
+                view.mostrarMensagem("O " + curso.getSigla() + " não tem inscritos no 1º ano.");
+            }
+        }
+
+        view.mostrarMensagem("\nValidação concluída! As turmas do 2º e 3º ano não foram afetadas pela regra.");
+    }
+
+    /**
+     * Método auxiliar para remover os alunos do 1º ano de um curso cancelado.
+     */
+    private void anularMatriculasPrimeiroAno(String siglaCurso) {
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            model.bll.Estudante e = repositorio.getEstudantes()[i];
+
+            if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(siglaCurso) && e.getAnoFrequencia() == 1) {
+                // Remove o aluno do repositório
+                repositorio.removerEstudante(e.getNumeroMecanografico());
+                // Como removemos um elemento e o array é reorganizado, recuamos o índice para não saltar ninguém
+                i--;
+            }
+        }
+    }
+
+    private void listarAlunosComDividas() {
+        // O array temporário serve apenas para entregar a "informação pura" à view
+        String[] devedores = new String[repositorio.getTotalEstudantes()];
+        int totalDevedores = 0;
+
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            model.bll.Estudante e = repositorio.getEstudantes()[i];
+
+            if (e != null && e.temDividas()) {
+                model.bll.Propina propinaAtual = e.getPropinaDoAno(repositorio.getAnoAtual());
+                double divida = (propinaAtual != null) ? propinaAtual.getValorEmDivida() : 0.0;
+
+                // Formatar os dados no Controller (Regras de negócio)
+                devedores[totalDevedores++] = "O " + e.getNumeroMecanografico() + " - " + e.getNome() + " | Dívida: " + divida + "€";
+            }
+        }
+
+        // Delegar a exibição na View
+        view.mostrarListaDevedores(devedores, totalDevedores);
+    }
+
+    private void alterarPrecoCurso() {
+        int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos());
+
+        if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
+            model.bll.Curso cursoEscolhido = repositorio.getCursos()[escolha - 1];
+
+            double novoPreco = view.pedirNovoPreco();
+
+            if (novoPreco > 0) {
+                cursoEscolhido.setValorPropinaAnual(novoPreco);
+                view.mostrarMensagem("Sucesso! O curso " + cursoEscolhido.getSigla() + " custa agora " + novoPreco + "€/ano.");
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarMensagem("Erro: Tem de introduzir um valor superior a 0.");
+            }
+        } else {
+            view.mostrarMensagem("Curso não encontrado ou opção inválida.");
         }
     }
 }

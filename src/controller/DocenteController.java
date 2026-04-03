@@ -1,6 +1,10 @@
 package controller;
 
-import model.*;
+import model.bll.Avaliacao;
+import model.bll.Docente;
+import model.bll.Estudante;
+import model.bll.UnidadeCurricular;
+import model.dal.RepositorioDados;
 import view.DocenteView;
 import utils.Validador;
 
@@ -80,7 +84,7 @@ public class DocenteController {
         // 1. ESCOLHER A UC
         view.mostrarMensagem("\n--- AS MINHAS UNIDADES CURRICULARES ---");
         for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
-            model.UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
+            UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
             view.mostrarMensagem((i + 1) + " - " + uc.getNome() + " [" + uc.getSigla() + "]");
         }
 
@@ -97,10 +101,10 @@ public class DocenteController {
             return;
         }
 
-        model.UnidadeCurricular ucSelecionada = docenteLogado.getUcsLecionadas()[escolhaUC];
+        UnidadeCurricular ucSelecionada = docenteLogado.getUcsLecionadas()[escolhaUC];
 
         // 2. OBTER APENAS OS ALUNOS INSCRITOS NESTA CADEIRA
-        model.Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
+        Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
 
         if (alunosDaUC.length == 0) {
             view.mostrarMensagem("Não existem alunos inscritos a esta Unidade Curricular neste momento.");
@@ -126,7 +130,7 @@ public class DocenteController {
             return;
         }
 
-        model.Estudante alunoSelecionado = alunosDaUC[escolhaAluno];
+        Estudante alunoSelecionado = alunosDaUC[escolhaAluno];
 
         // 4. LANÇAR A NOTA
 
@@ -258,7 +262,7 @@ public class DocenteController {
         // 1. ESCOLHER A UC
         view.mostrarMensagem("\n--- LANÇAMENTO CONTÍNUO DE NOTAS ---");
         for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
-            model.UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
+            UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
             view.mostrarMensagem((i + 1) + " - " + uc.getNome() + " [" + uc.getSigla() + "]");
         }
 
@@ -275,10 +279,10 @@ public class DocenteController {
             return;
         }
 
-        model.UnidadeCurricular ucSelecionada = docenteLogado.getUcsLecionadas()[escolhaUC];
+        UnidadeCurricular ucSelecionada = docenteLogado.getUcsLecionadas()[escolhaUC];
 
         // 2. OBTER A TURMA (ALUNOS INSCRITOS)
-        model.Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
+        Estudante[] alunosDaUC = repositorio.obterEstudantesPorUC(ucSelecionada.getSigla());
 
         if (alunosDaUC.length == 0) {
             view.mostrarMensagem("Não existem alunos inscritos a esta Unidade Curricular neste momento.");
@@ -292,7 +296,7 @@ public class DocenteController {
 
         // 3. CICLO CONTÍNUO ALUNO A ALUNO
         for (int i = 0; i < alunosDaUC.length; i++) {
-            model.Estudante aluno = alunosDaUC[i];
+            Estudante aluno = alunosDaUC[i];
 
             // Verifica logo se este aluno já tem as 3 notas máximas
             int proximaNota = aluno.obterNumeroProximaAvaliacao(ucSelecionada.getSigla());

@@ -1,4 +1,4 @@
-package model;
+package model.bll;
 
 public class Curso {
 
@@ -8,7 +8,7 @@ public class Curso {
     private Departamento departamento;
     private Docente docenteResponsavel;
     private final int duracaoAnos = 3;
-
+    private double valorPropinaAnual = 1000.00;
     private UnidadeCurricular[] unidadesCurriculares;
     private int totalUCs;
 
@@ -69,4 +69,7 @@ public class Curso {
 
         return contadorUcsNesteAno < 5;
     }
+
+    public double getValorPropinaAnual() { return valorPropinaAnual; }
+    public void setValorPropinaAnual(double valorPropinaAnual) { this.valorPropinaAnual = valorPropinaAnual; }
 }
