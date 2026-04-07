@@ -41,6 +41,9 @@ public class EstudanteController {
                 case 3:
                     verPercursoAcademico();
                     break;
+                case 4:
+                    gerirPropinas();
+                    break;
                 case 0:
                     view.mostrarMensagem("A sair da conta de Estudante...");
                     aExecutar = false;

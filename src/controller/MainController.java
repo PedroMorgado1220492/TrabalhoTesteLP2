@@ -29,7 +29,7 @@ public class MainController {
                 case 1:
                     view.mostrarMensagem("\n--- LOGIN DO SISTEMA ---");
                     String emailLogin = view.pedirInputString("Email").trim();
-                    String passwordLogin = view.pedirInputString("Password").trim();
+                    String passwordLogin = view.pedirPassword("Password").trim();
                     String passEncriptada = utils.Seguranca.encriptar(passwordLogin);
                     String tipoUtilizador = model.dal.ImportadorCSV.verificarLoginRapido("bd/logins.csv", emailLogin, passEncriptada);
 
@@ -42,22 +42,24 @@ public class MainController {
                     carregarBaseDeDadosCompleta();
 
                     if (tipoUtilizador.equals("GESTOR")) {
-                        Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
+
+                        Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
                         view.mostrarMensagem("Bem-vindo Gestor!");
                         new GestorController((Gestor) userLogado, repositorio).iniciarMenuGestor();
 
                     } else if (tipoUtilizador.equals("DOCENTE")) {
-                        Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
+
+                        Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
                         view.mostrarMensagem("Bem-vindo Docente!");
                         new DocenteController((Docente) userLogado, repositorio).iniciarMenu();
 
                     } else if (tipoUtilizador.equals("ESTUDANTE")) {
-                        Utilizador userLogado = repositorio.autenticar(emailLogin, passwordLogin);
+
+                        Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
                         view.mostrarMensagem("Bem-vindo Estudante!");
                         new EstudanteController((Estudante) userLogado, repositorio).iniciarMenu();
                     }
 
-                    // CORREÇÃO CRÍTICA: GRAVAR O TRABALHO ANTES DE APAGAR A RAM!
                     ExportadorCSV.exportarDados("bd", repositorio);
 
                     this.repositorio = new RepositorioDados();

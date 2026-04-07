@@ -23,6 +23,7 @@ public class EstudanteView {
         System.out.println("1 - Ver Dados Pessoais");
         System.out.println("2 - Atualizar Dados");
         System.out.println("3 - Percurso Académico");
+        System.out.println("4 - Propinas");
         System.out.println("0 - Sair / Logout");
         System.out.print("Escolha uma opção: ");
         try {
