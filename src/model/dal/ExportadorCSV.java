@@ -59,11 +59,11 @@ public class ExportadorCSV {
 
     private static void exportarGestores(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;EMAIL;PASSWORD;NOME;NIF;MORADA;DATANASCIMENTO");
+            pw.println("TIPO;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO");
             for (int i = 0; i < repo.getTotalGestores(); i++) {
                 Gestor g = repo.getGestores()[i];
                 if (g != null) {
-                    pw.println("GESTOR;" + g.getEmail() + ";" + g.getPassword() + ";" + g.getNome() + ";" +
+                    pw.println("GESTOR;" + g.getEmail() + ";" + g.getNome() + ";" +
                             g.getNif() + ";" + g.getMorada() + ";" + g.getDataNascimento());
                 }
             }
@@ -94,11 +94,11 @@ public class ExportadorCSV {
 
     private static void exportarDocentes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;EMAIL;PASSWORD;NOME;NIF;MORADA;DATANASCIMENTO");
+            pw.println("TIPO;SIGLA;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO");
             for (int i = 0; i < repo.getTotalDocentes(); i++) {
                 Docente d = repo.getDocentes()[i];
                 if (d != null) {
-                    pw.println("DOCENTE;" + d.getSigla() + ";" + d.getEmail() + ";" + d.getPassword() + ";" +
+                    pw.println("DOCENTE;" + d.getSigla() + ";" + d.getEmail() + ";" +
                             d.getNome() + ";" + d.getNif() + ";" + d.getMorada() + ";" + d.getDataNascimento());
                 }
             }
@@ -123,16 +123,14 @@ public class ExportadorCSV {
 
     private static void exportarEstudantes(String caminho, RepositorioDados repo) {
         try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(caminho))) {
-            // Atualizamos o cabeçalho para refletir as novas colunas (apenas ilustrativo)
-            pw.println("TIPO;NUM_MEC;EMAIL;PASSWORD;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
-
+            pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
                 model.bll.Estudante e = repo.getEstudantes()[i];
                 if (e != null) {
                     String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
 
                     // 1. Escrever os dados básicos e o Valor Base da Propina
-                    pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" + e.getPassword() + ";" +
+                    pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
                             e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
                             e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getValorPropinaBase());
 
@@ -146,16 +144,13 @@ public class ExportadorCSV {
                             pw.print(";" + propina.getHistoricoPagamentos()[j]);
                         }
                     } else {
-                        // Se por algum motivo o aluno não tiver propina gerada, metemos tudo a zero
+                        // Se por algum motivo o aluno não tiver propina gerada, fica tudo a zero
                         pw.print(";0.0;0");
                     }
-
                     pw.println();
                 }
             }
-        } catch (java.io.IOException e) {
-            System.out.println("Erro ao exportar estudantes: " + e.getMessage());
-        }
+        } catch (java.io.IOException e) { System.out.println("Erro ao exportar estudantes: " + e.getMessage()); }
     }
     private static void exportarAvaliacoes(String caminho, RepositorioDados repo) {
         try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(caminho))) {

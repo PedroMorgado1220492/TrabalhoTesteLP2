@@ -64,7 +64,7 @@ public class MainView {
             char[] passwordArray = console.readPassword(mensagem + ": ");
             return new String(passwordArray);
         } else {
-            System.out.println("[Aviso: A consola deste IDE não oculta texto. A password será visível]");
+            System.out.println("[Aviso: A password será visível no IDE para a tornar invisivel usar a Consola]");
             System.out.print(mensagem + ": ");
             return scanner.nextLine();
         }

@@ -466,8 +466,12 @@ public class GestorController {
                             numeroMecanografico, nome, nif, morada, dataNascimento, cursos[escolhaCurso], anoInscricao
                     );
 
+                    String passGeradaEst = novoEstudante.getPassword();
+                    novoEstudante.setPassword(utils.Seguranca.encriptar(passGeradaEst));
                     if (repositorio.adicionarEstudante(novoEstudante)) {
-                        view.mostrarMensagem("Estudante registado com sucesso! Email: " + novoEstudante.getEmail());
+                        view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
+                    } else {
+                        view.mostrarMensagem("Erro: Limite máximo de estudantes atingido.");
                     }
                     break;
                 case 2: // --- ALTERAR ESTUDANTE ---
@@ -587,12 +591,14 @@ public class GestorController {
 
                     Docente novoDocente = gestorAtivo.criarDocente(siglaGerada, nome, nif, morada, dataNascimento);
 
+                    String passGeradaDoc = novoDocente.getPassword();
+                    novoDocente.setPassword(utils.Seguranca.encriptar(passGeradaDoc));
+
                     if (repositorio.adicionarDocente(novoDocente)) {
-                        view.mostrarMensagem("Docente '" + nome + "' registado com sucesso! Email: " + novoDocente.getEmail());
+                        view.mostrarCredenciaisCriadas("DOCENTE", novoDocente.getNome(), novoDocente.getEmail(), passGeradaDoc);
                     } else {
                         view.mostrarMensagem("Erro: Limite de docentes atingido.");
                     }
-                    break;
 
                 case 2: // --- ALTERAR DOCENTE ---
                     String siglaDoc = view.pedirInputString("Introduza a Sigla do Docente a alterar");

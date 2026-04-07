@@ -41,7 +41,8 @@ public class ImportadorCSV {
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
-                repositorio.adicionarGestor(new Gestor(dados[1], dados[2], dados[3], dados[4], dados[5], dados[6]));
+                String pass = procurarPasswordNoLogins("bd/logins.csv", dados[1]);
+                repositorio.adicionarGestor(new Gestor(dados[1], pass, dados[2], dados[3], dados[4], dados[5]));
             }
         } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
     }
@@ -63,7 +64,8 @@ public class ImportadorCSV {
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
-                repositorio.adicionarDocente(new Docente(dados[1], dados[2], dados[3], dados[4], dados[5], dados[6], dados[7]));
+                String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
+                repositorio.adicionarDocente(new Docente(dados[1], dados[2], pass, dados[3], dados[4], dados[5], dados[6]));
             }
         } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
     }
@@ -113,41 +115,36 @@ public class ImportadorCSV {
                 if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
 
-                model.bll.Curso cursoEst = (dados.length > 9 && !dados[9].isEmpty()) ? procurarCurso(dados[9], repositorio) : null;
+                String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
+                model.bll.Curso cursoEst = (dados.length > 8 && !dados[8].isEmpty()) ? procurarCurso(dados[8], repositorio) : null;
 
                 model.bll.Estudante est = new model.bll.Estudante(
-                        Integer.parseInt(dados[1]), dados[2], dados[3], dados[4],
-                        dados[5], dados[6], dados[7], cursoEst, Integer.parseInt(dados[8])
+                        Integer.parseInt(dados[1]), dados[2], pass, dados[3],
+                        dados[4], dados[5], dados[6], cursoEst, Integer.parseInt(dados[7])
                 );
 
                 // --- PROPINA E PRESTAÇÕES ---
-                if (dados.length > 10 && !dados[10].isEmpty()) {
-                    double precoAntigo = Double.parseDouble(dados[10]);
+                if (dados.length > 9 && !dados[9].isEmpty()) {
+                    double precoAntigo = Double.parseDouble(dados[9]);
                     est.setValorPropinaBase(precoAntigo);
 
                     model.bll.Propina propinaGerada = est.getPropinaDoAno(est.getAnoPrimeiraInscricao());
                     if (propinaGerada != null) {
                         propinaGerada.setValorTotal(precoAntigo);
 
-                        // Verificar se há histórico de pagamentos na linha
-                        if (dados.length > 12) {
-                            int totalPrestacoes = Integer.parseInt(dados[12]);
-
-                            // Ler cada prestação
+                        if (dados.length > 11) {
+                            int totalPrestacoes = Integer.parseInt(dados[11]);
                             for (int i = 0; i < totalPrestacoes; i++) {
-                                int indexDaPrestacao = 13 + i;
+                                int indexDaPrestacao = 12 + i;
                                 if (indexDaPrestacao < dados.length) {
-                                    double valorPrestacao = Double.parseDouble(dados[indexDaPrestacao]);
-
-                                    // Ao registar, a propina automaticamente soma o valor pago!
-                                    propinaGerada.registarPagamento(valorPrestacao);
+                                    propinaGerada.registarPagamento(Double.parseDouble(dados[indexDaPrestacao]));
                                 }
                             }
                         }
                     }
                 }
 
-                // --- Auto-Matrícula do 1º Ano ---
+                // --- Auto-Matrícula ---
                 if (cursoEst != null && est.getPercursoAcademico() != null) {
                     for (int i = 0; i < cursoEst.getTotalUCs(); i++) {
                         model.bll.UnidadeCurricular uc = cursoEst.getUnidadesCurriculares()[i];
@@ -158,9 +155,7 @@ public class ImportadorCSV {
                 }
                 repositorio.adicionarEstudante(est);
             }
-        } catch (java.io.IOException e) {
-            System.out.println("Aviso ao ler estudantes: " + e.getMessage());
-        }
+        } catch (java.io.IOException e) { System.out.println("Aviso ao ler estudantes: " + e.getMessage()); }
     }
 
     public static void importarAvaliacoes(String caminho, RepositorioDados repositorio) {
@@ -224,4 +219,23 @@ public class ImportadorCSV {
             if (repo.getUcs()[i] != null && repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) return repo.getUcs()[i];
         } return null;
     }
+
+    /**
+     * Vai ao ficheiro de logins procurar a password encriptada do utilizador pelo seu email.
+     */
+    public static String procurarPasswordNoLogins(String caminhoLogins, String emailProcurado) {
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(caminhoLogins))) {
+            String linha;
+            br.readLine(); // Saltar o cabeçalho
+            while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
+                String[] dados = linha.split(";");
+                if (dados[1].equalsIgnoreCase(emailProcurado)) {
+                    return dados[2]; // Retorna a password encriptada
+                }
+            }
+        } catch (java.io.IOException e) { /* Ignorar, devolve vazio em caso de erro */ }
+        return "";
+    }
+
 }

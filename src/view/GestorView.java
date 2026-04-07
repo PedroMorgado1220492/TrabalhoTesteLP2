@@ -217,4 +217,15 @@ public class GestorView {
             return -1.0;
         }
     }
+
+    /**
+     * Apresenta o cartão de credenciais do novo utilizador no momento da criação.
+     */
+    public void mostrarCredenciaisCriadas(String tipo, String nome, String email, String password) {
+        System.out.println("\n--- NOVO " + tipo.toUpperCase() + " REGISTADO COM SUCESSO! ---");
+        System.out.println("Nome: " + nome);
+        System.out.println("Email de Acesso: " + email);
+        System.out.println("Password Provisória: " + password);
+        System.out.println("----------------------------------------------\n");
+    }
 }
