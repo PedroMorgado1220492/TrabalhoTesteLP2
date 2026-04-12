@@ -289,4 +289,22 @@ public class Estudante extends Utilizador {
         }
         return false;
     }
+
+    public Avaliacao getAvaliacaoAtual(String siglaUC) {
+        for (int i = 0; i < this.totalAvaliacoes; i++) {
+            if (this.avaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                return this.avaliacoes[i];
+            }
+        }
+        return null;
+    }
+
+    public Avaliacao getAvaliacaoHistorico(String siglaUC) {
+        for (int i = 0; i < this.totalHistorico; i++) {
+            if (this.historicoAvaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                return this.historicoAvaliacoes[i];
+            }
+        }
+        return null;
+    }
 }

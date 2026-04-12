@@ -1,42 +1,30 @@
 package view;
 
+import model.bll.Avaliacao;
+import model.bll.Estudante;
 import java.util.Scanner;
 
 public class EstudanteView {
 
-    // ---------- ATRIBUTOS ----------
     private Scanner scanner;
 
-    // ---------- CONSTRUTOR ----------
     public EstudanteView() {
         this.scanner = new Scanner(System.in);
     }
 
-    // ---------- MÉTODOS DE APRESENTAÇÃO E LEITURA ----------
+    // ---------- MENUS ----------
 
-    /**
-     * Apresenta o menu principal de interação para o utilizador Estudante.
-     * @return A opção numérica selecionada.
-     */
     public int mostrarMenuPrincipal() {
-        System.out.println("\n=== MENU ESTUDANTE ===");
-        System.out.println("1 - Ver Dados Pessoais");
-        System.out.println("2 - Atualizar Dados");
-        System.out.println("3 - Percurso Académico");
-        System.out.println("4 - Propinas");
+        System.out.println("\n=== ÁREA DO ESTUDANTE ===");
+        System.out.println("1 - Ver Dados Pessoais e Académicos");
+        System.out.println("2 - Atualizar Dados Pessoais");
+        System.out.println("3 - Consultar Percurso Académico");
+        System.out.println("4 - Tesouraria e Propinas");
         System.out.println("0 - Sair / Logout");
-        System.out.print("Escolha uma opção: ");
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+        System.out.print("Opção: ");
+        return lerOpcaoInteira();
     }
 
-    /**
-     * Apresenta o submenu para a atualização dos dados pessoais do Estudante.
-     * @return A opção numérica selecionada.
-     */
     public int mostrarMenuAtualizarDados() {
         System.out.println("\n--- ATUALIZAR DADOS PESSOAIS ---");
         System.out.println("1 - Alterar Nome");
@@ -45,6 +33,19 @@ public class EstudanteView {
         System.out.println("4 - Alterar Password");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
+        return lerOpcaoInteira();
+    }
+
+    // ---------- INPUTS DE DADOS ----------
+
+    public String pedirNovoNome() { System.out.print("Introduza o novo Nome: "); return scanner.nextLine().trim(); }
+    public String pedirNovoNif() { System.out.print("Introduza o novo NIF: "); return scanner.nextLine().trim(); }
+    public String pedirNovaMorada() { System.out.print("Introduza a nova Morada: "); return scanner.nextLine().trim(); }
+    public String pedirPassAtual() { System.out.print("Password Atual: "); return scanner.nextLine().trim(); }
+    public String pedirNovaPass() { System.out.print("Nova Password: "); return scanner.nextLine().trim(); }
+    public String pedirConfirmacaoPass() { System.out.print("Confirme Nova Password: "); return scanner.nextLine().trim(); }
+
+    private int lerOpcaoInteira() {
         try {
             return Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException e) {
@@ -52,73 +53,77 @@ public class EstudanteView {
         }
     }
 
-    /**
-     * Pede ao estudante que insira texto através da consola.
-     * @param mensagem Texto de pedido de informação.
-     * @return A string inserida.
-     */
-    public String pedirInputString(String mensagem) {
-        System.out.print(mensagem + ": ");
-        return scanner.nextLine();
-    }
+    // ---------- EXIBIÇÃO DE DADOS ----------
 
-    /**
-     * Apresenta uma mensagem de sistema/feedback ao estudante.
-     * @param mensagem Texto a apresentar.
-     */
-    public void mostrarMensagem(String mensagem) {
-        System.out.println(">> " + mensagem);
-    }
-
-    /**
-     * Apresenta o resumo financeiro da propina do aluno.
-     */
-    public void mostrarDetalhesPropina(double valorTotal, double valorPago, double valorDivida, double[] historico, int totalPagamentos, boolean pagaTotalmente) {
-        System.out.println("\n--- TESOURARIA: GESTÃO DE PROPINAS ---");
-        System.out.println("Valor Total da Propina: " + valorTotal + "€");
-        System.out.println("Valor Já Pago: " + valorPago + "€");
-        System.out.println("Valor em Dívida: " + valorDivida + "€");
-
-        if (totalPagamentos > 0) {
-            System.out.println("\nHistórico de Pagamentos Efetuados:");
-            for (int i = 0; i < totalPagamentos; i++) {
-                System.out.println(" -> Pagamento " + (i + 1) + ": " + historico[i] + "€");
-            }
-        }
-
-        if (pagaTotalmente) {
-            System.out.println("\nSituação regularizada! Não tem pagamentos pendentes.");
+    public void mostrarDadosFicha(Estudante e) {
+        System.out.println("\n--- FICHA DE ESTUDANTE ---");
+        System.out.println("Nº Mecanográfico: " + e.getNumeroMecanografico());
+        System.out.println("Nome: " + e.getNome());
+        System.out.println("Email: " + e.getEmail());
+        System.out.println("NIF: " + e.getNif());
+        System.out.println("Morada: " + e.getMorada());
+        System.out.println("Nascimento: " + e.getDataNascimento());
+        System.out.println("1ª Inscrição: " + e.getAnoPrimeiraInscricao());
+        if (e.getCurso() != null) {
+            System.out.println("Curso: " + e.getCurso().getNome() + " (" + e.getCurso().getSigla() + ")");
+            System.out.println("Ano de Frequência: " + e.getAnoFrequencia() + "º Ano");
         }
     }
 
+    public void mostrarCabecalhoPercurso() { System.out.println("\n--- PERCURSO ACADÉMICO ---"); }
+    public void mostrarAnoPercurso(int ano) { System.out.println("\n--- || " + ano + "º ano ||---"); }
+    public void mostrarLinhaUC(String sigla, String nome, int ano, String status) {
+        System.out.println(">> [" + sigla + "] " + nome + " (Ano: " + ano + "º) -> " + status);
+    }
+
     /**
-     * Apresenta o menu de pagamentos com os valores calculados.
+     * Centraliza a formatação dos estados das UCs (Apenas a View sabe falar)
      */
-    public int mostrarOpcoesPagamento(double divida, double prestacaoFixa) {
-        System.out.println("\n--- OPÇÕES DE PAGAMENTO ---");
+    public String formatarStatusUC(int estado, double nota) {
+        double notaArredondada = Math.round(nota * 100.0) / 100.0;
+        switch (estado) {
+            case 1: return "Inscrito -> " + notaArredondada;
+            case 2: return "Inscrito -> Sem Avaliação";
+            case 3: return "Concluído -> " + notaArredondada;
+            default: return "Não Inscrito";
+        }
+    }
+
+    // ---------- PROPINAS ----------
+
+    public void mostrarDetalhesPropina(double total, double pago, double divida, double[] historico, int nPagamentos, boolean estaPaga) {
+        System.out.println("\n--- EXTRATO DE PROPINAS ---");
+        System.out.println("Valor Total do Ano: " + total + "€");
+        System.out.println("Valor Já Pago: " + pago + "€");
+        System.out.println("Valor em Dívida: " + divida + "€");
+        if (estaPaga) System.out.println(">> SITUAÇÃO: REGULARIZADA.");
+        else System.out.println(">> SITUAÇÃO: PAGAMENTO EM FALTA.");
+    }
+
+    public int mostrarOpcoesPagamento(double divida, double prestacao) {
+        System.out.println("\n--- REALIZAR PAGAMENTO ---");
         System.out.println("1 - Pagamento Integral (" + divida + "€)");
-        System.out.println("2 - Pagar 1 Prestação (10% = " + prestacaoFixa + "€)");
-        System.out.println("3 - Introduzir outro valor");
-        System.out.println("0 - Voltar");
-        System.out.print("Escolha uma opção: ");
-
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+        System.out.println("2 - Pagar 1 Prestação (" + prestacao + "€)");
+        System.out.println("3 - Outro valor");
+        System.out.println("0 - Cancelar");
+        System.out.print("Opção: ");
+        return lerOpcaoInteira();
     }
 
-    /**
-     * Pede um valor monetário solto ao estudante.
-     */
-    public double pedirValorPagamento() {
-        System.out.print("Introduza o montante a pagar (€): ");
-        try {
-            return Double.parseDouble(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1.0;
-        }
+    public double pedirValorLivre() {
+        System.out.print("Introduza o valor a pagar (€): ");
+        try { return Double.parseDouble(scanner.nextLine()); }
+        catch (Exception e) { return -1; }
     }
 
+    // ---------- FEEDBACK ----------
+
+    public void msgSaida() { System.out.println(">> A sair da conta de Estudante..."); }
+    public void msgSucesso() { System.out.println(">> SUCESSO: Operação concluída."); }
+    public void msgErroOpcao() { System.out.println(">> ERRO: Opção inválida."); }
+    public void msgErroDados() { System.out.println(">> ERRO: Dados inválidos ou formato incorreto."); }
+    public void msgErroPassIncorreta() { System.out.println(">> ERRO: Password atual incorreta."); }
+    public void msgErroPassNaoCoincidem() { System.out.println(">> ERRO: As passwords não coincidem."); }
+    public void msgErroSemCurso() { System.out.println(">> ERRO: Não tem curso associado."); }
+    public void msgErroSemPropina() { System.out.println(">> ERRO: Nenhuma propina gerada para este ano."); }
 }

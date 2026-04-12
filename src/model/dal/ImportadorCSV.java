@@ -6,35 +6,93 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+/**
+ * Classe utilitária responsável pela leitura de ficheiros CSV.
+ * Converte os dados persistidos em memória secundária (ficheiros de texto)
+ * em Objetos Java (POJOs) e popula o RepositorioDados.
+ */
 public class ImportadorCSV {
 
+    /**
+     * Construtor privado para evitar a instanciação acidental da classe,
+     * uma vez que todos os seus métodos são estáticos.
+     */
     private ImportadorCSV() {}
 
     // =========================================================
-    // 1. CARREGAMENTO AUTOMÁTICO (LOGINS)
+    // 1. CARREGAMENTO AUTOMÁTICO (LOGINS E CREDENCIAIS)
     // =========================================================
+
+    /**
+     * Valida rapidamente as credenciais de um utilizador, lendo apenas
+     * o ficheiro mestre de logins, sem carregar o resto da base de dados.
+     * @param caminho O caminho relativo para o ficheiro de logins.
+     * @param email O email inserido pelo utilizador.
+     * @param password A palavra-passe (já encriptada) inserida pelo utilizador.
+     * @return O tipo de utilizador em maiúsculas (ex: "GESTOR", "ESTUDANTE") ou null se falhar.
+     */
     public static String verificarLoginRapido(String caminho, String email, String password) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha;
-            br.readLine(); // Saltar o cabeçalho
+            br.readLine();
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
+
                 String[] dados = linha.split(";");
-                // dados[0] = TIPO, dados[1] = EMAIL, dados[2] = PASSWORD
-                if (dados[1].equalsIgnoreCase(email) && dados[2].equals(password)) {
-                    return dados[0].toUpperCase(); // Devolve GESTOR, DOCENTE ou ESTUDANTE
+
+                // Prevenção extra: garantir que a linha tem pelo menos 3 colunas
+                if (dados.length >= 3) {
+                    String fileEmail = dados[1].trim();
+                    String filePass = dados[2].trim();
+
+                    if (fileEmail.equalsIgnoreCase(email.trim()) && filePass.equalsIgnoreCase(password.trim())) {
+                        return dados[0].trim().toUpperCase();
+                    }
                 }
             }
         } catch (IOException e) {
-            System.out.println("Erro ao aceder ao ficheiro de logins: " + e.getMessage());
+
+            return null;
         }
         return null;
     }
 
+    /**
+     * Pesquisa sequencial no ficheiro mestre de logins para recuperar a hash
+     * da password de um utilizador específico através do seu email.
+     * @param caminhoLogins O caminho relativo para o ficheiro de logins.
+     * @param emailProcurado O email do utilizador cuja password queremos recuperar.
+     * @return A password encriptada (hash) ou uma string vazia se não encontrar.
+     */
+    public static String procurarPasswordNoLogins(String caminhoLogins, String emailProcurado) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoLogins))) {
+            String linha;
+            br.readLine();
+            while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
+
+                String[] dados = linha.split(";");
+                if (dados.length >= 3) {
+                    if (dados[1].trim().equalsIgnoreCase(emailProcurado.trim())) {
+                        return dados[2].trim();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
+        return "";
+    }
+
     // =========================================================
-    // 2. CARREGAMENTO MODULAR (A PEDIDO)
+    // 2. CARREGAMENTO MODULAR (ENTIDADES)
     // =========================================================
 
+    /**
+     * Importa todos os administradores/gestores do sistema.
+     * @param caminho O caminho do ficheiro gestores.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarGestores(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
@@ -44,9 +102,16 @@ public class ImportadorCSV {
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[1]);
                 repositorio.adicionarGestor(new Gestor(dados[1], pass, dados[2], dados[3], dados[4], dados[5]));
             }
-        } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente: o sistema arranca sem dados caso o ficheiro não exista.
+        }
     }
 
+    /**
+     * Importa todos os departamentos institucionais.
+     * @param caminho O caminho do ficheiro departamentos.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarDepartamentos(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
@@ -55,9 +120,16 @@ public class ImportadorCSV {
                 String[] dados = linha.split(";");
                 repositorio.adicionarDepartamento(new Departamento(dados[1], dados[2]));
             }
-        } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
     }
 
+    /**
+     * Importa o corpo docente da instituição. Associa as credenciais do ficheiro mestre.
+     * @param caminho O caminho do ficheiro docentes.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarDocentes(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
@@ -67,9 +139,17 @@ public class ImportadorCSV {
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
                 repositorio.adicionarDocente(new Docente(dados[1], dados[2], pass, dados[3], dados[4], dados[5], dados[6]));
             }
-        } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
     }
 
+    /**
+     * Importa os Cursos. Requer que os Departamentos já tenham sido carregados
+     * para estabelecer a relação de dependência.
+     * @param caminho O caminho do ficheiro cursos.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarCursos(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
@@ -84,9 +164,16 @@ public class ImportadorCSV {
                     }
                 }
             }
-        } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
     }
 
+    /**
+     * Importa as Unidades Curriculares e efetua o mapeamento complexo com Docentes e Cursos.
+     * @param caminho O caminho do ficheiro ucs.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarUCs(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
@@ -95,6 +182,7 @@ public class ImportadorCSV {
                 String[] dados = linha.split(";");
                 Docente doc = procurarDocente(dados[4], repositorio);
                 Curso cursoUC = procurarCurso(dados[5], repositorio);
+
                 if (doc != null && cursoUC != null) {
                     UnidadeCurricular novaUc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
                     if (repositorio.adicionarUnidadeCurricular(novaUc)) {
@@ -105,30 +193,39 @@ public class ImportadorCSV {
                     }
                 }
             }
-        } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
     }
 
+    /**
+     * Importa o corpo estudantil.
+     * Esta função é altamente complexa pois reconstrói o estado financeiro (Propinas)
+     * e o estado académico do aluno a partir da sua matrícula.
+     * @param caminho O caminho do ficheiro estudantes.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarEstudantes(String caminho, RepositorioDados repositorio) {
-        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(caminho))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
 
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
-                model.bll.Curso cursoEst = (dados.length > 8 && !dados[8].isEmpty()) ? procurarCurso(dados[8], repositorio) : null;
+                Curso cursoEst = (dados.length > 8 && !dados[8].isEmpty()) ? procurarCurso(dados[8], repositorio) : null;
 
-                model.bll.Estudante est = new model.bll.Estudante(
+                Estudante est = new Estudante(
                         Integer.parseInt(dados[1]), dados[2], pass, dados[3],
                         dados[4], dados[5], dados[6], cursoEst, Integer.parseInt(dados[7])
                 );
 
-                // --- PROPINA E PRESTAÇÕES ---
+                // Reconstrução do Histórico Financeiro (Propinas)
                 if (dados.length > 9 && !dados[9].isEmpty()) {
                     double precoAntigo = Double.parseDouble(dados[9]);
                     est.setValorPropinaBase(precoAntigo);
 
-                    model.bll.Propina propinaGerada = est.getPropinaDoAno(est.getAnoPrimeiraInscricao());
+                    Propina propinaGerada = est.getPropinaDoAno(est.getAnoPrimeiraInscricao());
                     if (propinaGerada != null) {
                         propinaGerada.setValorTotal(precoAntigo);
 
@@ -144,10 +241,10 @@ public class ImportadorCSV {
                     }
                 }
 
-                // --- Auto-Matrícula ---
+                // Reconstrução do Estado Académico (Auto-Matrícula)
                 if (cursoEst != null && est.getPercursoAcademico() != null) {
                     for (int i = 0; i < cursoEst.getTotalUCs(); i++) {
-                        model.bll.UnidadeCurricular uc = cursoEst.getUnidadesCurriculares()[i];
+                        UnidadeCurricular uc = cursoEst.getUnidadesCurriculares()[i];
                         if (uc.getAnoCurricular() == est.getAnoFrequencia()) {
                             est.getPercursoAcademico().inscreverEmUc(uc);
                         }
@@ -155,9 +252,16 @@ public class ImportadorCSV {
                 }
                 repositorio.adicionarEstudante(est);
             }
-        } catch (java.io.IOException e) { System.out.println("Aviso ao ler estudantes: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
     }
 
+    /**
+     * Importa o histórico de avaliações (notas ativas e cadeiras concluídas/reprovadas).
+     * @param caminho O caminho do ficheiro avaliacoes.csv.
+     * @param repositorio O repositório central onde a informação será guardada em memória.
+     */
     public static void importarAvaliacoes(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha; br.readLine();
@@ -190,52 +294,72 @@ public class ImportadorCSV {
                     }
                 }
             }
-        } catch (IOException e) { System.out.println("Aviso: " + e.getMessage()); }
+        } catch (IOException e) {
+            // Ignorar silenciosamente
+        }
     }
 
-    // ---------- MÉTODOS AUXILIARES PRIVADOS ----------
+    // =========================================================
+    // 3. MÉTODOS AUXILIARES DE PESQUISA INTERNA
+    // =========================================================
+
+    /**
+     * Procura um Departamento em memória pela sua sigla.
+     */
     private static Departamento procurarDepartamento(String sigla, RepositorioDados repo) {
         for (int i = 0; i < repo.getTotalDepartamentos(); i++) {
-            if (repo.getDepartamentos()[i] != null && repo.getDepartamentos()[i].getSigla().equalsIgnoreCase(sigla)) return repo.getDepartamentos()[i];
-        } return null;
-    }
-    private static Curso procurarCurso(String sigla, RepositorioDados repo) {
-        for (int i = 0; i < repo.getTotalCursos(); i++) {
-            if (repo.getCursos()[i] != null && repo.getCursos()[i].getSigla().equalsIgnoreCase(sigla)) return repo.getCursos()[i];
-        } return null;
-    }
-    private static Docente procurarDocente(String sigla, RepositorioDados repo) {
-        for (int i = 0; i < repo.getTotalDocentes(); i++) {
-            if (repo.getDocentes()[i] != null && repo.getDocentes()[i].getSigla().equalsIgnoreCase(sigla)) return repo.getDocentes()[i];
-        } return null;
-    }
-    private static Estudante procurarEstudante(int numMec, RepositorioDados repo) {
-        for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-            if (repo.getEstudantes()[i] != null && repo.getEstudantes()[i].getNumeroMecanografico() == numMec) return repo.getEstudantes()[i];
-        } return null;
-    }
-    private static UnidadeCurricular procurarUC(String sigla, RepositorioDados repo) {
-        for (int i = 0; i < repo.getTotalUcs(); i++) {
-            if (repo.getUcs()[i] != null && repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) return repo.getUcs()[i];
-        } return null;
+            if (repo.getDepartamentos()[i] != null && repo.getDepartamentos()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getDepartamentos()[i];
+            }
+        }
+        return null;
     }
 
     /**
-     * Vai ao ficheiro de logins procurar a password encriptada do utilizador pelo seu email.
+     * Procura um Curso em memória pela sua sigla.
      */
-    public static String procurarPasswordNoLogins(String caminhoLogins, String emailProcurado) {
-        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(caminhoLogins))) {
-            String linha;
-            br.readLine(); // Saltar o cabeçalho
-            while ((linha = br.readLine()) != null) {
-                if (linha.trim().isEmpty()) continue;
-                String[] dados = linha.split(";");
-                if (dados[1].equalsIgnoreCase(emailProcurado)) {
-                    return dados[2]; // Retorna a password encriptada
-                }
+    private static Curso procurarCurso(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalCursos(); i++) {
+            if (repo.getCursos()[i] != null && repo.getCursos()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getCursos()[i];
             }
-        } catch (java.io.IOException e) { /* Ignorar, devolve vazio em caso de erro */ }
-        return "";
+        }
+        return null;
     }
 
+    /**
+     * Procura um Docente em memória pela sua sigla (ex: ABC).
+     */
+    private static Docente procurarDocente(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalDocentes(); i++) {
+            if (repo.getDocentes()[i] != null && repo.getDocentes()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getDocentes()[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Procura um Estudante em memória pelo seu Número Mecanográfico.
+     */
+    private static Estudante procurarEstudante(int numMec, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalEstudantes(); i++) {
+            if (repo.getEstudantes()[i] != null && repo.getEstudantes()[i].getNumeroMecanografico() == numMec) {
+                return repo.getEstudantes()[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Procura uma Unidade Curricular em memória pela sua sigla.
+     */
+    private static UnidadeCurricular procurarUC(String sigla, RepositorioDados repo) {
+        for (int i = 0; i < repo.getTotalUcs(); i++) {
+            if (repo.getUcs()[i] != null && repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) {
+                return repo.getUcs()[i];
+            }
+        }
+        return null;
+    }
 }
