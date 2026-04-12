@@ -113,11 +113,11 @@ public class ExportadorCSV {
      */
     private static void exportarCursos(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;NOME;DEPARTAMENTO");
+            pw.println("TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO"); // Novo cabeçalho
             for (int i = 0; i < repo.getTotalCursos(); i++) {
                 Curso c = repo.getCursos()[i];
                 if (c != null && c.getDepartamento() != null) {
-                    pw.println("CURSO;" + c.getSigla() + ";" + c.getNome() + ";" + c.getDepartamento().getSigla());
+                    pw.println("CURSO;" + c.getSigla() + ";" + c.getNome() + ";" + c.getDepartamento().getSigla() + ";" + c.isAtivo());
                 }
             }
         } catch (IOException e) { }
@@ -130,12 +130,13 @@ public class ExportadorCSV {
      */
     private static void exportarDocentes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO");
+            pw.println("TIPO;SIGLA;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;EMAIL_PESSOAL;ATIVO");
             for (int i = 0; i < repo.getTotalDocentes(); i++) {
                 Docente d = repo.getDocentes()[i];
                 if (d != null) {
                     pw.println("DOCENTE;" + d.getSigla() + ";" + d.getEmail() + ";" +
-                            d.getNome() + ";" + d.getNif() + ";" + d.getMorada() + ";" + d.getDataNascimento());
+                            d.getNome() + ";" + d.getNif() + ";" + d.getMorada() + ";" + d.getDataNascimento() + ";" +
+                            d.getEmailPessoal() + ";" + d.isAtivo());
                 }
             }
         } catch (IOException e) { }
@@ -148,7 +149,7 @@ public class ExportadorCSV {
      */
     private static void exportarUCs(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSO");
+            pw.println("TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSO;ATIVO");
             for (int i = 0; i < repo.getTotalUcs(); i++) {
                 UnidadeCurricular uc = repo.getUcs()[i];
                 if (uc != null) {
@@ -156,7 +157,7 @@ public class ExportadorCSV {
                     String siglaCurso = (uc.getCursos()[0] != null) ? uc.getCursos()[0].getSigla() : "";
 
                     pw.println("UC;" + uc.getSigla() + ";" + uc.getNome() + ";" + uc.getAnoCurricular() + ";" +
-                            siglaDocente + ";" + siglaCurso);
+                            siglaDocente + ";" + siglaCurso + ";" + uc.isAtivo());
                 }
             }
         } catch (IOException e) { }
@@ -169,28 +170,23 @@ public class ExportadorCSV {
      */
     private static void exportarEstudantes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
+            pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;EMAIL_PESSOAL;ATIVO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
                 model.bll.Estudante e = repo.getEstudantes()[i];
                 if (e != null) {
                     String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
 
-                    // 1. Escrever os dados básicos e o Valor Base da Propina
                     pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
                             e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
-                            e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getValorPropinaBase());
+                            e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" + e.isAtivo() + ";" + e.getValorPropinaBase());
 
-                    // 2. Escrever a Informação Financeira
                     model.bll.Propina propina = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
                     if (propina != null) {
                         pw.print(";" + propina.getValorPago() + ";" + propina.getTotalPagamentos());
-
-                        // 3. Escrever o histórico de prestações dinamicamente
                         for (int j = 0; j < propina.getTotalPagamentos(); j++) {
                             pw.print(";" + propina.getHistoricoPagamentos()[j]);
                         }
                     } else {
-                        // Se por algum motivo o aluno não tiver propina gerada, fica tudo a zero
                         pw.print(";0.0;0");
                     }
                     pw.println();

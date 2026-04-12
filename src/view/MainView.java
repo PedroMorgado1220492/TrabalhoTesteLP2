@@ -23,6 +23,7 @@ public class MainView {
         System.out.println("2 - Criar Estudante");
         System.out.println("3 - Avançar Ano");
         System.out.println("4 - Guardar");
+        System.out.println("5 - Recuperar Password (Em Desenvolvimento)");
         System.out.println("0 - Sair Sem Guardar");
         System.out.print("Opção: ");
         try {
@@ -77,10 +78,14 @@ public class MainView {
         return scanner.nextLine().trim();
     }
 
-    public int pedirEscolhaCurso(Curso[] cursos, int total) {
+    public int pedirEscolhaCurso(model.bll.Curso[] cursos, int total) {
         System.out.println("\n--- Escolha o Curso ---");
         for (int i = 0; i < total; i++) {
-            System.out.println((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
+            if (cursos[i] != null && cursos[i].isAtivo()) {
+                System.out.println((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
+            } else if (cursos[i] != null) {
+                System.out.println((i + 1) + " - [INDISPONÍVEL] " + cursos[i].getNome());
+            }
         }
         System.out.print("Número do Curso: ");
         try {
@@ -115,6 +120,17 @@ public class MainView {
         System.out.println("   [AVISO] " + sigla + " cancelado no 1º ano! Apenas " + inscritos + " inscritos.");
     }
 
+    // ------- RECUPEREÇÃO DA PASSWORDS ----------
+
+    public String pedirEmailPessoal() {
+        System.out.print("Email Pessoal: ");
+        return scanner.nextLine().trim();
+    }
+
+
+
+
+
     // ---------- MENSAGENS E FEEDBACK ----------
 
     public void msgPrepararRegisto() { System.out.println(">> A preparar o sistema de registo..."); }
@@ -135,4 +151,7 @@ public class MainView {
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
     public void msgErroEmailDominio() { System.out.println(">> Erro: O email deve pertencer ao domínio '@issmf.ipp.pt'."); }
     public void msgErroArquivoNaoEncontrado(String caminho) { System.err.println("[DEBUG/ALERTA] O Java não conseguiu encontrar o ficheiro: " + caminho); }
+    public void msgErroInativo() { System.out.println(">> ERRO: Esta conta encontra-se inativa. Contacte os serviços académicos."); }
+    public void msgAvisoRecuperacao() { System.out.println(">> Funcionalidade de Recuperação de Password em desenvolvimento. Estará disponível brevemente."); }
+    public void msgErroCursoInativo() { System.out.println(">> Erro: O curso selecionado encontra-se inativo e não aceita matrículas."); }
 }

@@ -104,6 +104,7 @@ public class GestorController {
                 case 1: adicionarCurso(); break;
                 case 2: alterarCurso(); break;
                 case 3: view.mostrarListaCursos(repositorio.getCursos(), repositorio.getTotalCursos()); break;
+                case 4: alternarEstadoCurso(); break;
                 case 0: aExecutar = false; break;
                 default: view.mostrarOpcaoInvalida();
             }
@@ -153,6 +154,30 @@ public class GestorController {
         } else view.mostrarErroCursoNaoEncontrado();
     }
 
+    private void alternarEstadoCurso() {
+        String sigla = view.pedirSiglaCursoAlterar();
+        Curso curso = encontrarCurso(sigla);
+        if (curso != null) {
+            // Não pode desativar se tiver Estudantes Ativos
+            if (curso.isAtivo()) {
+                boolean temAtivos = false;
+                for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+                    Estudante e = repositorio.getEstudantes()[i];
+                    if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla()) && e.isAtivo()) {
+                        temAtivos = true;
+                        break;
+                    }
+                }
+                if (temAtivos) {
+                    view.msgAvisoCursoComAlunosAtivos(curso.getSigla());
+                    return;
+                }
+            }
+            curso.setAtivo(!curso.isAtivo());
+            view.msgSucessoEstadoAlterado("Curso", curso.isAtivo());
+        } else view.mostrarErroCursoNaoEncontrado();
+    }
+
     // =========================================================
     // 3. GESTÃO DE UCs
     // =========================================================
@@ -166,6 +191,7 @@ public class GestorController {
                 case 2: partilharUC(); break;
                 case 3: alterarUC(); break;
                 case 4: view.mostrarListaUCs(repositorio.getUcs(), repositorio.getTotalUcs()); break;
+                case 5: alternarEstadoUC(); break;
                 case 0: aExecutar = false; break;
                 default: view.mostrarOpcaoInvalida();
             }
@@ -220,6 +246,12 @@ public class GestorController {
         UnidadeCurricular ucPartilhar = encontrarUC(siglaPartilha);
         if (ucPartilhar == null) { view.mostrarErroUCNaoEncontrada(); return; }
 
+        // UC Inativa não pode ser associada a cursos
+        if (!ucPartilhar.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
+
         int indexCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
         if (indexCurso < 0 || indexCurso >= repositorio.getTotalCursos()) {
             view.mostrarOpcaoInvalida(); return;
@@ -258,6 +290,26 @@ public class GestorController {
         } else view.mostrarErroUCNaoEncontrada();
     }
 
+    private void alternarEstadoUC() {
+        String sigla = view.pedirSiglaUCAlterar();
+        UnidadeCurricular uc = encontrarUC(sigla);
+        if (uc != null) {
+            // Não pode ser desativada se estiver associada a cursos
+            if (uc.isAtivo()) {
+                boolean associada = false;
+                for (int i = 0; i < uc.getCursos().length; i++) {
+                    if (uc.getCursos()[i] != null) { associada = true; break; }
+                }
+                if (associada) {
+                    view.msgAvisoUCAssociada(uc.getSigla());
+                    return;
+                }
+            }
+            uc.setAtivo(!uc.isAtivo());
+            view.msgSucessoEstadoAlterado("Unidade Curricular", uc.isAtivo());
+        } else view.mostrarErroUCNaoEncontrada();
+    }
+
     // =========================================================
     // 4. GESTÃO DE UTILIZADORES (ESTUDANTES E DOCENTES)
     // =========================================================
@@ -270,6 +322,7 @@ public class GestorController {
                 case 1: adicionarEstudante(); break;
                 case 2: alterarEstudante(); break;
                 case 3: view.mostrarListaEstudantes(repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
+                case 4: alternarEstadoEstudante(); break;
                 case 0: aExecutar = false; break;
                 default: view.mostrarOpcaoInvalida();
             }
@@ -283,6 +336,7 @@ public class GestorController {
         String nif = validarNif();
         String morada = view.pedirMorada();
         String dataNascimento = validarDataNascimento();
+        String emailPessoal = view.pedirEmailPessoal();
 
         int escolhaCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
         if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
@@ -291,13 +345,13 @@ public class GestorController {
 
         int anoInscricao = repositorio.getAnoAtual();
         int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
+        String emailAcesso = utils.EmailGenerator.gerarEmailEstudante(numeroMecanografico);
+        String passGeradaEst = utils.PasswordGenerator.generatePassword();
+        String passEnc = utils.Seguranca.encriptar(passGeradaEst);
 
-        Estudante novoEstudante = gestorAtivo.criarEstudante(
-                numeroMecanografico, nome, nif, morada, dataNascimento, repositorio.getCursos()[escolhaCurso], anoInscricao
+        Estudante novoEstudante = new Estudante(
+                numeroMecanografico, emailAcesso, passEnc, nome, nif, morada, dataNascimento, repositorio.getCursos()[escolhaCurso], anoInscricao, emailPessoal
         );
-
-        String passGeradaEst = novoEstudante.getPassword();
-        novoEstudante.setPassword(utils.Seguranca.encriptar(passGeradaEst));
 
         if (repositorio.adicionarEstudante(novoEstudante)) {
             view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
@@ -324,6 +378,19 @@ public class GestorController {
         }
     }
 
+    private void alternarEstadoEstudante() {
+        try {
+            int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
+            Estudante est = encontrarEstudante(numMec);
+            if (est != null) {
+                est.setAtivo(!est.isAtivo());
+                view.msgSucessoEstadoAlterado("Estudante", est.isAtivo());
+            } else view.mostrarErroEstudanteNaoEncontrado();
+        } catch (NumberFormatException e) {
+            view.mostrarErroNumMecNumerico();
+        }
+    }
+
     private void gerirDocentes() {
         boolean aExecutar = true;
         while (aExecutar) {
@@ -332,6 +399,7 @@ public class GestorController {
                 case 1: adicionarDocente(); break;
                 case 2: alterarDocente(); break;
                 case 3: view.mostrarListaDocentes(repositorio.getDocentes(), repositorio.getTotalDocentes()); break;
+                case 4: alternarEstadoDocente(); break;
                 case 0: aExecutar = false; break;
                 default: view.mostrarOpcaoInvalida();
             }
@@ -345,10 +413,14 @@ public class GestorController {
         String nif = validarNif();
         String morada = view.pedirMorada();
         String dataNascimento = validarDataNascimento();
+        String emailPessoal = view.pedirEmailPessoal();
 
-        Docente novoDocente = gestorAtivo.criarDocente(siglaGerada, nome, nif, morada, dataNascimento);
-        String passGeradaDoc = novoDocente.getPassword();
-        novoDocente.setPassword(utils.Seguranca.encriptar(passGeradaDoc));
+        String emailAcesso = siglaGerada.toLowerCase() + "@issmf.ipp.pt";
+        String passGeradaDoc = utils.PasswordGenerator.generatePassword();
+        String passEnc = utils.Seguranca.encriptar(passGeradaDoc);
+
+        // Criação direta para passar o Email Pessoal corretamente
+        Docente novoDocente = new Docente(siglaGerada, emailAcesso, passEnc, nome, nif, morada, dataNascimento, emailPessoal);
 
         if (repositorio.adicionarDocente(novoDocente)) {
             view.mostrarCredenciaisCriadas("DOCENTE", novoDocente.getNome(), novoDocente.getEmail(), passGeradaDoc);
@@ -367,6 +439,21 @@ public class GestorController {
             String novaMoradaDoc = view.pedirNovaMorada(docEditar.getMorada());
             if (!novaMoradaDoc.trim().isEmpty()) docEditar.setMorada(novaMoradaDoc);
             view.mostrarSucessoAtualizacao();
+        } else view.mostrarErroDocenteNaoEncontrado();
+    }
+
+    private void alternarEstadoDocente() {
+        String siglaDoc = view.pedirSiglaDocenteAlterar();
+        Docente doc = encontrarDocente(siglaDoc);
+        if (doc != null) {
+            // Não desativar se tiver UCs associadas
+            if (doc.isAtivo() && doc.getTotalUcsLecionadas() > 0) {
+                view.msgAvisoDocenteComUCs(doc.getSigla());
+                view.mostrarUcsAgregadasDocente(doc.getUcsLecionadas(), doc.getTotalUcsLecionadas());
+                return;
+            }
+            doc.setAtivo(!doc.isAtivo());
+            view.msgSucessoEstadoAlterado("Docente", doc.isAtivo());
         } else view.mostrarErroDocenteNaoEncontrado();
     }
 

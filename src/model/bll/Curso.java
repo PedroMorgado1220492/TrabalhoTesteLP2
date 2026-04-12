@@ -11,6 +11,7 @@ public class Curso {
     private double valorPropinaAnual = 1000.00;
     private UnidadeCurricular[] unidadesCurriculares;
     private int totalUCs;
+    private boolean ativo;
 
     // ---------- CONSTRUTOR ----------
     public Curso(String sigla, String nome, Departamento departamento) {
@@ -19,6 +20,7 @@ public class Curso {
         this.departamento = departamento;
         this.unidadesCurriculares = new UnidadeCurricular[15];
         this.totalUCs = 0;
+        this.ativo = true;
     }
 
     // ---------- GETTERS ----------
@@ -29,12 +31,14 @@ public class Curso {
     public int getDuracaoAnos() { return duracaoAnos; }
     public UnidadeCurricular[] getUnidadesCurriculares() { return unidadesCurriculares; }
     public int getTotalUCs() { return totalUCs; }
+    public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS ----------
     public void setSigla(String sigla) { this.sigla = sigla; }
     public void setNome(String nome) { this.nome = nome; }
     public void setDepartamento(Departamento departamento) { this.departamento = departamento; }
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

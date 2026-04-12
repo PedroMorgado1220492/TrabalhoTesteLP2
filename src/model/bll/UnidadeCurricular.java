@@ -7,7 +7,7 @@ public class UnidadeCurricular {
     private String nome;
     private int anoCurricular;
     private Docente docenteResponsavel;
-
+    private boolean ativo;
     private Curso[] cursos;
     private int totalCursos;
 
@@ -17,7 +17,7 @@ public class UnidadeCurricular {
         this.nome = nome;
         this.anoCurricular = anoCurricular;
         this.docenteResponsavel = docenteResponsavel;
-
+        this.ativo = true;
         this.cursos = new Curso[10];
         this.totalCursos = 0;
     }
@@ -29,12 +29,14 @@ public class UnidadeCurricular {
     public Docente getDocenteResponsavel() { return docenteResponsavel; }
     public Curso[] getCursos() { return cursos; }
     public int getTotalCursos() { return totalCursos; }
+    public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS ----------
     public void setSigla(String sigla) { this.sigla = sigla; }
     public void setNome(String nome) { this.nome = nome; }
     public void setAnoCurricular(int anoCurricular) { this.anoCurricular = anoCurricular; }
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

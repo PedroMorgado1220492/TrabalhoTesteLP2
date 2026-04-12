@@ -49,6 +49,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Curso");
         System.out.println("2 - Alterar Curso");
         System.out.println("3 - Listar Cursos");
+        System.out.println("4 - Ativar/Desativar Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -60,6 +61,7 @@ public class GestorView {
         System.out.println("2 - Associar UC Existente a outro Curso");
         System.out.println("3 - Alterar Unidade Curricular");
         System.out.println("4 - Listar Unidades Curriculares");
+        System.out.println("5 - Ativar/Desativar UC");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -70,6 +72,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Estudante");
         System.out.println("2 - Alterar Estudante");
         System.out.println("3 - Listar Estudantes");
+        System.out.println("4 - Ativar/Desativar Estudante");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -80,6 +83,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Docente");
         System.out.println("2 - Alterar Docente");
         System.out.println("3 - Listar Docentes");
+        System.out.println("4 - Ativar/Desativar Docente");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -139,9 +143,7 @@ public class GestorView {
     public String pedirNovoAnoCurricular(int atual) { return pedirString("Novo Ano Curricular (deixe em branco para manter '" + atual + "')"); }
     public String pedirNovaMorada(String atual) { return pedirString("Nova Morada (deixe em branco para manter)"); }
 
-    public boolean pedirConfirmacaoAvancoAno(int proximoAno) {
-        System.out.print("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): ");
-        return scanner.nextLine().trim().equalsIgnoreCase("S");
+    public boolean pedirConfirmacaoAvancoAno(int proximoAno) { System.out.print("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): "); return scanner.nextLine().trim().equalsIgnoreCase("S");
     }
 
     // ---------- FEEDBACK AO UTILIZADOR (Frases de Erro e Sucesso) ----------
@@ -194,6 +196,14 @@ public class GestorView {
     public void mostrarSucessoAlteracaoPreco(String curso, double preco) { System.out.println(">> Sucesso! O curso " + curso + " custa agora " + preco + "€/ano."); }
     public void mostrarErroPrecoInvalido() { System.out.println(">> Erro: Tem de introduzir um valor superior a 0."); }
 
+    public void msgAvisoDocenteComUCs(String sigla) { System.out.println(">> Erro: O Docente " + sigla + " tem UCs associadas e não pode ser desativado."); }
+    public void msgAvisoCursoComAlunosAtivos(String sigla) { System.out.println(">> Erro: O Curso " + sigla + " tem Estudantes Ativos e não pode ser desativado."); }
+    public void msgAvisoUCAssociada(String sigla) { System.out.println(">> Erro: A UC " + sigla + " está associada a cursos e não pode ser desativada."); }
+    public void msgSucessoEstadoAlterado(String entidade, boolean ativo) { String estado = ativo ? "ATIVADO" : "DESATIVADO"; System.out.println(">> Sucesso: O " + entidade + " encontra-se agora " + estado + "."); }
+
+    public String pedirEmailPessoal() { System.out.print("Email Pessoal: "); return scanner.nextLine().trim(); }
+    public void msgErroUCInativa() { System.out.println(">> Erro: Esta Unidade Curricular encontra-se INATIVA e não pode ser associada a cursos."); }
+
     // ---------- MÉTODOS DE LISTAGEM E APRESENTAÇÃO DE DADOS ----------
 
     public void mostrarCredenciaisCriadas(String tipo, String nome, String email, String password) {
@@ -226,7 +236,10 @@ public class GestorView {
     public void mostrarListaCursos(Curso[] cursos, int total) {
         System.out.println("\n--- LISTA DE CURSOS ---");
         if (total == 0) System.out.println("Não existem cursos registados.");
-        else for (int i = 0; i < total; i++) System.out.println("- " + cursos[i].getSigla() + " - " + cursos[i].getNome() + " (" + cursos[i].getDepartamento().getSigla() + ")");
+        else for (int i = 0; i < total; i++) {
+            String status = cursos[i].isAtivo() ? "[ATIVO]" : "[INATIVO]";
+            System.out.println("- " + status + " " + cursos[i].getSigla() + " - " + cursos[i].getNome());
+        }
     }
 
     public int pedirEscolhaCurso(Curso[] cursos, int total) {
@@ -239,13 +252,19 @@ public class GestorView {
     public void mostrarListaUCs(UnidadeCurricular[] ucs, int total) {
         System.out.println("\n--- LISTA DE UCs ---");
         if (total == 0) System.out.println("Não existem UCs registadas.");
-        else for (int i = 0; i < total; i++) System.out.println("- " + ucs[i].getSigla() + " : " + ucs[i].getNome() + " | Docente: " + ucs[i].getDocenteResponsavel().getSigla());
+        else for (int i = 0; i < total; i++) {
+            String status = ucs[i].isAtivo() ? "[ATIVO]" : "[INATIVO]";
+            System.out.println("- " + status + " " + ucs[i].getSigla() + " : " + ucs[i].getNome());
+        }
     }
 
     public void mostrarListaDocentes(Docente[] docentes, int total) {
         System.out.println("\n--- LISTA DE DOCENTES ---");
         if (total == 0) System.out.println("Não existem docentes registados.");
-        else for (int i = 0; i < total; i++) System.out.println("- " + docentes[i].getSigla() + " : " + docentes[i].getNome());
+        else for (int i = 0; i < total; i++) {
+            String status = docentes[i].isAtivo() ? "[ATIVO]" : "[INATIVO]";
+            System.out.println("- " + status + " " + docentes[i].getSigla() + " : " + docentes[i].getNome());
+        }
     }
 
     public int pedirEscolhaDocente(Docente[] docentes, int total) {
@@ -261,7 +280,17 @@ public class GestorView {
         else {
             for (int i = 0; i < total; i++) {
                 String siglaCurso = (estudantes[i].getCurso() != null) ? estudantes[i].getCurso().getSigla() : "N/A";
-                System.out.println("- " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
+                String status = estudantes[i].isAtivo() ? "[ATIVO]" : "[INATIVO]";
+                System.out.println("- " + status + " " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
+            }
+        }
+    }
+
+    public void mostrarUcsAgregadasDocente(UnidadeCurricular[] ucs, int total) {
+        System.out.println(">> UCs associadas ao docente:");
+        for (int i = 0; i < total; i++) {
+            if (ucs[i] != null) {
+                System.out.println("  -> " + ucs[i].getSigla() + " - " + ucs[i].getNome());
             }
         }
     }

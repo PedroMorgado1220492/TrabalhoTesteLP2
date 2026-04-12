@@ -16,10 +16,11 @@ public class EstudanteView {
 
     public int mostrarMenuPrincipal() {
         System.out.println("\n=== ÁREA DO ESTUDANTE ===");
-        System.out.println("1 - Ver Dados Pessoais e Académicos");
+        System.out.println("1 - Ver Ficha de Estudante");
         System.out.println("2 - Atualizar Dados Pessoais");
-        System.out.println("3 - Consultar Percurso Académico");
-        System.out.println("4 - Tesouraria e Propinas");
+        System.out.println("3 - Ver Percurso Académico");
+        System.out.println("4 - Gerir Propinas e Pagamentos");
+        System.out.println("5 - Desativar a minha Conta"); // NOVO
         System.out.println("0 - Sair / Logout");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -53,6 +54,12 @@ public class EstudanteView {
         }
     }
 
+    public boolean pedirConfirmacaoDesativacao() {
+        System.out.println("\n[AVISO] Se desativar a conta, deixará de ter acesso ao sistema.");
+        System.out.print("Tem a certeza que deseja prosseguir? (S/N): ");
+        return scanner.nextLine().trim().equalsIgnoreCase("S");
+    }
+
     // ---------- EXIBIÇÃO DE DADOS ----------
 
     public void mostrarDadosFicha(Estudante e) {
@@ -77,7 +84,7 @@ public class EstudanteView {
     }
 
     /**
-     * Centraliza a formatação dos estados das UCs (Apenas a View sabe falar)
+     * Centraliza a formatação dos estados das UCs
      */
     public String formatarStatusUC(int estado, double nota) {
         double notaArredondada = Math.round(nota * 100.0) / 100.0;
@@ -126,4 +133,5 @@ public class EstudanteView {
     public void msgErroPassNaoCoincidem() { System.out.println(">> ERRO: As passwords não coincidem."); }
     public void msgErroSemCurso() { System.out.println(">> ERRO: Não tem curso associado."); }
     public void msgErroSemPropina() { System.out.println(">> ERRO: Nenhuma propina gerada para este ano."); }
+    public void msgContaDesativada() { System.out.println(">> A sua conta foi DESATIVADA com sucesso. A terminar sessão..."); }
 }

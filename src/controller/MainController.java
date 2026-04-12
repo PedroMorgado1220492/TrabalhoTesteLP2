@@ -33,6 +33,7 @@ public class MainController {
                 case 2: processarRegistoEstudante(); break;
                 case 3: processarTransicaoAno(); break;
                 case 4: view.msgAvisoAutoSave(); break;
+                case 5: view.msgAvisoRecuperacao(); break;
                 case 0:
                     view.msgEncerramento();
                     aExecutar = false;
@@ -69,6 +70,14 @@ public class MainController {
 
         Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
         if (userLogado != null) {
+            if (userLogado instanceof Estudante && !((Estudante) userLogado).isAtivo()) {
+                view.msgErroInativo();
+                return;
+            }
+            if (userLogado instanceof Docente && !((Docente) userLogado).isAtivo()) {
+                view.msgErroInativo();
+                return;
+            }
             abrirMenuPorRole(tipoUtilizador, userLogado);
         }
 
@@ -142,6 +151,7 @@ public class MainController {
         int proximoAno = repositorio.getAnoAtual() + 1;
         if (view.pedirConfirmacaoAvanco(proximoAno)) {
             repositorio.avancarAno();
+            gerarCertificadosConcluintes(repositorio.getAnoAtual());
             view.msgSucessoAvancoAno(repositorio.getAnoAtual());
             ExportadorCSV.exportarDados("bd", repositorio);
         } else {
@@ -199,9 +209,16 @@ public class MainController {
         while (true) {
             int idx = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
             if (idx >= 0 && idx < repositorio.getTotalCursos()) {
-                return repositorio.getCursos()[idx];
+                Curso c = repositorio.getCursos()[idx];
+
+                if (c.isAtivo()) {
+                    return c;
+                } else {
+                    view.msgErroCursoInativo();
+                }
+            } else {
+                view.msgErroNumeroInvalido();
             }
-            view.msgErroNumeroInvalido();
         }
     }
 
@@ -211,8 +228,9 @@ public class MainController {
         String email = utils.EmailGenerator.gerarEmailEstudante(numMec);
         String passRaw = utils.PasswordGenerator.generatePassword();
         String passEnc = utils.Seguranca.encriptar(passRaw);
+        String emailPessoal = view.pedirEmailPessoal();
 
-        Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, data, curso, anoInscricao);
+        Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, data, curso, anoInscricao, emailPessoal);
 
         if (novo.getCurso() != null && novo.getPercursoAcademico() != null) {
             vincularUcsIniciais(novo, curso);
@@ -273,5 +291,36 @@ public class MainController {
                 i--;
             }
         }
+    }
+
+    private void gerarCertificadosConcluintes(int ano) {
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            Estudante e = repositorio.getEstudantes()[i];
+
+            if (e != null && e.getCurso() != null) {
+                if (verificarConclusaoCurso(e)) {
+                    // Chama o método estático da classe Certificado
+                    model.bll.Certificado.gerarCertificado(e, ano);
+                }
+            }
+        }
+    }
+
+    private boolean verificarConclusaoCurso(Estudante e) {
+        Curso c = e.getCurso();
+        if (c.getTotalUCs() == 0) return false;
+        int ucsAprovadas = 0;
+        for (int i = 0; i < c.getTotalUCs(); i++) {
+            UnidadeCurricular ucCurso = c.getUnidadesCurriculares()[i];
+            // Procurar esta UC no histórico de avaliações do aluno
+            for (int j = 0; j < e.getTotalHistorico(); j++) {
+                Avaliacao av = e.getHistoricoAvaliacoes()[j];
+                if (av != null && av.getUc().getSigla().equals(ucCurso.getSigla()) && av.calcularMedia() >= 9.5) {
+                    ucsAprovadas++;
+                    break;
+                }
+            }
+        }
+        return ucsAprovadas == c.getTotalUCs();
     }
 }

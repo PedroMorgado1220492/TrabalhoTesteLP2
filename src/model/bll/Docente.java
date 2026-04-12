@@ -11,10 +11,15 @@ public class Docente extends Utilizador {
     private UnidadeCurricular[] ucsResponsavel;
     private int totalUcsResponsavel;
 
+    private String emailPessoal;
+    private boolean ativo;
+
     // ---------- CONSTRUTOR ----------
-    public Docente(String sigla, String email, String password, String nome, String nif, String morada, String dataNascimento) {
+    public Docente(String sigla, String email, String password, String nome, String nif, String morada, String dataNascimento, String emailPessoal) {
         super(email, password, nome, nif, morada, dataNascimento);
         this.sigla = sigla;
+        this.emailPessoal = emailPessoal;
+        this.ativo = true;
 
         this.ucsLecionadas = new UnidadeCurricular[20];
         this.totalUcsLecionadas = 0;
@@ -29,9 +34,13 @@ public class Docente extends Utilizador {
     public int getTotalUcsLecionadas() { return totalUcsLecionadas; }
     public UnidadeCurricular[] getUcsResponsavel() { return ucsResponsavel; }
     public int getTotalUcsResponsavel() { return totalUcsResponsavel; }
+    public String getEmailPessoal() { return emailPessoal; }
+    public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS ----------
     public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setEmailPessoal(String emailPessoal) { this.emailPessoal = emailPessoal; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

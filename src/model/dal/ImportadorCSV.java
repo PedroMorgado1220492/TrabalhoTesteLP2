@@ -137,11 +137,14 @@ public class ImportadorCSV {
                 if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
-                repositorio.adicionarDocente(new Docente(dados[1], dados[2], pass, dados[3], dados[4], dados[5], dados[6]));
+
+                String emailPessoal = dados.length > 7 ? dados[7] : "";
+                Docente d = new Docente(dados[1], dados[2], pass, dados[3], dados[4], dados[5], dados[6], emailPessoal);
+                if (dados.length > 8) d.setAtivo(Boolean.parseBoolean(dados[8]));
+
+                repositorio.adicionarDocente(d);
             }
-        } catch (IOException e) {
-            // Ignorar silenciosamente
-        }
+        } catch (IOException e) { }
     }
 
     /**
@@ -159,14 +162,14 @@ public class ImportadorCSV {
                 Departamento dep = procurarDepartamento(dados[3], repositorio);
                 if (dep != null) {
                     Curso novoCurso = new Curso(dados[1], dados[2], dep);
+                    if (dados.length > 4) novoCurso.setAtivo(Boolean.parseBoolean(dados[4]));
+
                     if (repositorio.adicionarCurso(novoCurso)) {
                         dep.adicionarCurso(novoCurso);
                     }
                 }
             }
-        } catch (IOException e) {
-            // Ignorar silenciosamente
-        }
+        } catch (IOException e) { }
     }
 
     /**
@@ -185,6 +188,8 @@ public class ImportadorCSV {
 
                 if (doc != null && cursoUC != null) {
                     UnidadeCurricular novaUc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
+                    if (dados.length > 6) novaUc.setAtivo(Boolean.parseBoolean(dados[6]));
+
                     if (repositorio.adicionarUnidadeCurricular(novaUc)) {
                         cursoUC.adicionarUnidadeCurricular(novaUc);
                         novaUc.adicionarCurso(cursoUC);
@@ -193,9 +198,7 @@ public class ImportadorCSV {
                     }
                 }
             }
-        } catch (IOException e) {
-            // Ignorar silenciosamente
-        }
+        } catch (IOException e) { }
     }
 
     /**
@@ -214,25 +217,27 @@ public class ImportadorCSV {
 
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
                 Curso cursoEst = (dados.length > 8 && !dados[8].isEmpty()) ? procurarCurso(dados[8], repositorio) : null;
+                String emailPessoal = dados.length > 9 ? dados[9] : "";
 
                 Estudante est = new Estudante(
                         Integer.parseInt(dados[1]), dados[2], pass, dados[3],
-                        dados[4], dados[5], dados[6], cursoEst, Integer.parseInt(dados[7])
+                        dados[4], dados[5], dados[6], cursoEst, Integer.parseInt(dados[7]), emailPessoal
                 );
 
-                // Reconstrução do Histórico Financeiro (Propinas)
-                if (dados.length > 9 && !dados[9].isEmpty()) {
-                    double precoAntigo = Double.parseDouble(dados[9]);
+                if (dados.length > 10 && !dados[10].isEmpty()) est.setAtivo(Boolean.parseBoolean(dados[10]));
+
+                if (dados.length > 11 && !dados[11].isEmpty()) {
+                    double precoAntigo = Double.parseDouble(dados[11]);
                     est.setValorPropinaBase(precoAntigo);
 
                     Propina propinaGerada = est.getPropinaDoAno(est.getAnoPrimeiraInscricao());
                     if (propinaGerada != null) {
                         propinaGerada.setValorTotal(precoAntigo);
 
-                        if (dados.length > 11) {
-                            int totalPrestacoes = Integer.parseInt(dados[11]);
+                        if (dados.length > 13) {
+                            int totalPrestacoes = Integer.parseInt(dados[13]);
                             for (int i = 0; i < totalPrestacoes; i++) {
-                                int indexDaPrestacao = 12 + i;
+                                int indexDaPrestacao = 14 + i;
                                 if (indexDaPrestacao < dados.length) {
                                     propinaGerada.registarPagamento(Double.parseDouble(dados[indexDaPrestacao]));
                                 }
@@ -241,7 +246,6 @@ public class ImportadorCSV {
                     }
                 }
 
-                // Reconstrução do Estado Académico (Auto-Matrícula)
                 if (cursoEst != null && est.getPercursoAcademico() != null) {
                     for (int i = 0; i < cursoEst.getTotalUCs(); i++) {
                         UnidadeCurricular uc = cursoEst.getUnidadesCurriculares()[i];
@@ -252,9 +256,7 @@ public class ImportadorCSV {
                 }
                 repositorio.adicionarEstudante(est);
             }
-        } catch (IOException e) {
-            // Ignorar silenciosamente
-        }
+        } catch (IOException e) { }
     }
 
     /**

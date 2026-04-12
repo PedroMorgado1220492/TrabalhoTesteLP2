@@ -100,12 +100,11 @@ public class DocenteView {
     public void msgErroPassNaoCoincidem() { System.out.println(">> Erro: As passwords não coincidem."); }
     public void msgAvisoSemUCs() { System.out.println(">> Aviso: Não tem UCs atribuídas."); }
     public void msgAvisoTurmaVazia() { System.out.println(">> Aviso: Não há alunos nesta turma."); }
-
-    // ---------- LOTE ----------
     public void cabecalhoLote(String uc) { System.out.println("\n--- LANÇAMENTO EM LOTE: " + uc + " ---"); }
     public String inputNotaLote(int i, int total, String nome, int num) {
         System.out.print("[" + i + "/" + total + "] Nota para " + nome + " (" + num + "/3) [ENTER p/ saltar]: ");
         return scanner.nextLine().trim();
     }
     public void resumoLote(int n) { System.out.println(">> Fim da pauta. " + n + " notas lançadas."); }
+    public void msgErroAlunoInativo() { System.out.println(">> Erro: Este aluno encontra-se inativo e não lhe podem ser lançadas avaliações.");}
 }

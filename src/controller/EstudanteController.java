@@ -30,6 +30,9 @@ public class EstudanteController {
                 case 2: menuAtualizar(); break;
                 case 3: verPercurso(); break;
                 case 4: gerirPropinas(); break;
+                case 5:
+                    if (desativarConta()) running = false;
+                    break;
                 case 0: view.msgSaida(); running = false; break;
                 default: view.msgErroOpcao();
             }
@@ -165,5 +168,15 @@ public class EstudanteController {
             case 3 -> view.pedirValorLivre();
             default -> 0;
         };
+    }
+
+    //-----DESATIVAR CONTA-----
+    private boolean desativarConta() {
+        if (view.pedirConfirmacaoDesativacao()) {
+            estudanteLogado.setAtivo(false); // Fica inativo
+            view.msgContaDesativada();
+            return true;
+        }
+        return false;
     }
 }

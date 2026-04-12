@@ -51,6 +51,12 @@ public class DocenteController {
         if (idxAlu < 0 || idxAlu >= alunos.length) return;
 
         Estudante alu = alunos[idxAlu];
+
+        if (!alu.isAtivo()) {
+            view.msgErroAlunoInativo();
+            return;
+        }
+
         int numNota = alu.obterNumeroProximaAvaliacao(uc.getSigla());
         if (numNota > 3) { view.msgErroLimiteNotas(); return; }
 
@@ -74,6 +80,9 @@ public class DocenteController {
         int count = 0;
         for (int i = 0; i < alunos.length; i++) {
             Estudante alu = alunos[i];
+
+            if (!alu.isAtivo()) continue;
+
             int num = alu.obterNumeroProximaAvaliacao(uc.getSigla());
             if (num > 3) continue;
 

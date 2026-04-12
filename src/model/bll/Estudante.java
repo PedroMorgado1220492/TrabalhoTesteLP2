@@ -12,6 +12,8 @@ public class Estudante extends Utilizador {
     private Propina[] propinas;
     private int totalPropinas;
     private double valorPropinaBase;
+    private String emailPessoal;
+    private boolean ativo;
 
     // Arrays de Avaliações
     private Avaliacao[] avaliacoes;
@@ -20,11 +22,14 @@ public class Estudante extends Utilizador {
     private int totalHistorico;
 
     // ---------- CONSTRUTOR ----------
-    public Estudante(int numeroMecanografico, String email, String password, String nome, String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao) {
+    public Estudante(int numeroMecanografico, String email, String password, String nome,
+                     String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao, String emailPessoal) {
         super(email, password, nome, nif, morada, dataNascimento);
         this.numeroMecanografico = numeroMecanografico;
         this.curso = curso;
         this.anoPrimeiraInscricao = anoPrimeiraInscricao;
+        this.emailPessoal = emailPessoal;
+        this.ativo = true;
 
         this.anoCurricular = 1;
         this.anoFrequencia = 1;
@@ -60,6 +65,8 @@ public class Estudante extends Utilizador {
     public Avaliacao[] getHistoricoAvaliacoes() { return historicoAvaliacoes; }
     public int getTotalHistorico() { return totalHistorico; }
     public double getValorPropinaBase() { return valorPropinaBase; }
+    public String getEmailPessoal() { return emailPessoal; }
+    public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS ----------
     public void setNome(String nome) { this.nome = nome; }
@@ -72,6 +79,8 @@ public class Estudante extends Utilizador {
     public void setPercursoAcademico(PercursoAcademico percursoAcademico) { this.percursoAcademico = percursoAcademico; }
     public void setDataNascimento(String dataNascimento) { this.dataNascimento = dataNascimento; }
     public void setValorPropinaBase(double ValorPropinaBase) { this.valorPropinaBase = ValorPropinaBase; }
+    public void setEmailPessoal(String emailPessoal) { this.emailPessoal = emailPessoal; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
