@@ -95,16 +95,15 @@ public class ImportadorCSV {
      */
     public static void importarGestores(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
-            String linha; br.readLine();
+            String linha;
+            br.readLine();
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[1]);
-                repositorio.adicionarGestor(new Gestor(dados[1], pass, dados[2], dados[3], dados[4], dados[5]));
+                repositorio.adicionarGestor(new Gestor(dados[1], pass, dados[2], dados[3]));
             }
-        } catch (IOException e) {
-            // Ignorar silenciosamente: o sistema arranca sem dados caso o ficheiro não exista.
-        }
+        } catch (IOException e) { }
     }
 
     /**

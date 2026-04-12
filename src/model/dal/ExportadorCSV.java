@@ -80,12 +80,11 @@ public class ExportadorCSV {
      */
     private static void exportarGestores(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO");
+            pw.println("TIPO;EMAIL;NOME;MORADA");
             for (int i = 0; i < repo.getTotalGestores(); i++) {
                 Gestor g = repo.getGestores()[i];
                 if (g != null) {
-                    pw.println("GESTOR;" + g.getEmail() + ";" + g.getNome() + ";" +
-                            g.getNif() + ";" + g.getMorada() + ";" + g.getDataNascimento());
+                    pw.println("GESTOR;" + g.getEmail() + ";" + g.getNome() + ";" + g.getMorada());
                 }
             }
         } catch (IOException e) { }

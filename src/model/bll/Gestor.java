@@ -6,20 +6,22 @@ import utils.PasswordGenerator;
 public class Gestor extends Utilizador {
 
     // ---------- CONSTRUTOR ----------
-    public Gestor(String email, String password, String nome, String nif, String morada, String dataNascimento) {
-        super(email, password, nome, nif, morada, dataNascimento);
+    public Gestor(String email, String password, String nome, String morada) {
+        super(email, password, nome, "", morada, "", null);
     }
 
-    // ---------- MÉTODOS DE LÓGICA E AÇÃO (FÁBRICA DE OBJETOS) ----------
+    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
     /**
      * Instancia um novo Estudante gerando automaticamente as suas credenciais.
      */
-    public Estudante criarEstudante(int numeroMecanografico, String nome, String nif, String morada, String dataNascimento, Curso curso, int anoPrimeiraInscricao) {
+    public Estudante criarEstudante(int numeroMecanografico, String nome, String nif, String morada,
+                                    String dataNascimento, Curso curso, int anoPrimeiraInscricao, String emailPessoal) {
         String emailGerado = utils.EmailGenerator.gerarEmailEstudante(numeroMecanografico);
         String passwordGerada = utils.PasswordGenerator.generatePassword();
 
-        Estudante novoEstudante = new Estudante(numeroMecanografico, emailGerado, passwordGerada, nome, nif, morada, dataNascimento, curso, anoPrimeiraInscricao);
+        // Agora passa 10 argumentos para o construtor de Estudante
+        Estudante novoEstudante = new Estudante(numeroMecanografico, emailGerado, passwordGerada, nome, nif, morada, dataNascimento, curso, anoPrimeiraInscricao, emailPessoal);
 
         // --- AUTO-ALOCAÇÃO (INSCRIÇÃO NAS UCs DE 1º ANO) ---
         if (curso != null && novoEstudante.getPercursoAcademico() != null) {
@@ -38,11 +40,12 @@ public class Gestor extends Utilizador {
     /**
      * Instancia um novo Docente gerando automaticamente o email com base na sigla e a password.
      */
-    public Docente criarDocente(String sigla, String nome, String nif, String morada, String dataNascimento) {
+    public Docente criarDocente(String sigla, String nome, String nif, String morada, String dataNascimento, String emailPessoal) {
         String emailGerado = EmailGenerator.gerarEmailDocente(sigla);
         String passwordGerada = PasswordGenerator.generatePassword();
-        return new Docente(sigla, emailGerado, passwordGerada, nome, nif, morada, dataNascimento);
+        return new Docente(sigla, emailGerado, passwordGerada, nome, nif, morada, dataNascimento, emailPessoal);
     }
+
 
     /**
      * Instancia um novo Departamento.

@@ -1,2 +1,2 @@
-TIPO;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO
-GESTOR;backoffice@issmf.ipp.pt;Admin Principal;123456789;Rua Central;01-01-1980
+TIPO;EMAIL;NOME;MORADA
+GESTOR;backoffice@issmf.ipp.pt;Administrador;Campus
