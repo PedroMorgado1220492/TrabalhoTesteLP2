@@ -6,44 +6,65 @@ import model.bll.Curso;
 import model.bll.Docente;
 import model.bll.Avaliacao;
 
+/**
+ * Classe utilitária dedicada ao processamento de métricas e indicadores de desempenho.
+ * Agrupa funções estáticas para calcular médias globais da instituição, rácios de sucesso
+ * e estatísticas específicas para a carga letiva de cada Docente.
+ */
 public class Estatisticas {
 
+    /**
+     * Construtor privado para impedir a instanciação da classe.
+     * Segue o padrão Utility Class, já que todos os métodos expostos são estáticos.
+     */
     private Estatisticas() {}
 
     // =========================================================
-    // ESTATÍSTICAS GLOBAIS (PARA O GESTOR)
+    // ESTATÍSTICAS GLOBAIS INSTITUCIONAIS (PARA O GESTOR)
     // =========================================================
 
     /**
-     * Calcula a média de todas as avaliações registadas na instituição (Ano atual + Histórico).
+     * Calcula a média aritmética global de todas as classificações registadas na instituição.
+     * Processa a totalidade dos registos de avaliação, englobando tanto o ano letivo corrente
+     * como o histórico consolidado de todos os estudantes.
+     *
+     * @param repo O repositório central contendo os dados dos alunos.
+     * @return A média global da instituição, arredondada a duas casas decimais, ou 0.0 caso não existam registos.
      */
     public static double calcularMediaGlobalInstituicao(RepositorioDados repo) {
         double somaTotal = 0;
         int contadorAvaliacoes = 0;
 
+        // Varre a totalidade do corpo estudantil
         for (int i = 0; i < repo.getTotalEstudantes(); i++) {
             Estudante e = repo.getEstudantes()[i];
 
-            // Notas do ano corrente
+            // Acumula as avaliações decorrentes do ano atual
             for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                 somaTotal += e.getAvaliacoes()[j].calcularMedia();
                 contadorAvaliacoes++;
             }
-            // Notas do histórico
+            // Acumula as avaliações arquivadas nos anos transatos
             for (int j = 0; j < e.getTotalHistorico(); j++) {
                 somaTotal += e.getHistoricoAvaliacoes()[j].calcularMedia();
                 contadorAvaliacoes++;
             }
         }
 
+        // Previne erros de divisão por zero caso o sistema esteja vazio
         if (contadorAvaliacoes == 0) return 0.0;
 
-        // Arredondar a 2 casas decimais
+        // Processa o arredondamento matemático para apresentação em formato de pauta (ex: 14.56)
         return Math.round((somaTotal / contadorAvaliacoes) * 100.0) / 100.0;
     }
 
     /**
-     * Encontra o estudante com a melhor média global (juntando o ano atual e o histórico).
+     * Executa um algoritmo de procura para identificar o estudante detentor da melhor
+     * classificação média ponderada (rácio entre a soma de todas as notas e o número de avaliações realizadas).
+     *
+     * @param repo O repositório central de dados.
+     * @return Uma String formatada com o nome, número mecanográfico e média do melhor aluno,
+     * ou uma mensagem de erro caso o cálculo não seja possível.
      */
     public static String identificarMelhorAluno(RepositorioDados repo) {
         if (repo.getTotalEstudantes() == 0) return "Sem alunos registados.";
@@ -56,15 +77,18 @@ public class Estatisticas {
             double somaAluno = 0;
             int contAluno = 0;
 
+            // Extração do subtotal do ano corrente
             for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                 somaAluno += e.getAvaliacoes()[j].calcularMedia();
                 contAluno++;
             }
+            // Extração do subtotal do histórico passado
             for (int j = 0; j < e.getTotalHistorico(); j++) {
                 somaAluno += e.getHistoricoAvaliacoes()[j].calcularMedia();
                 contAluno++;
             }
 
+            // Regista o novo líder se a média atual superar a anterior
             if (contAluno > 0) {
                 double mediaAluno = somaAluno / contAluno;
                 if (mediaAluno > melhorMedia) {
@@ -81,7 +105,10 @@ public class Estatisticas {
     }
 
     /**
-     * Identifica qual é o Curso que tem o maior número de alunos ativos.
+     * Determina o Curso com maior adesão, contabilizando o número total de matrículas ativas.
+     *
+     * @param repo O repositório de dados.
+     * @return A instância do Curso com maior volume de alunos inscritos, ou null se não existirem registos.
      */
     public static Curso obterCursoComMaisAlunos(RepositorioDados repo) {
         if (repo.getTotalCursos() == 0) return null;
@@ -93,6 +120,7 @@ public class Estatisticas {
             Curso c = repo.getCursos()[i];
             int contadorAlunos = 0;
 
+            // Contabiliza apenas estudantes cuja matrícula atual referencie a sigla em análise
             for (int j = 0; j < repo.getTotalEstudantes(); j++) {
                 Estudante e = repo.getEstudantes()[j];
                 if (e.getCurso() != null && e.getCurso().getSigla().equals(c.getSigla())) {
@@ -100,6 +128,7 @@ public class Estatisticas {
                 }
             }
 
+            // Atualiza o curso líder se o volume superar o registo anterior
             if (contadorAlunos > maxAlunos) {
                 maxAlunos = contadorAlunos;
                 cursoVencedor = c;
@@ -108,13 +137,18 @@ public class Estatisticas {
         return cursoVencedor;
     }
 
-
     // =========================================================
     // ESTATÍSTICAS FILTRADAS (PARA O DOCENTE)
     // =========================================================
 
     /**
-     * Calcula a média de notas APENAS nas Unidades Curriculares que o Docente leciona.
+     * Calcula o indicador de desempenho de um docente específico.
+     * Efetua o cálculo da média aritmética limitando a agregação de dados exclusivamente
+     * às classificações obtidas pelos estudantes nas disciplinas que compõem a sua carga letiva.
+     *
+     * @param docente O docente titular alvo da análise.
+     * @param repo    O repositório de dados para extração do universo estudantil.
+     * @return A média global das suas turmas (arredondada a 2 casas decimais) ou 0.0.
      */
     public static double calcularMediaUCsDocente(Docente docente, RepositorioDados repo) {
         if (docente.getTotalUcsLecionadas() == 0) return 0.0;
@@ -125,7 +159,7 @@ public class Estatisticas {
         for (int i = 0; i < repo.getTotalEstudantes(); i++) {
             Estudante e = repo.getEstudantes()[i];
 
-            // Analisar notas atuais do aluno
+            // Filtra as avaliações ativas do aluno, processando apenas as que cruzam com a carga letiva do docente
             for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                 Avaliacao av = e.getAvaliacoes()[j];
                 if (docenteLecionaUC(docente, av.getUnidadeCurricular().getSigla())) {
@@ -140,7 +174,12 @@ public class Estatisticas {
     }
 
     /**
-     * Calcula quantos alunos ÚNICOS têm notas lançadas nas disciplinas do Docente.
+     * Calcula o total de estudantes distintos (únicos) que foram alvo de avaliação
+     * por parte do docente durante o atual ciclo letivo.
+     *
+     * @param docente O docente alvo da verificação.
+     * @param repo    O repositório de dados.
+     * @return O número total de estudantes com pelo menos uma nota lançada nas disciplinas do docente.
      */
     public static int contarAlunosAvaliadosDoDocente(Docente docente, RepositorioDados repo) {
         int totalAlunosUnicos = 0;
@@ -149,11 +188,13 @@ public class Estatisticas {
             Estudante e = repo.getEstudantes()[i];
             boolean alunoAvaliadoPeloDocente = false;
 
+            // Analisa as avaliações correntes; a iteração é interrompida no primeiro "match"
+            // para garantir que um aluno com várias notas na mesma UC conta apenas como "um" (distinto)
             for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                 Avaliacao av = e.getAvaliacoes()[j];
                 if (docenteLecionaUC(docente, av.getUnidadeCurricular().getSigla())) {
                     alunoAvaliadoPeloDocente = true;
-                    break; // Basta uma avaliação para o aluno contar
+                    break;
                 }
             }
 
@@ -164,7 +205,13 @@ public class Estatisticas {
         return totalAlunosUnicos;
     }
 
-    // Método auxiliar privado para verificar se o docente leciona uma determinada UC
+    /**
+     * Método auxiliar (Helper) para verificar a pertinência orgânica entre um docente e uma disciplina.
+     *
+     * @param docente O docente a validar.
+     * @param siglaUC A sigla correspondente à Unidade Curricular.
+     * @return true se a UC estiver na lista oficial de disciplinas lecionadas pelo docente; false caso contrário.
+     */
     private static boolean docenteLecionaUC(Docente docente, String siglaUC) {
         for (int i = 0; i < docente.getTotalUcsLecionadas(); i++) {
             if (docente.getUcsLecionadas()[i].getSigla().equals(siglaUC)) {

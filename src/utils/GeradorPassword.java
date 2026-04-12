@@ -1,13 +1,13 @@
 package utils;
 
-public class PasswordGenerator {
+public class GeradorPassword {
 
     // ---------- CONSTRUTOR ----------
     /**
      * Construtor privado para evitar instanciação.
      * Esta é uma classe utilitária estática.
      */
-    private PasswordGenerator() {}
+    private GeradorPassword() {}
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

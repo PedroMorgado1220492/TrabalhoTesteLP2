@@ -1,13 +1,13 @@
 package utils;
 
-public class EmailGenerator {
+public class GeradorEmail {
 
     // ---------- CONSTRUTOR ----------
     /**
      * Construtor privado para evitar instanciação.
      * Esta é uma classe utilitária estática.
      */
-    private EmailGenerator() {}
+    private GeradorEmail() {}
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

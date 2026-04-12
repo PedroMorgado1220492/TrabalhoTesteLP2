@@ -1,8 +1,12 @@
 package view;
 
-import model.bll.Curso;
 import java.util.Scanner;
 
+/**
+ * Interface de utilizador principal (View) do sistema ISSMF.
+ * Responsável por toda a interação de entrada e saída (I/O) no terminal,
+ * garantindo a separação entre a lógica de apresentação e a lógica de negócio (MVC).
+ */
 public class MainView {
 
     private Scanner scanner;
@@ -43,11 +47,12 @@ public class MainView {
 
     public String pedirPassword() {
         java.io.Console console = System.console();
+        // O uso de Console oculta a digitação da password se o programa correr num terminal real
         if (console != null) {
             char[] passwordArray = console.readPassword("Password: ");
             return new String(passwordArray).trim();
         } else {
-            System.out.println("[Aviso: A password será visível no IDE para a tornar invisivel usar a Consola]");
+            System.out.println("[Aviso: A password será visível no IDE. Para a tornar invisível, utilize o Terminal/Consola]");
             System.out.print("Password: ");
             return scanner.nextLine().trim();
         }
@@ -109,6 +114,7 @@ public class MainView {
     }
 
     public void mostrarAvisoValidacaoCursos() { System.out.println("\n>> A verificar o número mínimo de alunos (5) para as turmas de 1º ano..."); }
+
     public void mostrarFimValidacao() { System.out.println(">> Validação concluída!\n"); }
 
     public void mostrarCursoAprovado(String sigla, int inscritos) {
@@ -119,18 +125,14 @@ public class MainView {
         System.out.println("   [AVISO] " + sigla + " cancelado no 1º ano! Apenas " + inscritos + " inscritos.");
     }
 
-    // ------- RECUPEREÇÃO DA PASSWORDS ----------
+    // ------- RECUPERAÇÃO DE PASSWORDS ----------
 
     public String pedirEmailPessoal() {
         System.out.print("Email Pessoal: ");
         return scanner.nextLine().trim();
     }
 
-
-
-
-
-    // ---------- MENSAGENS E FEEDBACK ----------
+    // ---------- MENSAGENS DE SISTEMA E FEEDBACK ----------
 
     public void msgPrepararRegisto() { System.out.println(">> A preparar o sistema de registo..."); }
     public void msgErroLogin() { System.out.println(">> Erro: Email ou Password incorretos."); }
@@ -148,9 +150,25 @@ public class MainView {
     public void msgEncerramento() { System.out.println(">> A encerrar o sistema..."); }
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
     public void msgErroEmailDominio() { System.out.println(">> Erro: O email deve pertencer ao domínio '@issmf.ipp.pt'."); }
-    public void msgErroArquivoNaoEncontrado(String caminho) { System.err.println("[DEBUG/ALERTA] O Java não conseguiu encontrar o ficheiro: " + caminho); }
-    public void msgErroInativo() { System.out.println(">> ERRO: Esta conta encontra-se inativa. Contacte os serviços académicos."); }
+    public void msgErroArquivoNaoEncontrado(String caminho) { System.err.println("[O Java não conseguiu encontrar o ficheiro: " + caminho); }
+    public void msgErroInativo() { System.out.println(">> Erro: Esta conta encontra-se inativa. Contacte os serviços académicos."); }
     public void msgErroCursoInativo() { System.out.println(">> Erro: O curso selecionado encontra-se inativo e não aceita matrículas."); }
+
+    // Feedback de Emails e Recuperação
     public void msgSucessoRecuperacao() { System.out.println(">> SUCESSO: Uma nova password foi gerada e enviada para o seu Email Pessoal."); }
-    public void msgErroDadosIncorretos() { System.out.println(">> ERRO: O Email de acesso ou o NIF inseridos não estão corretos ou não coincidem."); }
+
+    /**
+     * Mensagem que cobre os dois cenários de falha na recuperação (erro humano nos dados ou erro técnico de SMTP).
+     */
+    public void msgErroDadosIncorretosOuFalhaEmail() {
+        System.out.println(">> Erro: O Email/NIF estão incorretos, ou ocorreu uma falha técnica de rede no envio da notificação.");
+    }
+
+    public void msgSucessoEnvioEmail(String email) {
+        System.out.println(">> Sucesso: Credenciais enviadas para o endereço: " + email);
+    }
+
+    public void msgErroEnvioEmail() {
+        System.out.println(">> Aviso: Não foi possível enviar o email automático. Verifique a ligação à internet ou as credenciais SMTP do sistema.");
+    }
 }

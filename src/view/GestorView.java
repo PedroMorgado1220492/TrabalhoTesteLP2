@@ -8,6 +8,10 @@ import model.bll.UnidadeCurricular;
 
 import java.util.Scanner;
 
+/**
+ * Interface gráfica de linha de comandos (CLI) destinada ao perfil Gestor.
+ * Concentra todos os menus de backoffice, inputs e outputs relacionados com a administração da instituição.
+ */
 public class GestorView {
 
     private Scanner scanner;
@@ -143,10 +147,23 @@ public class GestorView {
     public String pedirNovoAnoCurricular(int atual) { return pedirString("Novo Ano Curricular (deixe em branco para manter '" + atual + "')"); }
     public String pedirNovaMorada(String atual) { return pedirString("Nova Morada (deixe em branco para manter)"); }
 
-    public boolean pedirConfirmacaoAvancoAno(int proximoAno) { System.out.print("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): "); return scanner.nextLine().trim().equalsIgnoreCase("S");
+    public boolean pedirConfirmacaoAvancoAno(int proximoAno) {
+        System.out.print("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): ");
+        return scanner.nextLine().trim().equalsIgnoreCase("S");
     }
 
-    // ---------- FEEDBACK AO UTILIZADOR (Frases de Erro e Sucesso) ----------
+    public String pedirEmailPessoal() { return pedirString("Email Pessoal"); }
+
+    public double pedirNovoPreco() {
+        System.out.print("Introduza a nova propina anual (€): ");
+        try {
+            return Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1.0;
+        }
+    }
+
+    // ---------- FEEDBACK AO UTILIZADOR (Mensagens de Erro e Sucesso) ----------
 
     public void mostrarMensagemSaida() { System.out.println(">> A sair do Backoffice..."); }
     public void mostrarOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
@@ -183,6 +200,7 @@ public class GestorView {
     public void mostrarErroLimiteUCsAno(String curso, int ano) { System.out.println(">> Erro: O curso " + curso + " já atingiu o máximo de 5 UCs no " + ano + "º ano!"); }
     public void mostrarErroUCJaNoCurso() { System.out.println(">> Erro: Esta UC já pertence a este Curso."); }
     public void mostrarSucessoPartilhaUC(String nomeUc, String curso) { System.out.println(">> Sucesso: A UC de " + nomeUc + " foi partilhada com " + curso + "."); }
+    public void msgErroUCInativa() { System.out.println(">> Erro: Esta Unidade Curricular encontra-se INATIVA e não pode ser associada a cursos."); }
 
     public void mostrarErroNomeInvalido() { System.out.println(">> Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras."); }
     public void mostrarErroNomeInvalidoMantido() { System.out.println(">> Erro: Nome inválido. Mantido o original."); }
@@ -199,12 +217,27 @@ public class GestorView {
     public void msgAvisoDocenteComUCs(String sigla) { System.out.println(">> Erro: O Docente " + sigla + " tem UCs associadas e não pode ser desativado."); }
     public void msgAvisoCursoComAlunosAtivos(String sigla) { System.out.println(">> Erro: O Curso " + sigla + " tem Estudantes Ativos e não pode ser desativado."); }
     public void msgAvisoUCAssociada(String sigla) { System.out.println(">> Erro: A UC " + sigla + " está associada a cursos e não pode ser desativada."); }
-    public void msgSucessoEstadoAlterado(String entidade, boolean ativo) { String estado = ativo ? "ATIVADO" : "DESATIVADO"; System.out.println(">> Sucesso: O " + entidade + " encontra-se agora " + estado + "."); }
+    public void msgSucessoEstadoAlterado(String entidade, boolean ativo) {
+        String estado = ativo ? "ATIVADO" : "DESATIVADO";
+        System.out.println(">> Sucesso: O " + entidade + " encontra-se agora " + estado + ".");
+    }
 
-    public String pedirEmailPessoal() { System.out.print("Email Pessoal: "); return scanner.nextLine().trim(); }
-    public void msgErroUCInativa() { System.out.println(">> Erro: Esta Unidade Curricular encontra-se INATIVA e não pode ser associada a cursos."); }
+    public void mostrarAvisoTransicaoAno() {
+        System.out.println("\n--- TRANSIÇÃO DE ANO LETIVO ---");
+        System.out.println("Atenção: Esta ação irá avaliar todos os alunos, subir o ano de frequência");
+        System.out.println("dos que tiverem aprovação (>= 60%) e arquivar todas as notas.");
+    }
 
-    // ---------- MÉTODOS DE LISTAGEM E APRESENTAÇÃO DE DADOS ----------
+    /**
+     * Feedback visual e de estado sobre o envio de credenciais.
+     */
+    public void mostrarStatusEmail(boolean enviado, String email) {
+        if (enviado) {
+            System.out.println(">> Notificação enviada para: " + email);
+        } else {
+            System.out.println(">> Alerta: Falha técnica no envio da notificação para " + email + ". O registo foi concluído, mas o utilizador não recebeu o email automático.");
+        }
+    }
 
     public void mostrarCredenciaisCriadas(String tipo, String nome, String email, String password) {
         System.out.println("\n--- NOVO " + tipo.toUpperCase() + " REGISTADO COM SUCESSO! ---");
@@ -214,11 +247,7 @@ public class GestorView {
         System.out.println("----------------------------------------------\n");
     }
 
-    public void mostrarAvisoTransicaoAno() {
-        System.out.println("\n--- TRANSIÇÃO DE ANO LETIVO ---");
-        System.out.println("Atenção: Esta ação irá avaliar todos os alunos, subir o ano de frequência");
-        System.out.println("dos que tiverem aprovação (>= 60%) e arquivar todas as notas.");
-    }
+    // ---------- MÉTODOS DE LISTAGEM E ESTATÍSTICAS ----------
 
     public void mostrarListaDepartamentos(Departamento[] deps, int total) {
         System.out.println("\n--- LISTA DE DEPARTAMENTOS ---");
@@ -294,8 +323,6 @@ public class GestorView {
             }
         }
     }
-
-    // ---------- RELATÓRIOS E ESTATÍSTICAS ----------
 
     public void mostrarRelatorioAlunosPorCurso(Curso[] cursos, int totalCursos, Estudante[] estudantes, int totalEstudantes) {
         System.out.println("\n--- ALUNOS POR CURSO ---");
@@ -380,7 +407,7 @@ public class GestorView {
         if (total == 0) System.out.println("Nenhum aluno tem propinas em atraso.");
         else {
             for (int i = 0; i < total; i++) {
-                System.out.println("O " + devedores[i].getNumeroMecanografico() + " - " + devedores[i].getNome() + " | Dívida: " + dividas[i] + "€");
+                System.out.println("-> " + devedores[i].getNumeroMecanografico() + " - " + devedores[i].getNome() + " | Dívida: " + dividas[i] + "€");
             }
         }
     }
@@ -393,14 +420,5 @@ public class GestorView {
         }
         System.out.print("Escolha o número do curso: ");
         return lerOpcaoInteira();
-    }
-
-    public double pedirNovoPreco() {
-        System.out.print("Introduza a nova propina anual (€): ");
-        try {
-            return Double.parseDouble(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1.0;
-        }
     }
 }

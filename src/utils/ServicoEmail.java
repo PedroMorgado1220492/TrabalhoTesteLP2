@@ -5,14 +5,29 @@ import java.util.Properties;
 import javax.mail.*;
 import javax.mail.internet.*;
 
+/**
+ * Classe utilitária responsável pela comunicação externa via protocolo SMTP.
+ * Gere a configuração do servidor de correio e a construção de mensagens.
+ * As mensagens de feedback para o utilizador são delegadas aos controladores
+ * através de retornos booleanos.
+ */
 public class ServicoEmail {
 
-    // Configurações do Remetente
+    // ---------- CONFIGURAÇÕES DO REMETENTE ----------
     private static final String REMETENTE = "pedromorgado41@gmail.com";
     private static final String HOST = "smtp.gmail.com";
     private static final String PORTA = "587";
     private static final String PASSWORD_EMAIL = "nyma moxb hnsa lzsa";
 
+    /**
+     * Construtor privado para garantir o padrão de classe utilitária.
+     */
+    private ServicoEmail() {}
+
+    /**
+     * Configura as propriedades do protocolo SMTP.
+     * @return Sessão autenticada.
+     */
     private static Session configurarSessao() {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -21,18 +36,27 @@ public class ServicoEmail {
         props.put("mail.smtp.port", PORTA);
 
         return Session.getInstance(props, new Authenticator() {
+            @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(REMETENTE, PASSWORD_EMAIL);
             }
         });
     }
 
+    // ---------- MÉTODOS DE ENVIO (AGORA COM RETORNO LÓGICO) ----------
+
     /**
-     * Envia e-mail de boas-vindas após criação de conta.
+     * Tenta enviar um e-mail de boas-vindas.
+     * * @param user    O utilizador registado.
+     * @param passRaw A password em texto limpo.
+     * @return true se o e-mail foi enviado com sucesso; false caso ocorra uma falha técnica.
      */
-    public static void enviarEmailBoasVindas(Utilizador user, String passRaw) {
+    public static boolean enviarEmailBoasVindas(Utilizador user, String passRaw) {
         String destino = user.getEmailPessoal();
-        if (destino == null || destino.isEmpty()) return;
+
+        if (destino == null || destino.isEmpty()) {
+            return false;
+        }
 
         try {
             Message message = new MimeMessage(configurarSessao());
@@ -42,71 +66,60 @@ public class ServicoEmail {
 
             StringBuilder corpo = new StringBuilder();
             corpo.append("Olá ").append(user.getNome()).append(",\n\n");
-            corpo.append("A sua conta foi criada com sucesso. Aqui estão os seus dados:\n");
-            corpo.append("- Email de Login: ").append(user.getEmail()).append("\n");
+            corpo.append("A sua conta foi criada com sucesso no Sistema ISSMF.\n\n");
+            corpo.append("- Login: ").append(user.getEmail()).append("\n");
             corpo.append("- Password: ").append(passRaw).append("\n\n");
 
             if (user instanceof Estudante) {
                 Estudante e = (Estudante) user;
                 corpo.append("- Curso: ").append(e.getCurso() != null ? e.getCurso().getNome() : "N/A").append("\n");
-            } else if (user instanceof Docente) {
-                Docente d = (Docente) user;
-                corpo.append("- Unidades Curriculares:\n");
-                for (int i = 0; i < d.getTotalUcsLecionadas(); i++) {
-                    corpo.append("  * ").append(d.getUcsLecionadas()[i].getSigla()).append(" - ")
-                            .append(d.getUcsLecionadas()[i].getNome()).append("\n");
-                }
             }
 
-            corpo.append("\nPor motivos de segurança, altere a sua password no primeiro acesso.");
+            corpo.append("\nAltere a sua password no primeiro acesso.");
             message.setText(corpo.toString());
 
             Transport.send(message);
-            System.out.println(">> Email enviado para: " + destino);
+            return true; // Sucesso
 
         } catch (MessagingException e) {
-            System.err.println(">> Erro ao enviar email: " + e.getMessage());
+            // O erro é registado apenas para log interno do servidor, não para o utilizador final aqui
+            return false; // Falha
         }
     }
 
     /**
-     * Envia e-mail com a nova password recuperada.
+     * Tenta enviar um e-mail de recuperação de password.
+     * * @param user     O utilizador alvo.
+     * @param novaPass A nova password gerada.
+     * @return true se enviado; false se falhar.
      */
-    public static void enviarEmailRecuperacao(Utilizador user, String novaPass) {
+    public static boolean enviarEmailRecuperacao(Utilizador user, String novaPass) {
         String destino = user.getEmailPessoal();
 
-        // Verificação de segurança: garantir que o utilizador tem email pessoal
         if (destino == null || destino.isEmpty()) {
-            System.err.println(">> Erro: Não foi possível enviar o email de recuperação. O utilizador não possui um Email Pessoal registado.");
-            return;
+            return false;
         }
 
         try {
             Message message = new MimeMessage(configurarSessao());
             message.setFrom(new InternetAddress(REMETENTE));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destino));
-            message.setSubject("Recuperação de Password - Sistema ISSMF"); // Assunto diferente
+            message.setSubject("Recuperação de Password - Sistema ISSMF");
 
-            // Construção do corpo do email
             StringBuilder corpo = new StringBuilder();
             corpo.append("Olá ").append(user.getNome()).append(",\n\n");
-            corpo.append("Recebemos um pedido para recuperar a sua password no Sistema do ISSMF.\n");
-            corpo.append("A sua password foi redefinida com sucesso. Aqui estão os seus novos dados de acesso:\n\n");
-
-            corpo.append("- Email de Login: ").append(user.getEmail()).append("\n");
+            corpo.append("A sua password foi redefinida. Utilize os dados abaixo para aceder:\n\n");
+            corpo.append("- Login: ").append(user.getEmail()).append("\n");
             corpo.append("- Nova Password: ").append(novaPass).append("\n\n");
-
-            corpo.append("Por motivos de segurança, recomendamos vivamente que altere esta password no menu 'Atualizar Dados Pessoais' logo após iniciar sessão.\n\n");
-            corpo.append("Com os melhores cumprimentos,\n");
-            corpo.append("Equipa do Sistema ISSMF");
+            corpo.append("Equipa ISSMF");
 
             message.setText(corpo.toString());
 
             Transport.send(message);
-            System.out.println(">> Email de recuperação enviado com sucesso para o endereço: " + destino);
+            return true;
 
         } catch (MessagingException e) {
-            System.err.println(">> Erro crítico ao tentar enviar email de recuperação: " + e.getMessage());
+            return false;
         }
     }
 }

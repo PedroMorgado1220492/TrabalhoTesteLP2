@@ -8,19 +8,35 @@ import view.EstudanteView;
 import model.bll.Estudante;
 import model.dal.RepositorioDados;
 import utils.Validador;
+import utils.Seguranca; // Importação essencial para a gestão de passwords
 
+/**
+ * Controlador responsável pela gestão das operações e interações do Estudante.
+ * Atua como intermediário entre a interface gráfica do estudante (EstudanteView)
+ * e a camada de dados (RepositorioDados), garantindo a integridade do percurso académico.
+ */
 public class EstudanteController {
 
     private EstudanteView view;
     private Estudante estudanteLogado;
     private RepositorioDados repositorio;
 
+    /**
+     * Construtor do controlador do estudante.
+     *
+     * @param estudanteLogado A instância do estudante que iniciou a sessão.
+     * @param repositorio     O repositório central com os dados do sistema.
+     */
     public EstudanteController(Estudante estudanteLogado, RepositorioDados repositorio) {
         this.view = new EstudanteView();
         this.estudanteLogado = estudanteLogado;
         this.repositorio = repositorio;
     }
 
+    /**
+     * Inicia o ciclo principal do menu do estudante.
+     * Mantém o utilizador na área reservada até que este decida sair ou desativar a conta.
+     */
     public void iniciarMenu() {
         boolean running = true;
         while (running) {
@@ -31,21 +47,34 @@ public class EstudanteController {
                 case 3: verPercurso(); break;
                 case 4: gerirPropinas(); break;
                 case 5:
+                    // Se a conta for desativada, o ciclo encerra forçando o logout imediato
                     if (desativarConta()) running = false;
                     break;
-                case 0: view.msgSaida(); running = false; break;
-                default: view.msgErroOpcao();
+                case 0:
+                    view.msgSaida();
+                    running = false;
+                    break;
+                default:
+                    view.msgErroOpcao();
             }
         }
     }
 
-    // ---------- MÉTODOS DE CONSULTA ----------
+    // ---------- MÉTODOS DE CONSULTA ACADÉMICA ----------
 
+    /**
+     * Reconstitui visualmente o percurso académico do estudante.
+     * Organiza as Unidades Curriculares por ano e apresenta o estado de aprovação de cada uma.
+     */
     private void verPercurso() {
         Curso curso = estudanteLogado.getCurso();
-        if (curso == null) { view.msgErroSemCurso(); return; }
+        if (curso == null) {
+            view.msgErroSemCurso();
+            return;
+        }
 
         view.mostrarCabecalhoPercurso();
+        // Itera pelos 3 anos curriculares padrão (Licenciatura)
         for (int ano = 1; ano <= 3; ano++) {
             view.mostrarAnoPercurso(ano);
             for (int i = 0; i < curso.getTotalUCs(); i++) {
@@ -58,29 +87,38 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Determina o estado lógico de uma UC para o estudante (Inscrito, Concluído ou Pendente).
+     *
+     * @param sigla A sigla da Unidade Curricular.
+     * @return String formatada com o estado e classificação correspondente.
+     */
     private String processarStatusParaView(String sigla) {
-        int estado = 0; // Default: Não inscrito
+        int estado = 0; // Por defeito: Não inscrito
         double nota = 0.0;
 
+        // 1. Verifica se a UC faz parte das inscrições ativas do ano corrente
         if (estudanteLogado.estaInscrito(sigla)) {
             Avaliacao av = estudanteLogado.getAvaliacaoAtual(sigla);
             if (av != null) {
-                estado = 1; // Inscrito com nota
+                estado = 1; // Inscrito e já possui notas lançadas
                 nota = av.calcularMedia();
             } else {
-                estado = 2; // Inscrito sem nota
+                estado = 2; // Inscrito mas aguarda lançamento de notas
             }
         } else {
+            // 2. Procura no histórico de anos transatos
             Avaliacao hist = estudanteLogado.getAvaliacaoHistorico(sigla);
             if (hist != null && hist.calcularMedia() >= 9.5) {
-                estado = 3; // Concluído
+                estado = 3; // Concluído com sucesso (Aprovado)
                 nota = hist.calcularMedia();
             }
         }
+
         return view.formatarStatusUC(estado, nota);
     }
 
-    // ---------- MÉTODOS DE ATUALIZAÇÃO (PERFIL) ----------
+    // ---------- MÉTODOS DE ATUALIZAÇÃO DE PERFIL ----------
 
     private void menuAtualizar() {
         boolean sub = true;
@@ -122,11 +160,21 @@ public class EstudanteController {
         view.msgSucesso();
     }
 
+    /**
+     * Atualiza a password do estudante garantindo a integridade via Hash SHA-256.
+     */
     private void atualizarPassword() {
-        if (view.pedirPassAtual().equals(estudanteLogado.getPassword())) {
-            String p = view.pedirNovaPass();
-            if (p.equals(view.pedirConfirmacaoPass())) {
-                estudanteLogado.setPassword(p);
+        String passAtualRaw = view.pedirPassAtual();
+        // Encripta o input para validar contra a Hash guardada no modelo
+        String passAtualEnc = Seguranca.encriptar(passAtualRaw);
+
+        if (passAtualEnc.equals(estudanteLogado.getPassword())) {
+            String novaPassRaw = view.pedirNovaPass();
+            String confirmacaoRaw = view.pedirConfirmacaoPass();
+
+            if (!novaPassRaw.isEmpty() && novaPassRaw.equals(confirmacaoRaw)) {
+                // Encriptamos a nova password antes da persistência
+                estudanteLogado.setPassword(Seguranca.encriptar(novaPassRaw));
                 view.msgSucesso();
             } else {
                 view.msgErroPassNaoCoincidem();
@@ -136,11 +184,17 @@ public class EstudanteController {
         }
     }
 
-    // ---------- GESTÃO FINANCEIRA ----------
+    // ---------- GESTÃO FINANCEIRA (PROPINAS) ----------
 
+    /**
+     * Gere o fluxo de visualização de dívidas e processamento de pagamentos.
+     */
     private void gerirPropinas() {
         Propina propina = estudanteLogado.getPropinaDoAno(repositorio.getAnoAtual());
-        if (propina == null) { view.msgErroSemPropina(); return; }
+        if (propina == null) {
+            view.msgErroSemPropina();
+            return;
+        }
 
         view.mostrarDetalhesPropina(propina.getValorTotal(), propina.getValorPago(),
                 propina.getValorEmDivida(), propina.getHistoricoPagamentos(),
@@ -149,9 +203,10 @@ public class EstudanteController {
         if (propina.isPagaTotalmente()) return;
 
         double valor = calcularValorPagamento(propina);
-        if (valor == 0) return; // Operação cancelada ou inválida
+        if (valor <= 0) return;
 
-        if (valor > 0 && propina.registarPagamento(valor)) {
+        // Regista o pagamento e sincroniza imediatamente com a base de dados CSV
+        if (propina.registarPagamento(valor)) {
             view.msgSucesso();
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
@@ -163,17 +218,22 @@ public class EstudanteController {
         int op = view.mostrarOpcoesPagamento(propina.getValorEmDivida(), propina.getValorTotal() / 10);
 
         return switch (op) {
-            case 1 -> propina.getValorEmDivida();
-            case 2 -> Math.min(propina.getValorTotal() / 10, propina.getValorEmDivida());
-            case 3 -> view.pedirValorLivre();
+            case 1 -> propina.getValorEmDivida(); // Liquidação Total
+            case 2 -> Math.min(propina.getValorTotal() / 10, propina.getValorEmDivida()); // Prestação Mensal
+            case 3 -> view.pedirValorLivre(); // Montante Personalizado
             default -> 0;
         };
     }
 
-    //-----DESATIVAR CONTA-----
+    // ---------- DESATIVAÇÃO DE CONTA ----------
+
+    /**
+     * Permite ao estudante suspender a sua conta de forma voluntária.
+     * @return true se a desativação foi confirmada e processada.
+     */
     private boolean desativarConta() {
         if (view.pedirConfirmacaoDesativacao()) {
-            estudanteLogado.setAtivo(false); // Fica inativo
+            estudanteLogado.setAtivo(false);
             view.msgContaDesativada();
             return true;
         }

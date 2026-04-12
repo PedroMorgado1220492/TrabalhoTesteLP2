@@ -7,33 +7,38 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * Classe utilitária responsável pela exportação de dados da memória para ficheiros CSV.
- * O sistema utiliza o mecanismo try-with-resources para garantir que os descritores
- * de ficheiros são sempre fechados (evitando memory leaks e ficheiros corrompidos).
+ * Classe utilitária responsável pela exportação e persistência de dados em ficheiros CSV.
+ * Implementa a camada de acesso a dados (DAL) para escrita, garantindo que o estado
+ * dos objetos em memória é guardado de forma estruturada no disco.
  */
 public class ExportadorCSV {
 
     /**
-     * Construtor privado para evitar instanciação, dado que
-     * a classe contém apenas métodos estáticos de utilidade.
+     * Construtor privado para impedir a instanciação da classe.
+     * Sendo uma classe de utilidade, todos os métodos são estáticos.
      */
     private ExportadorCSV() {}
 
     /**
-     * Ponto de entrada principal para a gravação dos dados.
-     * Executa a exportação sequencial de todas as entidades presentes no repositório.
-     * * @param pastaBD A diretoria onde os ficheiros vão ser guardados (ex: "bd/").
-     * @param repo O RepositorioDados com os objetos atualmente em memória.
+     * Ponto de entrada central para o processo de gravação global.
+     * Coordena a exportação sequencial de todas as entidades do sistema para a diretoria especificada.
+     *
+     * @param pastaBD O caminho da diretoria onde os ficheiros serão armazenados (ex: "bd/").
+     * @param repo    O repositório de dados contendo as instâncias a exportar.
      */
     public static void exportarDados(String pastaBD, RepositorioDados repo) {
-        // Garantir que a pasta tem a barra no final
-        if (!pastaBD.endsWith("/")) pastaBD += "/";
+        // Normalização do caminho da diretoria
+        if (!pastaBD.endsWith("/")) {
+            pastaBD += "/";
+        }
 
+        // Verificação e criação automática da diretoria caso esta não exista
         java.io.File diretorio = new java.io.File(pastaBD);
         if (!diretorio.exists()) {
             diretorio.mkdirs();
         }
 
+        // Execução da exportação individual por tipo de entidade
         exportarLogins(pastaBD + "logins.csv", repo);
         exportarGestores(pastaBD + "gestores.csv", repo);
         exportarDepartamentos(pastaBD + "departamentos.csv", repo);
@@ -45,38 +50,42 @@ public class ExportadorCSV {
     }
 
     // =========================================================
-    // MÉTODOS DE EXPORTAÇÃO SEPARADOS
+    // MÉTODOS DE EXPORTAÇÃO INDIVIDUAL
     // =========================================================
 
     /**
-     * Exporta o ficheiro mestre de credenciais de todos os utilizadores.
-     * * @param caminho O destino final do ficheiro (ex: "bd/logins.csv").
-     * @param repo O Repositório de onde se extraem as passwords (já em hash).
+     * Exporta as credenciais de acesso (Email e Password Hash) de todos os perfis.
+     * Este ficheiro serve como base para o mecanismo de "Login Rápido" do sistema.
+     *
+     * @param caminho O destino final do ficheiro logins.csv.
+     * @param repo    O repositório de dados.
      */
     private static void exportarLogins(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
             pw.println("TIPO;EMAIL;PASSWORD");
 
+            // Processamento dos Gestores
             for (int i = 0; i < repo.getTotalGestores(); i++) {
                 Gestor g = repo.getGestores()[i];
                 if (g != null) pw.println("GESTOR;" + g.getEmail() + ";" + g.getPassword());
             }
+            // Processamento dos Docentes
             for (int i = 0; i < repo.getTotalDocentes(); i++) {
                 Docente d = repo.getDocentes()[i];
                 if (d != null) pw.println("DOCENTE;" + d.getEmail() + ";" + d.getPassword());
             }
+            // Processamento dos Estudantes
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
                 Estudante e = repo.getEstudantes()[i];
                 if (e != null) pw.println("ESTUDANTE;" + e.getEmail() + ";" + e.getPassword());
             }
         } catch (IOException e) {
+            // Em caso de erro de I/O, a falha é ignorada silenciosamente para não interromper o fluxo principal
         }
     }
 
     /**
-     * Exporta os dados pessoais e de contacto dos Gestores.
-     * * @param caminho O destino do ficheiro gestores.csv.
-     * @param repo O Repositório.
+     * Exporta os dados administrativos e demográficos dos Gestores.
      */
     private static void exportarGestores(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -91,9 +100,7 @@ public class ExportadorCSV {
     }
 
     /**
-     * Exporta a estrutura orgânica da instituição (Departamentos).
-     * * @param caminho O destino do ficheiro departamentos.csv.
-     * @param repo O Repositório.
+     * Exporta a lista de Departamentos registados no sistema.
      */
     private static void exportarDepartamentos(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -106,26 +113,23 @@ public class ExportadorCSV {
     }
 
     /**
-     * Exporta os Cursos, preservando a ligação ao Departamento de origem.
-     * * @param caminho O destino do ficheiro cursos.csv.
-     * @param repo O Repositório.
+     * Serializa a informação dos Cursos e a sua respetiva ligação aos Departamentos.
      */
     private static void exportarCursos(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO"); // Novo cabeçalho
+            pw.println("TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO");
             for (int i = 0; i < repo.getTotalCursos(); i++) {
                 Curso c = repo.getCursos()[i];
                 if (c != null && c.getDepartamento() != null) {
-                    pw.println("CURSO;" + c.getSigla() + ";" + c.getNome() + ";" + c.getDepartamento().getSigla() + ";" + c.isAtivo());
+                    pw.println("CURSO;" + c.getSigla() + ";" + c.getNome() + ";" +
+                            c.getDepartamento().getSigla() + ";" + c.isAtivo());
                 }
             }
         } catch (IOException e) { }
     }
 
     /**
-     * Exporta o corpo docente, excluindo credenciais.
-     * * @param caminho O destino do ficheiro docentes.csv.
-     * @param repo O Repositório.
+     * Exporta os dados pessoais e profissionais de cada Docente.
      */
     private static void exportarDocentes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -134,17 +138,15 @@ public class ExportadorCSV {
                 Docente d = repo.getDocentes()[i];
                 if (d != null) {
                     pw.println("DOCENTE;" + d.getSigla() + ";" + d.getEmail() + ";" +
-                            d.getNome() + ";" + d.getNif() + ";" + d.getMorada() + ";" + d.getDataNascimento() + ";" +
-                            d.getEmailPessoal() + ";" + d.isAtivo());
+                            d.getNome() + ";" + d.getNif() + ";" + d.getMorada() + ";" +
+                            d.getDataNascimento() + ";" + d.getEmailPessoal() + ";" + d.isAtivo());
                 }
             }
         } catch (IOException e) { }
     }
 
     /**
-     * Exporta o plano curricular (UCs), mapeando os docentes responsáveis e os cursos.
-     * * @param caminho O destino do ficheiro ucs.csv.
-     * @param repo O Repositório.
+     * Exporta o plano curricular (UCs), mapeando os regentes e os cursos associados.
      */
     private static void exportarUCs(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -153,6 +155,7 @@ public class ExportadorCSV {
                 UnidadeCurricular uc = repo.getUcs()[i];
                 if (uc != null) {
                     String siglaDocente = (uc.getDocenteResponsavel() != null) ? uc.getDocenteResponsavel().getSigla() : "";
+                    // Assume-se a primeira posição do array de cursos para exportação simples
                     String siglaCurso = (uc.getCursos()[0] != null) ? uc.getCursos()[0].getSigla() : "";
 
                     pw.println("UC;" + uc.getSigla() + ";" + uc.getNome() + ";" + uc.getAnoCurricular() + ";" +
@@ -163,9 +166,8 @@ public class ExportadorCSV {
     }
 
     /**
-     * Exporta os dados académicos e financeiros (Propinas) do corpo estudantil.
-     * * @param caminho O destino do ficheiro estudantes.csv.
-     * @param repo O Repositório.
+     * Exporta os dados demográficos, académicos e o estado financeiro (propinas) dos Estudantes.
+     * Este método realiza uma exportação complexa que inclui o histórico de pagamentos anuais.
      */
     private static void exportarEstudantes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -175,10 +177,13 @@ public class ExportadorCSV {
                 if (e != null) {
                     String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
 
+                    // Escrita dos dados base do estudante
                     pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
                             e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
-                            e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" + e.isAtivo() + ";" + e.getValorPropinaBase());
+                            e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" +
+                            e.isAtivo() + ";" + e.getValorPropinaBase());
 
+                    // Exportação dos dados da propina do ano de ingresso
                     model.bll.Propina propina = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
                     if (propina != null) {
                         pw.print(";" + propina.getValorPago() + ";" + propina.getTotalPagamentos());
@@ -195,10 +200,8 @@ public class ExportadorCSV {
     }
 
     /**
-     * Extrai todas as avaliações diretamente da árvore de Estudantes e serializa as notas
-     * no formato "NOTA" (ano letivo atual) e "HISTORICO" (anos transatos).
-     * * @param caminho O destino do ficheiro avaliacoes.csv.
-     * @param repo O Repositório com as instâncias ativas.
+     * Consolida todas as classificações (atuais e históricas) extraídas da árvore de objetos Estudante.
+     * Diferencia os registos entre "NOTA" (em curso) e "HISTORICO" (unidades concluídas).
      */
     private static void exportarAvaliacoes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -208,7 +211,7 @@ public class ExportadorCSV {
                 Estudante e = repo.getEstudantes()[i];
 
                 if (e != null) {
-                    // 1. Exportar Notas do Ano Atual (NOTA)
+                    // 1. Exportação das Notas do Ano Corrente
                     for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                         Avaliacao aval = e.getAvaliacoes()[j];
                         if (aval != null) {
@@ -221,7 +224,7 @@ public class ExportadorCSV {
                         }
                     }
 
-                    // 2. Exportar Histórico Antigo (HISTORICO)
+                    // 2. Exportação do Histórico Permanente
                     for (int j = 0; j < e.getTotalHistorico(); j++) {
                         Avaliacao aval = e.getHistoricoAvaliacoes()[j];
                         if (aval != null) {

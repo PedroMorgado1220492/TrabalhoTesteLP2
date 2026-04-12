@@ -1,10 +1,16 @@
 package model.bll;
 
+/**
+ * Representa o estado corrente das inscrições e avaliações de um Estudante durante um ano letivo.
+ * Funciona como um "buffer" anual que regista as disciplinas em que o aluno está ativamente
+ * matriculado antes de as notas transitarem para o registo histórico no final do ano.
+ */
 public class PercursoAcademico {
 
     // ---------- ATRIBUTOS ----------
     private Estudante estudante;
 
+    // Estruturas de dados para o ano letivo corrente
     private UnidadeCurricular[] ucsInscrito;
     private int totalUcsInscrito;
 
@@ -12,9 +18,18 @@ public class PercursoAcademico {
     private int totalAvaliacoes;
 
     // ---------- CONSTRUTOR ----------
+
+    /**
+     * Construtor da classe PercursoAcademico.
+     * Aloca memória para armazenar as inscrições do ano corrente, estabelecendo
+     * um teto máximo compatível com a carga de um plano de estudos normal.
+     *
+     * @param estudante A instância do estudante titular deste percurso.
+     */
     public PercursoAcademico(Estudante estudante) {
         this.estudante = estudante;
 
+        // Limite estrutural estabelecido em 15 UCs por ano letivo
         this.ucsInscrito = new UnidadeCurricular[15];
         this.totalUcsInscrito = 0;
 
@@ -23,20 +38,27 @@ public class PercursoAcademico {
     }
 
     // ---------- GETTERS ----------
+
     public Estudante getEstudante() { return estudante; }
+
     public UnidadeCurricular[] getUcsInscrito() { return ucsInscrito; }
+
     public int getTotalUcsInscrito() { return totalUcsInscrito; }
+
     public Avaliacao[] getAvaliacoes() { return avaliacoes; }
+
     public int getTotalAvaliacoes() { return totalAvaliacoes; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
     /**
-     * Regista a inscrição do estudante numa nova Unidade Curricular.
-     * * @param uc Unidade Curricular onde pretende inscrever-se.
-     * @return true se a inscrição for bem sucedida, false se tiver atingido o limite do curso.
+     * Efetiva a inscrição (matrícula) do estudante numa específica Unidade Curricular para o ano letivo corrente.
+     *
+     * @param uc A Unidade Curricular na qual o estudante será inscrito.
+     * @return true se a inscrição for processada com sucesso; false caso o limite anual do vetor (15) seja atingido.
      */
     public boolean inscreverEmUc(UnidadeCurricular uc) {
+        // Valida a disponibilidade de "vagas" no array do percurso do aluno
         if (totalUcsInscrito < ucsInscrito.length) {
             ucsInscrito[totalUcsInscrito] = uc;
             totalUcsInscrito++;
@@ -46,11 +68,13 @@ public class PercursoAcademico {
     }
 
     /**
-     * Associa um registo de avaliação de uma UC ao percurso do estudante.
-     * * @param avaliacao Objeto contendo as notas da UC.
-     * @return true se registada com sucesso, false se o limite de avaliações foi atingido.
+     * Vincula um boletim de avaliação relativo a uma Unidade Curricular ao registo corrente do estudante.
+     *
+     * @param avaliacao A instância de Avaliacao contendo as notas parciais ou finais da UC.
+     * @return true se a operação for concluída; false se a matriz de avaliações anuais estiver cheia.
      */
     public boolean registarAvaliacao(Avaliacao avaliacao) {
+        // Verifica limite de espaço no buffer do ano letivo
         if (totalAvaliacoes < avaliacoes.length) {
             avaliacoes[totalAvaliacoes] = avaliacao;
             totalAvaliacoes++;
@@ -60,11 +84,15 @@ public class PercursoAcademico {
     }
 
     /**
-     * Limpa as inscrições e notas do ano letivo atual para preparar o novo ano.
+     * Repõe o estado do percurso académico (inscrições e notas correntes).
+     * Este método é acionado estritamente no final do ano letivo (após a transição de notas para o Histórico)
+     * para preparar o processo de auto-matrícula do ano civil seguinte.
      */
     public void limparInscricoesAtivas() {
+        // Recria as matrizes, repondo os apontadores para a posição zero
         this.ucsInscrito = new UnidadeCurricular[20];
         this.totalUcsInscrito = 0;
+
         this.avaliacoes = new Avaliacao[20];
         this.totalAvaliacoes = 0;
     }
