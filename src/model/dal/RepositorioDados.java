@@ -270,4 +270,20 @@ public class RepositorioDados {
         }
         return false;
     }
+
+    /**
+     * Procura um utilizador (Gestor, Docente ou Estudante) pelo seu email de login.
+     */
+    public Utilizador procurarUtilizadorPorEmail(String email) {
+        for (int i = 0; i < totalGestores; i++) {
+            if (gestores[i] != null && gestores[i].getEmail().equalsIgnoreCase(email)) return gestores[i];
+        }
+        for (int i = 0; i < totalDocentes; i++) {
+            if (docentes[i] != null && docentes[i].getEmail().equalsIgnoreCase(email)) return docentes[i];
+        }
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].getEmail().equalsIgnoreCase(email)) return estudantes[i];
+        }
+        return null;
+    }
 }

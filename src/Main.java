@@ -7,16 +7,16 @@ public class Main {
 
         System.out.println(">>> O Java está a procurar ficheiros na pasta: " + System.getProperty("user.dir"));
 
-        // 1. Criar o Ecrã (View)
+        // Criar o Ecrã (View)
         MainView view = new MainView();
 
-        // 2. Criar a Memória (Model/Repositorio)
+        // Criar a Memória (Model/Repositorio)
         RepositorioDados repositorio = new RepositorioDados();
 
-        // 3. Criar o Controlador e entregar-lhe as peças
+        // Criar o Controlador
         MainController mc = new MainController(view, repositorio);
 
-        // 4. Arrancar o sistema
+        // Arrancar o sistema
         mc.iniciarSistema();
     }
 }

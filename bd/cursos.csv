@@ -1,3 +1,4 @@
-TIPO;SIGLA;NOME;DEPARTAMENTO
-CURSO;LEI;Licenciatura em Engenharia Informatica;DEI;true
-CURSO;LGE;Licenciatura em Gestao de Empresas;DGE;true
+TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO
+CURSO;LEI;Engenharia Informatica;DEP-INF;true
+CURSO;LGE;Gestao de Empresas;DEP-GES;true
+CURSO;LMA;Matematica Aplicada;DEP-MAT;false

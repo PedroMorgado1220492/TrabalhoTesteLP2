@@ -1,3 +1,4 @@
 TIPO;SIGLA;NOME
-DEPARTAMENTO;DEI;Departamento de Engenharia Informatica
-DEPARTAMENTO;DGE;Departamento de Gestao e Economia
+DEPARTAMENTO;DEP-INF;Departamento de Informatica
+DEPARTAMENTO;DEP-MAT;Departamento de Matematica
+DEPARTAMENTO;DEP-GES;Departamento de Gestao

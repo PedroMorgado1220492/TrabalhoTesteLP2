@@ -1,2 +1,12 @@
-TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSO
-UC;P1;Programacao I;1;ABC;LEI;true
+TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSO;ATIVO
+UC;LP1;Linguagens Prog 1;1;ABC;LEI;true
+UC;LP2;Linguagens Prog 2;1;ABC;LEI;true
+UC;MAT1;Matematica 1;1;MTH;LEI;true
+UC;BD;Bases de Dados;2;XYZ;LEI;true
+UC;ES;Eng Software;2;XYZ;LEI;true
+UC;PI;Projeto Inf;3;ABC;LEI;true
+UC;IA;Inteligencia Art;3;XYZ;LEI;true
+UC;CONT1;Contabilidade 1;1;MTH;LGE;true
+UC;GES1;Gestao 1;1;XYZ;LGE;true
+UC;ECO1;Economia 1;2;MTH;LGE;true
+UC;MARK1;Marketing;3;XYZ;LGE;true

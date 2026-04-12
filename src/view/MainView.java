@@ -22,9 +22,8 @@ public class MainView {
         System.out.println("1 - Login");
         System.out.println("2 - Criar Estudante");
         System.out.println("3 - Avançar Ano");
-        System.out.println("4 - Guardar");
-        System.out.println("5 - Recuperar Password (Em Desenvolvimento)");
-        System.out.println("0 - Sair Sem Guardar");
+        System.out.println("4 - Recuperar Password");
+        System.out.println("0 - Sair");
         System.out.print("Opção: ");
         try {
             return Integer.parseInt(scanner.nextLine());
@@ -97,7 +96,7 @@ public class MainView {
 
     public void mostrarCredenciaisGeradas(int ano, int numMec, String email, String pass) {
         System.out.println("\n>> Estudante registado com sucesso no ano " + ano + "!");
-        System.out.println(">> Nº Mec: " + numMec + " | Email: " + email + " | Pass: " + pass);
+        System.out.println(">> Nº Mec: " + numMec + " | Email: " + email);
     }
 
     // ---------- TRANSIÇÃO DE ANO E VALIDAÇÃO DE CURSOS ----------
@@ -146,12 +145,12 @@ public class MainView {
     public void msgErroLimiteEstudantes() { System.out.println(">> Erro: Limite máximo de estudantes atingido."); }
     public void msgSucessoAvancoAno(int ano) { System.out.println(">> Sucesso! O sistema avançou para o ano letivo de " + ano + "."); }
     public void msgCancelamentoAvancoAno(int ano) { System.out.println(">> Operação cancelada. Mantemo-nos em " + ano + "."); }
-    public void msgAvisoAutoSave() { System.out.println(">> Não é necessário guardar manualmente. O sistema tem Auto-Save inteligente ao sair dos menus!"); }
     public void msgEncerramento() { System.out.println(">> A encerrar o sistema..."); }
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
     public void msgErroEmailDominio() { System.out.println(">> Erro: O email deve pertencer ao domínio '@issmf.ipp.pt'."); }
     public void msgErroArquivoNaoEncontrado(String caminho) { System.err.println("[DEBUG/ALERTA] O Java não conseguiu encontrar o ficheiro: " + caminho); }
     public void msgErroInativo() { System.out.println(">> ERRO: Esta conta encontra-se inativa. Contacte os serviços académicos."); }
-    public void msgAvisoRecuperacao() { System.out.println(">> Funcionalidade de Recuperação de Password em desenvolvimento. Estará disponível brevemente."); }
     public void msgErroCursoInativo() { System.out.println(">> Erro: O curso selecionado encontra-se inativo e não aceita matrículas."); }
+    public void msgSucessoRecuperacao() { System.out.println(">> SUCESSO: Uma nova password foi gerada e enviada para o seu Email Pessoal."); }
+    public void msgErroDadosIncorretos() { System.out.println(">> ERRO: O Email de acesso ou o NIF inseridos não estão corretos ou não coincidem."); }
 }

@@ -2,6 +2,8 @@ package utils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import model.bll.Utilizador;
+import model.dal.RepositorioDados;
 
 public class Seguranca {
 
@@ -22,5 +24,22 @@ public class Seguranca {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Erro: Algoritmo de segurança não encontrado.");
         }
+    }
+
+    public static boolean recuperarPassword(String emailLogin, String nif, RepositorioDados repo) {
+        Utilizador user = repo.procurarUtilizadorPorEmail(emailLogin);
+
+        // Verifica se encontrou o utilizador e se o NIF bate certo
+        if (user != null && user.getNif().equals(nif)) {
+
+            String novaPassRaw = PasswordGenerator.generatePassword();
+            user.setPassword(encriptar(novaPassRaw));
+
+            // Envia o email!
+            ServicoEmail.enviarEmailRecuperacao(user, novaPassRaw);
+
+            return true;
+        }
+        return false;
     }
 }

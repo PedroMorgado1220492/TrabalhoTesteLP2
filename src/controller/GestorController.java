@@ -1,5 +1,6 @@
 package controller;
 
+import utils.ServicoEmail;
 import view.GestorView;
 import model.bll.Gestor;
 import model.dal.RepositorioDados;
@@ -354,6 +355,7 @@ public class GestorController {
         );
 
         if (repositorio.adicionarEstudante(novoEstudante)) {
+            ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
             view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
         } else view.mostrarErroLimiteEstudantes();
     }
@@ -423,6 +425,7 @@ public class GestorController {
         Docente novoDocente = new Docente(siglaGerada, emailAcesso, passEnc, nome, nif, morada, dataNascimento, emailPessoal);
 
         if (repositorio.adicionarDocente(novoDocente)) {
+            ServicoEmail.enviarEmailBoasVindas(novoDocente, passGeradaDoc);
             view.mostrarCredenciaisCriadas("DOCENTE", novoDocente.getNome(), novoDocente.getEmail(), passGeradaDoc);
         } else view.mostrarErroLimiteDocentes();
     }

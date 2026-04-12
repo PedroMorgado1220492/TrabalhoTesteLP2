@@ -7,6 +7,7 @@ import utils.*;
 import view.MainView;
 import model.dal.RepositorioDados;
 
+
 public class MainController {
 
     private MainView view;
@@ -32,8 +33,7 @@ public class MainController {
                 case 1: processarLogin(); break;
                 case 2: processarRegistoEstudante(); break;
                 case 3: processarTransicaoAno(); break;
-                case 4: view.msgAvisoAutoSave(); break;
-                case 5: view.msgAvisoRecuperacao(); break;
+                case 4: processarRecuperacaoPassword(); break;
                 case 0:
                     view.msgEncerramento();
                     aExecutar = false;
@@ -237,6 +237,7 @@ public class MainController {
         }
 
         if (repositorio.adicionarEstudante(novo)) {
+            ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
             view.mostrarCredenciaisGeradas(anoInscricao, numMec, email, passRaw);
         } else {
             view.msgErroLimiteEstudantes();
@@ -323,4 +324,25 @@ public class MainController {
         }
         return ucsAprovadas == c.getTotalUCs();
     }
+
+    private void processarRecuperacaoPassword() {
+        view.mostrarCabecalhoLogin();
+        String email = view.pedirEmail();
+        String nif = view.pedirNif();
+
+        carregarBaseDeDadosCompleta();
+
+        boolean sucesso = utils.Seguranca.recuperarPassword(email, nif, repositorio);
+
+        if (sucesso) {
+            view.msgSucessoRecuperacao();
+            ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.msgErroDadosIncorretos();
+        }
+
+        this.repositorio = new RepositorioDados();
+    }
+
+
 }
