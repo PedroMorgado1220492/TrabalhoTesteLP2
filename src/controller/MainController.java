@@ -170,13 +170,17 @@ public class MainController {
         view.mostrarCabecalhoTransicao();
         carregarBaseDeDadosCompleta();
 
-        // Verifica a viabilidade de funcionamento dos cursos no arranque
-        validarArranqueDeCursos();
-
         int proximoAno = repositorio.getAnoAtual() + 1;
+
+        // A regra avalia apenas as novas inscrições para o ano que vai iniciar!
+        validarArranqueDeCursos(proximoAno);
+
         if (view.pedirConfirmacaoAvanco(proximoAno)) {
             repositorio.avancarAno();
-            gerarCertificadosConcluintes(repositorio.getAnoAtual());
+
+            // O certificado é impresso com o ano letivo que o aluno acabou de concluir
+            gerarCertificadosConcluintes(proximoAno - 1);
+
             view.msgSucessoAvancoAno(repositorio.getAnoAtual());
             ExportadorCSV.exportarDados("bd", repositorio);
         } else {
@@ -239,6 +243,7 @@ public class MainController {
         ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
         ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
     }
+
 
     private String validarNome() {
         while (true) {
@@ -378,20 +383,20 @@ public class MainController {
     }
 
     /**
-     * Valida a condição de "Numerus Clausus Mínimo" para o arranque do 1º ano de cada curso.
-     * Cursos com menos de 5 alunos no 1º ano são cancelados e os alunos desmatriculados.
+     * Valida a condição de "Numerus Clausus Mínimo" para o arranque do 1º ano de cada curso
+     * verificando APENAS os alunos cuja primeira inscrição seja no ano alvo.
      */
-    private void validarArranqueDeCursos() {
+    private void validarArranqueDeCursos(int anoAlvo) {
         view.mostrarAvisoValidacaoCursos();
         if (repositorio.getTotalCursos() == 0) return;
 
         for (int i = 0; i < repositorio.getTotalCursos(); i++) {
             Curso curso = repositorio.getCursos()[i];
-            int inscritos = contarInscritosPrimeiroAno(curso);
+            int inscritos = contarInscritosPrimeiroAno(curso, anoAlvo);
 
             if (inscritos > 0 && inscritos < 5) {
                 view.mostrarCursoCancelado(curso.getSigla(), inscritos);
-                anularMatriculasPrimeiroAno(curso.getSigla());
+                anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
             } else if (inscritos >= 5) {
                 view.mostrarCursoAprovado(curso.getSigla(), inscritos);
             }
@@ -400,14 +405,15 @@ public class MainController {
     }
 
     /**
-     * Contabiliza o número de alunos matriculados no primeiro ano de um dado curso.
+     * Contabiliza o número de alunos matriculados pela primeira vez no ano alvo.
      */
-    private int contarInscritosPrimeiroAno(Curso curso) {
+    private int contarInscritosPrimeiroAno(Curso curso, int anoAlvo) {
         int conta = 0;
         for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
             Estudante e = repositorio.getEstudantes()[j];
+            // Regra corrigida: Verifica se o aluno ingressou no ano alvo!
             if (e != null && e.getCurso() != null &&
-                    e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoFrequencia() == 1) {
+                    e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoPrimeiraInscricao() == anoAlvo) {
                 conta++;
             }
         }
@@ -415,15 +421,15 @@ public class MainController {
     }
 
     /**
-     * Remove do sistema os alunos de 1º ano matriculados num curso que não reuniu as condições de arranque.
+     * Remove do sistema os alunos inscritos no ano alvo num curso que não reuniu as condições de arranque.
      */
-    private void anularMatriculasPrimeiroAno(String siglaCurso) {
+    private void anularMatriculasPrimeiroAno(String siglaCurso, int anoAlvo) {
         for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
             Estudante e = repositorio.getEstudantes()[i];
+            // Remove apenas se o aluno ingressou no ano alvo!
             if (e != null && e.getCurso() != null &&
-                    e.getCurso().getSigla().equals(siglaCurso) && e.getAnoFrequencia() == 1) {
+                    e.getCurso().getSigla().equals(siglaCurso) && e.getAnoPrimeiraInscricao() == anoAlvo) {
                 repositorio.removerEstudante(e.getNumeroMecanografico());
-                // Decrementa o índice para ajustar à contração do array após remoção
                 i--;
             }
         }
@@ -457,7 +463,7 @@ public class MainController {
     }
 
     /**
-     * Verifica se um aluno obteve aproveitamento (média > 9.5) em todas as Unidades Curriculares do seu curso.
+     * Verifica se um aluno obteve aproveitamento (média >= 9.5) em todas as Unidades Curriculares do seu curso.
      *
      * @param e O estudante a avaliar.
      * @return true se todas as UCs do plano de estudos constarem no histórico com nota positiva.
@@ -473,7 +479,9 @@ public class MainController {
             // Procura a UC atual no histórico de avaliações do aluno
             for (int j = 0; j < e.getTotalHistorico(); j++) {
                 Avaliacao av = e.getHistoricoAvaliacoes()[j];
-                if (av != null && av.getUc().getSigla().equals(ucCurso.getSigla()) && av.calcularMedia() >= 9.5) {
+
+                // BLINDAGEM: Adicionada a verificação "av.getUc() != null" para evitar o crach!
+                if (av != null && av.getUc() != null && av.getUc().getSigla().equals(ucCurso.getSigla()) && av.calcularMedia() >= 9.5) {
                     ucsAprovadas++;
                     break;
                 }

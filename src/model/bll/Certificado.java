@@ -1,8 +1,7 @@
 package model.bll;
 
-import java.io.BufferedReader;
+
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,11 +28,11 @@ public class Certificado {
 
         // 2. Obter o próximo número sequencial e registar no CSV
         String csvCaminho = "bd/certificados.csv";
-        int numCertificado = obterProximoNumero(csvCaminho);
-        registarNoCSV(csvCaminho, numCertificado, e.getNumeroMecanografico(), null, "ID_CERTIFICADO;NUM_MECANOGRAFICO");
+
+        registarNoCSV(csvCaminho, e.getNumeroMecanografico(), null, "NUM_MECANOGRAFICO");
 
         // 3. Define o caminho do documento de texto
-        String caminhoTxt = "certificados/certificado_" + numCertificado + ".txt";
+        String caminhoTxt = "certificados/certificado_" + e.getNumeroMecanografico() + ".txt";
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminhoTxt))) {
 
             // Impressão do cabeçalho institucional do documento
@@ -51,7 +50,7 @@ public class Certificado {
 
             // Processamento do cálculo e arredondamento da média final (2 casas decimais)
             double media = calcularMediaFinal(e);
-            pw.println("com média final de " + Math.round(media * 100.0) / 100.0 + " valores.");
+            pw.println("com média final de " + (int) media + " valores.");
             pw.println("=====================================================");
             pw.println("UNIDADES CURRICULARES CONCLUÍDAS:");
 
@@ -69,7 +68,7 @@ public class Certificado {
                 }
             }
             pw.println("=====================================================");
-            pw.println("Certificado Nº: " + numCertificado);
+            pw.println("Certificado Identificador: " + e.getNumeroMecanografico());
 
             return caminhoTxt;
 
@@ -100,33 +99,11 @@ public class Certificado {
         }
 
         // Previne erros de divisão por zero na devolução do resultado final
-        return count > 0 ? soma / count : 0.0;
+        return count > 0 ? Math.round(soma / count) : 0.0;
     }
 
-    // --- MÉTODOS DE CONTROLO SEQUENCIAL ---
 
-    private static int obterProximoNumero(String caminhoArquivo) {
-        int ultimoNumero = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
-            String linha = br.readLine(); // Lê e ignora a primeira linha (o Cabeçalho!)
-
-            while ((linha = br.readLine()) != null) {
-                if (linha.trim().isEmpty()) continue;
-                String[] partes = linha.split(";");
-                if (partes.length > 0) {
-                    try {
-                        int numeroAAtual = Integer.parseInt(partes[0]);
-                        if (numeroAAtual > ultimoNumero) ultimoNumero = numeroAAtual;
-                    } catch (NumberFormatException ignored) {}
-                }
-            }
-        } catch (IOException e) {
-            // Se o ficheiro não existir, não há problema, começamos no 1.
-        }
-        return ultimoNumero + 1;
-    }
-
-    private static void registarNoCSV(String caminho, int id, int numMec, String extra, String cabecalho) {
+    private static void registarNoCSV(String caminho, int numMec, String extra, String cabecalho) {
         java.io.File ficheiro = new java.io.File(caminho);
         boolean ficheiroJaExiste = ficheiro.exists(); // Verifica se é a primeira vez que criamos o CSV
 
@@ -136,7 +113,7 @@ public class Certificado {
                 pw.println(cabecalho);
             }
             // Depois gravamos a linha de dados normal
-            pw.println(id + ";" + numMec + (extra != null ? ";" + extra : ""));
+            pw.println(numMec + (extra != null ? ";" + extra : ""));
         } catch(IOException e) {}
     }
 }

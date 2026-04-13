@@ -1,0 +1,21 @@
+=====================================================
+             CERTIFICADO DE CONCLUSÃO                
+=====================================================
+O aluno Maria Santos, com a morada Lisboa,
+número de contribuinte 200100102 terminou o curso
+no ano 2026, curso de Gestao de Empresas,
+com média final de 14.13 valores.
+=====================================================
+UNIDADES CURRICULARES CONCLUÍDAS:
+
+--- 1º ANO ---
+  [CONT1] Contabilidade 1 | Nota Final: 15.0
+  [GES1] Gestao 1 | Nota Final: 12.0
+
+--- 2º ANO ---
+  [ECO1] Economia 1 | Nota Final: 13.5
+
+--- 3º ANO ---
+  [MARK1] Marketing | Nota Final: 16.0
+=====================================================
+Certificado Identificador: 20240002

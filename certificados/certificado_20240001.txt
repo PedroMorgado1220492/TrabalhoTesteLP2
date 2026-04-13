@@ -1,0 +1,28 @@
+=====================================================
+             CERTIFICADO DE CONCLUSÃO                
+=====================================================
+O aluno Joao Silva, com a morada Porto,
+número de contribuinte 200100101 terminou o curso
+no ano 2026, curso de Engenharia Informatica,
+com média final de 14.55 valores.
+=====================================================
+UNIDADES CURRICULARES CONCLUÍDAS:
+
+--- 1º ANO ---
+  [LP1] Linguagens Prog 1 | Nota Final: 14.5
+  [LP2] Linguagens Prog 2 | Nota Final: 16.0
+  [MAT1] Matematica 1 | Nota Final: 10.0
+  [CONT1] Contabilidade 1 | Nota Final: 14.0
+  [GES1] Gestao 1 | Nota Final: 16.5
+
+--- 2º ANO ---
+  [BD] Bases de Dados | Nota Final: 18.0
+  [ES] Eng Software | Nota Final: 15.0
+  [ECO1] Economia 1 | Nota Final: 12.0
+
+--- 3º ANO ---
+  [MARK1] Marketing | Nota Final: 18.0
+  [PI] Projeto Inf | Nota Final: 12.0
+  [IA] Inteligencia Art | Nota Final: 14.0
+=====================================================
+Certificado Identificador: 20240001

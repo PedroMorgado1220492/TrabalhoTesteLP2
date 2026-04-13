@@ -165,35 +165,45 @@ public class ExportadorCSV {
         } catch (IOException e) { }
     }
 
+
     /**
      * Exporta os dados demográficos, académicos e o estado financeiro (propinas) dos Estudantes.
-     * Este método realiza uma exportação complexa que inclui o histórico de pagamentos anuais.
      */
     private static void exportarEstudantes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
             pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;EMAIL_PESSOAL;ATIVO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
+
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-                model.bll.Estudante e = repo.getEstudantes()[i];
-                if (e != null) {
-                    String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
+                // Tenta exportar o aluno. Se der erro, salta só este aluno e não apaga o ficheiro!
+                try {
+                    model.bll.Estudante e = repo.getEstudantes()[i];
+                    if (e != null) {
+                        String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
 
-                    // Escrita dos dados base do estudante
-                    pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
-                            e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
-                            e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" +
-                            e.isAtivo() + ";" + e.getValorPropinaBase());
+                        // Escrita dos dados base do estudante
+                        pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
+                                e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
+                                e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" +
+                                e.isAtivo() + ";" + e.getValorPropinaBase());
 
-                    // Exportação dos dados da propina do ano de ingresso
-                    model.bll.Propina propina = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
-                    if (propina != null) {
-                        pw.print(";" + propina.getValorPago() + ";" + propina.getTotalPagamentos());
-                        for (int j = 0; j < propina.getTotalPagamentos(); j++) {
-                            pw.print(";" + propina.getHistoricoPagamentos()[j]);
+                        // Exportação dos dados da propina do ano de ingresso
+                        model.bll.Propina propina = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
+                        if (propina != null) {
+                            pw.print(";" + propina.getValorPago() + ";" + propina.getTotalPagamentos());
+
+                            // Verifica se o histórico não é nulo antes de imprimir
+                            if (propina.getHistoricoPagamentos() != null) {
+                                for (int j = 0; j < propina.getTotalPagamentos(); j++) {
+                                    pw.print(";" + propina.getHistoricoPagamentos()[j]);
+                                }
+                            }
+                        } else {
+                            pw.print(";0.0;0");
                         }
-                    } else {
-                        pw.print(";0.0;0");
+                        pw.println();
                     }
-                    pw.println();
+                } catch (Exception ex) {
+                    // Ignora silenciosamente dados corrompidos num estudante específico
                 }
             }
         } catch (IOException e) { }
@@ -201,46 +211,50 @@ public class ExportadorCSV {
 
     /**
      * Consolida todas as classificações (atuais e históricas) extraídas da árvore de objetos Estudante.
-     * Diferencia os registos entre "NOTA" (em curso) e "HISTORICO" (unidades concluídas).
      */
     private static void exportarAvaliacoes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-
             pw.println("TIPO;NUM_MEC;SIGLA_UC;ANO_OU_NOTA1;NOTA2_OU_NOTA1;NOTA3_OU_NOTA2;NOTA3");
 
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-                Estudante e = repo.getEstudantes()[i];
+                try {
+                    Estudante e = repo.getEstudantes()[i];
 
-                if (e != null) {
-                    // 1. Exportação das Notas do Ano Corrente (Avaliação Contínua)
-                    for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
-                        Avaliacao aval = e.getAvaliacoes()[j];
-                        if (aval != null) {
+                    if (e != null) {
+                        // 1. Exportação das Notas do Ano Corrente
+                        for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
+                            Avaliacao aval = e.getAvaliacoes()[j];
 
-                            double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
-                            double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
-                            double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
+                            // Garante que a avaliação tem uma UC real associada antes de pedir a Sigla
+                            if (aval != null && aval.getUc() != null) {
+                                double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
+                                double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
+                                double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
 
-                            pw.println("NOTA;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
-                                    nota1 + ";" + nota2 + ";" + nota3);
+                                pw.println("NOTA;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
+                                        nota1 + ";" + nota2 + ";" + nota3);
+                            }
+                        }
+
+                        // 2. Exportação do Histórico Permanente
+                        for (int j = 0; j < e.getTotalHistorico(); j++) {
+                            Avaliacao aval = e.getHistoricoAvaliacoes()[j];
+
+                            // A mesma verificação para o Histórico!
+                            if (aval != null && aval.getUc() != null) {
+                                double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
+                                double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
+                                double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
+
+                                pw.println("HISTORICO;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
+                                        aval.getAnoAvaliacao() + ";" + nota1 + ";" + nota2 + ";" + nota3);
+                            }
                         }
                     }
-
-                    // 2. Exportação do Histórico Permanente
-                    for (int j = 0; j < e.getTotalHistorico(); j++) {
-                        Avaliacao aval = e.getHistoricoAvaliacoes()[j];
-                        if (aval != null) {
-                            double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
-                            double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
-                            double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
-
-                            pw.println("HISTORICO;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
-                                    aval.getAnoAvaliacao() + ";" + nota1 + ";" + nota2 + ";" + nota3);
-                        }
-                    }
+                } catch (Exception ex) {
+                    // Previne que uma falha de conversão apague o ficheiro
                 }
             }
-        } catch (IOException e) {
-        }
+        } catch (IOException e) { }
     }
 }
