@@ -74,7 +74,7 @@ public class Certificado {
             return caminhoTxt;
 
         } catch (IOException ex) {
-            return null; 
+            return null;
         }
     }
 

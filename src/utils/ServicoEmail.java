@@ -17,7 +17,7 @@ public class ServicoEmail {
     private static final String REMETENTE = "backofficeissmf@gmail.com";
     private static final String HOST = "smtp.gmail.com";
     private static final String PORTA = "587";
-    private static final String PASSWORD_EMAIL = "pgwk vsuc hfhl cksq";
+    private static final String PASSWORD_EMAIL = "zshi neph uhas efll";
 
     /**
      * Construtor privado para garantir o padrão de classe utilitária.

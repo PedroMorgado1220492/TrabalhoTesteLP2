@@ -292,8 +292,20 @@ public class MainController {
     private void registarEstudanteNoSistema() {
         view.mostrarCabecalhoRegisto();
 
-        // Validação se existem cursos
-        if (repositorio.getTotalCursos() == 0) {
+        // Filtrar apenas os cursos ativos (disponíveis)
+        Curso[] cursosAtivos = new Curso[repositorio.getTotalCursos()];
+        int totalAtivos = 0;
+
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            Curso c = repositorio.getCursos()[i];
+            if (c != null && c.isAtivo()) {
+                cursosAtivos[totalAtivos] = c;
+                totalAtivos++;
+            }
+        }
+
+        // Validação se existem cursos ativos disponíveis para novas matrículas
+        if (totalAtivos == 0) {
             view.msgSemCursosParaRegisto();
             return;
         }
@@ -305,14 +317,14 @@ public class MainController {
         String dataNascimento = validarDataNascimento();
         String emailPessoal = view.pedirEmailPessoal();
 
-        int indexCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
-        if (indexCurso < 0 || indexCurso >= repositorio.getTotalCursos()) {
+        int indexCurso = view.pedirEscolhaCurso(cursosAtivos, totalAtivos);
+
+        if (indexCurso < 0 || indexCurso >= totalAtivos) {
             view.msgErroNumeroInvalido();
             return;
         }
 
-        Curso cursoEscolhido = repositorio.getCursos()[indexCurso];
-
+        Curso cursoEscolhido = cursosAtivos[indexCurso];
         // Revisão de dados na View
         view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoEscolhido.getNome());
 
@@ -329,6 +341,9 @@ public class MainController {
             Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, dataNascimento, cursoEscolhido, anoAtual, emailPessoal);
 
             if (repositorio.adicionarEstudante(novo)) {
+                // Inscrever automaticamente nas UCs do 1º ano
+                vincularUcsIniciais(novo, cursoEscolhido);
+
                 // Enviar o email e capturar o resultado
                 boolean emailEnviado = utils.ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
 
@@ -356,7 +371,7 @@ public class MainController {
     private void vincularUcsIniciais(Estudante est, Curso curso) {
         for (int i = 0; i < curso.getTotalUCs(); i++) {
             UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-            if (uc.getAnoCurricular() == est.getAnoFrequencia()) {
+            if (uc != null && uc.getAnoCurricular() == est.getAnoFrequencia()) {
                 est.getPercursoAcademico().inscreverEmUc(uc);
             }
         }

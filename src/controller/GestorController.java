@@ -502,24 +502,39 @@ public class GestorController {
      * e notifica o utilizador via email.
      */
     private void adicionarEstudante() {
-        if (repositorio.getTotalCursos() == 0) {
+        // Filtrar os cursos ativos antes de qualquer outra operação
+        Curso[] cursosAtivos = new Curso[repositorio.getTotalCursos()];
+        int totalAtivos = 0;
+
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            Curso c = repositorio.getCursos()[i];
+            if (c != null && c.isAtivo()) {
+                cursosAtivos[totalAtivos] = c;
+                totalAtivos++;
+            }
+        }
+
+        // Validação se existem cursos disponíveis para matrícula
+        if (totalAtivos == 0) {
             view.mostrarErroFaltaCurso();
             return;
         }
 
+        // Recolha de dados
         String nome = validarNome();
         String nif = validarNif();
         String morada = view.pedirMorada();
         String dataNascimento = validarDataNascimento();
         String emailPessoal = view.pedirEmailPessoal();
 
-        int escolhaCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
-        if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
+        int escolhaCurso = view.pedirEscolhaCurso(cursosAtivos, totalAtivos);
+
+        if (escolhaCurso < 0 || escolhaCurso >= totalAtivos) {
             view.mostrarOpcaoInvalida();
             return;
         }
 
-        Curso cursoSelecionado = repositorio.getCursos()[escolhaCurso];
+        Curso cursoSelecionado = cursosAtivos[escolhaCurso];
 
         view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoSelecionado.getSigla());
 
@@ -537,15 +552,33 @@ public class GestorController {
 
             if (repositorio.adicionarEstudante(novoEstudante)) {
                 // Integração com sistema de envio de credenciais simulado
+                vincularUcsIniciais(novoEstudante, cursoSelecionado);
+
                 boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
                 view.mostrarStatusEmail(emailEnviado, novoEstudante.getEmailPessoal());
                 view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
+
+                // Salva as alterações no disco
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteEstudantes();
             }
         } else {
             view.mostrarAvisoSemAlteracao();
+        }
+    }
+
+    /**
+     * Inscreve o estudante nas Unidades Curriculares correspondentes ao seu ano de frequência.
+     * * @param est   O estudante a inscrever.
+     * @param curso O curso que define o plano de estudos.
+     */
+    private void vincularUcsIniciais(Estudante est, Curso curso) {
+        for (int i = 0; i < curso.getTotalUCs(); i++) {
+            UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+            if (uc != null && uc.getAnoCurricular() == est.getAnoFrequencia()) {
+                est.getPercursoAcademico().inscreverEmUc(uc);
+            }
         }
     }
 
