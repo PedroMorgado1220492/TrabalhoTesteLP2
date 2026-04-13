@@ -56,7 +56,7 @@ public class Estudante extends Utilizador {
         this.percursoAcademico = new PercursoAcademico(this);
 
         // Limites estruturais definidos para garantir a gestão de memória (1 ano vs Histórico total)
-        this.avaliacoes = new Avaliacao[20];
+        this.avaliacoes = new Avaliacao[15];
         this.totalAvaliacoes = 0;
 
         this.historicoAvaliacoes = new Avaliacao[150];
@@ -293,7 +293,7 @@ public class Estudante extends Utilizador {
         if (curso == null || percursoAcademico == null) return;
 
         // 1. Identificação das Unidades Curriculares em atraso (Reprovações)
-        UnidadeCurricular[] ucsParaRepetir = new UnidadeCurricular[20];
+        UnidadeCurricular[] ucsParaRepetir = new UnidadeCurricular[15];
         int totalRepetir = 0;
 
         for (int j = 0; j < percursoAcademico.getTotalUcsInscrito(); j++) {
