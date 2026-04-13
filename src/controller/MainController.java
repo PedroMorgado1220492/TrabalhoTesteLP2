@@ -235,8 +235,8 @@ public class MainController {
         ImportadorCSV.importarDepartamentos("bd/departamentos.csv", repositorio);
         ImportadorCSV.importarCursos("bd/cursos.csv", repositorio);
         ImportadorCSV.importarDocentes("bd/docentes.csv", repositorio);
-        ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
         ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
+        ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
         ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
     }
 
