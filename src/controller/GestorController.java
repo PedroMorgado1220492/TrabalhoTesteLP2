@@ -86,7 +86,7 @@ public class GestorController {
 
     /**
      * Processa o registo de um novo Departamento.
-     * Exige uma sigla única no sistema para garantir a integridade dos dados.
+     * Exige uma sigla única no sistema para garantir a integridade dos dados e pede confirmação antes de gravar.
      */
     private void adicionarDepartamento() {
         String sigla;
@@ -99,11 +99,18 @@ public class GestorController {
         }
         String nome = view.pedirNomeDepartamento();
 
-        Departamento novoDep = gestorAtivo.criarDepartamento(sigla, nome);
-        if (repositorio.adicionarDepartamento(novoDep)) {
-            view.mostrarSucessoRegistoDepartamento(nome);
+        view.mostrarRevisaoDepartamento(sigla, nome);
+
+        if (view.confirmarDados()) {
+            Departamento novoDep = gestorAtivo.criarDepartamento(sigla, nome);
+            if (repositorio.adicionarDepartamento(novoDep)) {
+                view.mostrarSucessoRegistoDepartamento(nome);
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio); // Grava logo
+            } else {
+                view.mostrarErroLimiteDepartamentos();
+            }
         } else {
-            view.mostrarErroLimiteDepartamentos();
+            view.mostrarAvisoSemAlteracao();
         }
     }
 
@@ -121,6 +128,7 @@ public class GestorController {
             if (!novoNomeDep.isEmpty()) {
                 depEditar.setNome(novoNomeDep);
                 view.mostrarSucessoAtualizacao();
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarAvisoSemAlteracao();
             }
@@ -153,6 +161,7 @@ public class GestorController {
 
     /**
      * Cria um novo Curso, associando-o obrigatoriamente a um Departamento existente.
+     * Pede confirmação final antes de instanciar o objeto.
      */
     private void adicionarCurso() {
         // Bloqueia a criação se a infraestrutura base (Departamentos) não existir
@@ -177,11 +186,20 @@ public class GestorController {
             return;
         }
 
-        Curso novoCurso = gestorAtivo.criarCurso(siglaCurso, nomeCurso, repositorio.getDepartamentos()[escolhaIndex]);
-        if (repositorio.adicionarCurso(novoCurso)) {
-            view.mostrarSucessoRegistoCurso(nomeCurso);
+        Departamento dep = repositorio.getDepartamentos()[escolhaIndex];
+
+        view.mostrarRevisaoCurso(siglaCurso, nomeCurso, dep.getSigla());
+
+        if (view.confirmarDados()) {
+            Curso novoCurso = gestorAtivo.criarCurso(siglaCurso, nomeCurso, dep);
+            if (repositorio.adicionarCurso(novoCurso)) {
+                view.mostrarSucessoRegistoCurso(nomeCurso);
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarErroLimiteCursos();
+            }
         } else {
-            view.mostrarErroLimiteCursos();
+            view.mostrarAvisoSemAlteracao();
         }
     }
 
@@ -201,6 +219,7 @@ public class GestorController {
                 if (!novoNomeCurso.isEmpty()) {
                     cursoEditar.setNome(novoNomeCurso);
                     view.mostrarSucessoAtualizacao();
+                    model.dal.ExportadorCSV.exportarDados("bd", repositorio);
                 } else {
                     view.mostrarAvisoSemAlteracao();
                 }
@@ -237,6 +256,7 @@ public class GestorController {
 
             curso.setAtivo(!curso.isAtivo());
             view.msgSucessoEstadoAlterado("Curso", curso.isAtivo());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroCursoNaoEncontrado();
         }
@@ -259,6 +279,7 @@ public class GestorController {
                 case 3: alterarUC(); break;
                 case 4: view.mostrarListaUCs(repositorio.getUcs(), repositorio.getTotalUcs()); break;
                 case 5: alternarEstadoUC(); break;
+                case 6: removerUcDeCurso(); break;
                 case 0: aExecutar = false; break;
                 default: view.mostrarOpcaoInvalida();
             }
@@ -266,7 +287,7 @@ public class GestorController {
     }
 
     /**
-     * Cria uma nova Unidade Curricular.
+     * Cria uma nova Unidade Curricular e pede confirmação antes de persistir.
      * Requer a atribuição obrigatória de um Docente Responsável e o vínculo a um Curso existente.
      */
     private void criarUC() {
@@ -315,12 +336,19 @@ public class GestorController {
             return;
         }
 
-        UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
-        if (repositorio.adicionarUnidadeCurricular(novaUc)) {
-            vincularUC(novaUc, cursoAssociado, docenteResponsavel);
-            view.mostrarSucessoRegistoUC(nomeUc);
+        view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla());
+
+        if (view.confirmarDados()) {
+            UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
+            if (repositorio.adicionarUnidadeCurricular(novaUc)) {
+                vincularUC(novaUc, cursoAssociado, docenteResponsavel);
+                view.mostrarSucessoRegistoUC(nomeUc);
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarErroLimiteUCs();
+            }
         } else {
-            view.mostrarErroLimiteUCs();
+            view.mostrarAvisoSemAlteracao();
         }
     }
 
@@ -363,6 +391,31 @@ public class GestorController {
         cursoAlvo.adicionarUnidadeCurricular(ucPartilhar);
         ucPartilhar.adicionarCurso(cursoAlvo);
         view.mostrarSucessoPartilhaUC(ucPartilhar.getNome(), cursoAlvo.getSigla());
+        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+    }
+
+    /**
+     * Remove a associação lógica de uma Unidade Curricular a um determinado Curso.
+     */
+    private void removerUcDeCurso() {
+        int idxCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
+        if (idxCurso < 0 || idxCurso >= repositorio.getTotalCursos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+        Curso curso = repositorio.getCursos()[idxCurso];
+
+        // Apresenta as UCs associadas a este curso para referência
+        view.mostrarRelatorioUCsPorCurso(new Curso[]{curso}, 1);
+
+        String sigla = view.pedirSiglaUCRemover();
+
+        if (curso.removerUnidadeCurricular(sigla)) {
+            view.mostrarSucessoAtualizacao();
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio); // Sincroniza a remoção com o CSV
+        } else {
+            view.mostrarErroUCNaoEncontrada();
+        }
     }
 
     /**
@@ -385,6 +438,7 @@ public class GestorController {
                 }
             }
             view.mostrarSucessoAtualizacao();
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroUCNaoEncontrada();
         }
@@ -414,6 +468,7 @@ public class GestorController {
             }
             uc.setAtivo(!uc.isAtivo());
             view.msgSucessoEstadoAlterado("Unidade Curricular", uc.isAtivo());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroUCNaoEncontrada();
         }
@@ -442,7 +497,7 @@ public class GestorController {
     }
 
     /**
-     * Regista um novo Estudante no sistema.
+     * Regista um novo Estudante no sistema, pedindo confirmação prévia.
      * O sistema gera automaticamente as credenciais (Nº Mecanográfico sequencial, Email institucional e Password)
      * e notifica o utilizador via email.
      */
@@ -464,24 +519,33 @@ public class GestorController {
             return;
         }
 
-        // Geração automática de credenciais baseadas no ano de inscrição
-        int anoInscricao = repositorio.getAnoAtual();
-        int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
-        String emailAcesso = GeradorEmail.gerarEmailEstudante(numeroMecanografico);
-        String passGeradaEst = GeradorPassword.generatePassword();
-        String passEnc = utils.Seguranca.encriptar(passGeradaEst);
+        Curso cursoSelecionado = repositorio.getCursos()[escolhaCurso];
 
-        Estudante novoEstudante = new Estudante(
-                numeroMecanografico, emailAcesso, passEnc, nome, nif, morada, dataNascimento, repositorio.getCursos()[escolhaCurso], anoInscricao, emailPessoal
-        );
+        view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoSelecionado.getSigla());
 
-        if (repositorio.adicionarEstudante(novoEstudante)) {
-            // Integração com sistema de envio de credenciais simulado
-            boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
-            view.mostrarStatusEmail(emailEnviado, novoEstudante.getEmailPessoal());
-            view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
+        if (view.confirmarDados()) {
+            // Geração automática de credenciais baseadas no ano de inscrição
+            int anoInscricao = repositorio.getAnoAtual();
+            int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
+            String emailAcesso = GeradorEmail.gerarEmailEstudante(numeroMecanografico);
+            String passGeradaEst = GeradorPassword.generatePassword();
+            String passEnc = utils.Seguranca.encriptar(passGeradaEst);
+
+            Estudante novoEstudante = new Estudante(
+                    numeroMecanografico, emailAcesso, passEnc, nome, nif, morada, dataNascimento, cursoSelecionado, anoInscricao, emailPessoal
+            );
+
+            if (repositorio.adicionarEstudante(novoEstudante)) {
+                // Integração com sistema de envio de credenciais simulado
+                boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
+                view.mostrarStatusEmail(emailEnviado, novoEstudante.getEmailPessoal());
+                view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarErroLimiteEstudantes();
+            }
         } else {
-            view.mostrarErroLimiteEstudantes();
+            view.mostrarAvisoSemAlteracao();
         }
     }
 
@@ -506,6 +570,7 @@ public class GestorController {
                 if (!novaMorada.trim().isEmpty()) estEditar.setMorada(novaMorada);
 
                 view.mostrarSucessoAtualizacao();
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroEstudanteNaoEncontrado();
             }
@@ -524,6 +589,7 @@ public class GestorController {
             if (est != null) {
                 est.setAtivo(!est.isAtivo());
                 view.msgSucessoEstadoAlterado("Estudante", est.isAtivo());
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroEstudanteNaoEncontrado();
             }
@@ -551,7 +617,7 @@ public class GestorController {
     }
 
     /**
-     * Contrata/Regista um novo Docente.
+     * Contrata/Regista um novo Docente pedindo confirmação.
      * Gera uma sigla única baseada no nome inserido, bem como o email institucional e password.
      */
     private void adicionarDocente() {
@@ -564,19 +630,26 @@ public class GestorController {
         String dataNascimento = validarDataNascimento();
         String emailPessoal = view.pedirEmailPessoal();
 
-        String emailAcesso = siglaGerada.toLowerCase() + "@issmf.ipp.pt";
-        String passGeradaDoc = GeradorPassword.generatePassword();
-        String passEnc = utils.Seguranca.encriptar(passGeradaDoc);
+        view.mostrarRevisaoDocente(nome, nif, morada, dataNascimento, emailPessoal, siglaGerada);
 
-        Docente novoDocente = new Docente(siglaGerada, emailAcesso, passEnc, nome, nif, morada, dataNascimento, emailPessoal);
+        if (view.confirmarDados()) {
+            String emailAcesso = siglaGerada.toLowerCase() + "@issmf.ipp.pt";
+            String passGeradaDoc = GeradorPassword.generatePassword();
+            String passEnc = utils.Seguranca.encriptar(passGeradaDoc);
 
-        if (repositorio.adicionarDocente(novoDocente)) {
-            boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoDocente, passGeradaDoc);
-            view.mostrarStatusEmail(emailEnviado, novoDocente.getEmailPessoal());
+            Docente novoDocente = new Docente(siglaGerada, emailAcesso, passEnc, nome, nif, morada, dataNascimento, emailPessoal);
 
-            view.mostrarCredenciaisCriadas("DOCENTE", novoDocente.getNome(), novoDocente.getEmail(), passGeradaDoc);
+            if (repositorio.adicionarDocente(novoDocente)) {
+                boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoDocente, passGeradaDoc);
+                view.mostrarStatusEmail(emailEnviado, novoDocente.getEmailPessoal());
+
+                view.mostrarCredenciaisCriadas("DOCENTE", novoDocente.getNome(), novoDocente.getEmail(), passGeradaDoc);
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarErroLimiteDocentes();
+            }
         } else {
-            view.mostrarErroLimiteDocentes();
+            view.mostrarAvisoSemAlteracao();
         }
     }
 
@@ -598,6 +671,7 @@ public class GestorController {
             if (!novaMoradaDoc.trim().isEmpty()) docEditar.setMorada(novaMoradaDoc);
 
             view.mostrarSucessoAtualizacao();
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroDocenteNaoEncontrado();
         }
@@ -619,6 +693,7 @@ public class GestorController {
             }
             doc.setAtivo(!doc.isAtivo());
             view.msgSucessoEstadoAlterado("Docente", doc.isAtivo());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroDocenteNaoEncontrado();
         }
@@ -639,6 +714,7 @@ public class GestorController {
         if (view.pedirConfirmacaoAvancoAno(proximoAno)) {
             repositorio.avancarAno();
             view.mostrarSucessoAvancoAno(repositorio.getAnoAtual());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarCancelamentoAvancoAno(repositorio.getAnoAtual());
         }

@@ -66,6 +66,7 @@ public class GestorView {
         System.out.println("3 - Alterar Unidade Curricular");
         System.out.println("4 - Listar Unidades Curriculares");
         System.out.println("5 - Ativar/Desativar UC");
+        System.out.println("6 - Remover UC de um Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -135,6 +136,7 @@ public class GestorView {
     public String pedirAnoCurricularUC() { return pedirString("Ano Curricular (1, 2 ou 3)"); }
     public String pedirSiglaUCPartilhar() { return pedirString("Introduza a Sigla da UC existente que quer partilhar"); }
     public String pedirSiglaUCAlterar() { return pedirString("Introduza a Sigla da UC a alterar"); }
+    public String pedirSiglaUCRemover() { return pedirString("Sigla da UC a desassociar do curso"); }
 
     public String pedirNomePessoa() { return pedirString("Nome (Nome e Sobrenome)"); }
     public String pedirNif() { return pedirString("NIF (9 dígitos)"); }
@@ -245,6 +247,15 @@ public class GestorView {
         System.out.println("Email de Acesso: " + email);
         System.out.println("Password Provisória: " + password);
         System.out.println("----------------------------------------------\n");
+    }
+
+    /**
+     * Solicita a confirmação final antes de persistir os dados no sistema.
+     * @return true se o utilizador confirmar com 'S'.
+     */
+    public boolean confirmarDados() {
+        System.out.print("\nOs dados estão corretos? (S/N): ");
+        return scanner.nextLine().trim().equalsIgnoreCase("S");
     }
 
     // ---------- MÉTODOS DE LISTAGEM E ESTATÍSTICAS ----------
@@ -421,4 +432,37 @@ public class GestorView {
         System.out.print("Escolha o número do curso: ");
         return lerOpcaoInteira();
     }
+
+    // ---------- REVISÃO DE DADOS ----------
+
+    public void mostrarRevisaoDepartamento(String sigla, String nome) {
+        System.out.println("\n--- REVISÃO DE DADOS ---");
+        System.out.println("Sigla: " + sigla + " | Nome: " + nome);
+    }
+
+    public void mostrarRevisaoCurso(String sigla, String nome, String siglaDep) {
+        System.out.println("\n--- REVISÃO DE DADOS ---");
+        System.out.println("Sigla: " + sigla + " | Nome: " + nome + " | Departamento: " + siglaDep);
+    }
+
+    public void mostrarRevisaoUC(String sigla, String nome, int ano, String nomeDocente, String siglaCurso) {
+        System.out.println("\n--- REVISÃO DE DADOS ---");
+        System.out.println("Sigla: " + sigla + " | Nome: " + nome + " | Ano: " + ano + "º");
+        System.out.println("Docente: " + nomeDocente + " | Curso: " + siglaCurso);
+    }
+
+    public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String email, String siglaCurso) {
+        System.out.println("\n--- REVISÃO DE DADOS ---");
+        System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
+        System.out.println("Nasc: " + dataNasc + " | Email Pessoal: " + email);
+        System.out.println("Curso: " + siglaCurso);
+    }
+
+    public void mostrarRevisaoDocente(String nome, String nif, String morada, String dataNasc, String email, String sigla) {
+        System.out.println("\n--- REVISÃO DE DADOS ---");
+        System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
+        System.out.println("Nasc: " + dataNasc + " | Email Pessoal: " + email);
+        System.out.println("Sigla Atribuída: " + sigla);
+    }
+
 }

@@ -259,10 +259,9 @@ public class Estudante extends Utilizador {
     }
 
     /**
-     * Avalia o rácio de aprovações com base na "Regra dos 60%".
-     * O critério assenta na proporção de cadeiras superadas face ao número total de inscrições.
-     *
-     * @return true se o rácio de sucesso for $\ge 0.60$; false caso contrário.
+     * Calcula se o estudante obteve aprovação a pelo menos 60% das Unidades Curriculares
+     * em que se encontra atualmente inscrito.
+     * * @return true se a taxa de aprovação for igual ou superior a 60%; false caso contrário.
      */
     public boolean temAproveitamentoParaProgredir() {
         if (percursoAcademico == null || percursoAcademico.getTotalUcsInscrito() == 0) {
@@ -272,10 +271,12 @@ public class Estudante extends Utilizador {
         int positivas = 0;
         int totalInscritas = percursoAcademico.getTotalUcsInscrito();
 
-        // Contabiliza as UCs em que o aluno obteve provimento
+        // Contabiliza as UCs em que o aluno obteve aproveitamento
         for (int i = 0; i < totalInscritas; i++) {
             UnidadeCurricular uc = percursoAcademico.getUcsInscrito()[i];
-            if (teveAprovacao(uc.getSigla())) {
+
+            // Programação Defensiva: Verifica se a UC não é nula antes de pedir a sigla
+            if (uc != null && teveAprovacao(uc.getSigla())) {
                 positivas++;
             }
         }
@@ -302,37 +303,35 @@ public class Estudante extends Utilizador {
             }
         }
 
-        // 2. Transferência de dados em memória para o Histórico de Longo Prazo
+        // 2. Transição de Grau e Auditoria Financeira (FEITO ANTES DA MATRÍCULA!)
+        // O aluno só sobe de ano se NÃO tiver dívidas e se TIVER aproveitamento (>= 60%).
+        if (!temDividas() && temAproveitamentoParaProgredir()) {
+            if (anoFrequencia < 3) {
+                anoFrequencia++; // O ano muda aqui. As próximas inscrições já vão ler o novo ano!
+            }
+        }
+
+        // 3. Transferência de dados em memória para o Histórico de Longo Prazo
         arquivarAvaliacoes();
 
-        // 3. Purga do registo de inscrições anuais
+        // 4. Purga do registo de inscrições anuais
         percursoAcademico.limparInscricoesAtivas();
 
-        // 4. Auto-Matrícula (Fase A): Obrigatoriedade de repetir as UCs em atraso
+        // 5. Auto-Matrícula (Fase A): Obrigatoriedade de repetir as UCs em atraso
         for (int j = 0; j < totalRepetir; j++) {
             percursoAcademico.inscreverEmUc(ucsParaRepetir[j]);
         }
 
-        // 5. Auto-Matrícula (Fase B): Integração nas novas UCs correspondentes ao seu atual nível
+        // 6. Auto-Matrícula (Fase B): Integração nas novas UCs correspondentes ao seu atual nível
         for (int j = 0; j < curso.getTotalUCs(); j++) {
             UnidadeCurricular ucCurso = curso.getUnidadesCurriculares()[j];
 
+            // Lê o anoFrequencia, que já foi atualizado no Passo 2 (se o aluno progrediu)
             if (ucCurso.getAnoCurricular() == anoFrequencia) {
                 // Impede reinscrições em cadeiras validadas em anos transatos
                 if (!estaInscrito(ucCurso.getSigla()) && !jaConcluiuUC(ucCurso.getSigla())) {
                     percursoAcademico.inscreverEmUc(ucCurso);
                 }
-            }
-        }
-
-        // 6. Transição de Grau e Auditoria Financeira
-        if (temDividas()) {
-            System.out.println(">> BLOQUEADO: O aluno " + nome + " não pode progredir de ano devido a propinas em atraso.");
-        } else if (temAproveitamentoParaProgredir()) {
-            if (anoFrequencia < 3) {
-                anoFrequencia++;
-            } else {
-                System.out.println(">> Parabéns! O aluno " + nome + " concluiu o curso!");
             }
         }
     }

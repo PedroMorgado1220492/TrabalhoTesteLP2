@@ -110,4 +110,24 @@ public class Curso {
         // Retorna a verificação da regra estrita: máximo de 5 UCs por ano curricular
         return contadorUcsNesteAno < 5;
     }
+
+    /**
+     * Remove uma Unidade Curricular deste curso através da sua sigla.
+     * @param sigla A sigla da UC a remover.
+     * @return true se a UC foi encontrada e removida.
+     */
+    public boolean removerUnidadeCurricular(String sigla) {
+        for (int i = 0; i < totalUCs; i++) {
+            if (unidadesCurriculares[i].getSigla().equalsIgnoreCase(sigla)) {
+                // Shift-Left para manter o array compacto
+                for (int j = i; j < totalUCs - 1; j++) {
+                    unidadesCurriculares[j] = unidadesCurriculares[j + 1];
+                }
+                unidadesCurriculares[totalUCs - 1] = null;
+                totalUCs--;
+                return true;
+            }
+        }
+        return false;
+    }
 }

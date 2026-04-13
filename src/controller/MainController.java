@@ -151,35 +151,15 @@ public class MainController {
         view.msgPrepararRegisto();
         carregarBaseDeDadosCompleta();
 
-        executarFluxoRegisto();
+        registarEstudanteNoSistema();
 
         encerrarSessaoESalvar();
     }
 
-    /**
-     * Executa a recolha de dados e validações necessárias para matricular um novo aluno.
-     */
-    private void executarFluxoRegisto() {
-        view.mostrarCabecalhoRegisto();
 
-        if (repositorio.getTotalCursos() == 0) {
-            view.msgSemCursosParaRegisto();
-            return;
-        }
-
-        String nome = validarNome();
-        String nif = validarNif();
-        String morada = view.pedirMorada();
-        String dataNasc = validarDataNascimento();
-        Curso curso = escolherCursoValido();
-
-        if (curso == null) return;
-
-        registarEstudanteNoSistema(nome, nif, morada, dataNasc, curso);
-    }
 
     // =========================================================
-    // 3. TRANSIÇÃO DE ANO LETIVO E GESTÃO GLOBAL (CASE 3 & 4)
+    // 3. TRANSIÇÃO DE ANO LETIVO E GESTÃO GLOBAL (CASE 3)
     // =========================================================
 
     /**
@@ -205,6 +185,10 @@ public class MainController {
 
         this.repositorio = new RepositorioDados(); // Limpar a memória no final do processo
     }
+
+    // =========================================================
+    // 4. RECUPERAÇÃO DA PASSWORD (CASE 4)
+    // =========================================================
 
     /**
      * Inicia o fluxo de recuperação de password para qualquer utilizador do sistema.
@@ -305,31 +289,64 @@ public class MainController {
     /**
      * Efetiva a criação e o registo do estudante na base de dados, gerando credenciais seguras.
      */
-    private void registarEstudanteNoSistema(String nome, String nif, String morada, String data, Curso curso) {
-        int anoInscricao = repositorio.getAnoAtual();
-        int numMec = repositorio.gerarNumeroMecanografico(anoInscricao);
-        String email = GeradorEmail.gerarEmailEstudante(numMec);
-        String passRaw = GeradorPassword.generatePassword();
-        String passEnc = utils.Seguranca.encriptar(passRaw);
-        String emailPessoal = view.pedirEmailPessoal();
+    private void registarEstudanteNoSistema() {
+        view.mostrarCabecalhoRegisto();
 
-        Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, data, curso, anoInscricao, emailPessoal);
-
-        // Efetua a inscrição automática nas Unidades Curriculares do 1º ano
-        if (novo.getCurso() != null && novo.getPercursoAcademico() != null) {
-            vincularUcsIniciais(novo, curso);
+        // Validação se existem cursos
+        if (repositorio.getTotalCursos() == 0) {
+            view.msgSemCursosParaRegisto();
+            return;
         }
 
-        if (repositorio.adicionarEstudante(novo)) {
-            boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
-            if (emailEnviado) {
-                view.msgSucessoEnvioEmail(novo.getEmailPessoal());
+        // Recolha de Dados
+        String nome = validarNome();
+        String nif = validarNif();
+        String morada = view.pedirMorada();
+        String dataNascimento = validarDataNascimento();
+        String emailPessoal = view.pedirEmailPessoal();
+
+        int indexCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
+        if (indexCurso < 0 || indexCurso >= repositorio.getTotalCursos()) {
+            view.msgErroNumeroInvalido();
+            return;
+        }
+
+        Curso cursoEscolhido = repositorio.getCursos()[indexCurso];
+
+        // Revisão de dados na View
+        view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoEscolhido.getNome());
+
+        // Confirmação
+        if (view.confirmarDados()) {
+
+            // Lógica de Geração de Credenciais
+            int anoAtual = repositorio.getAnoAtual();
+            int numMec = repositorio.gerarNumeroMecanografico(anoAtual);
+            String email = utils.GeradorEmail.gerarEmailEstudante(numMec);
+            String passRaw = utils.GeradorPassword.generatePassword();
+            String passEnc = utils.Seguranca.encriptar(passRaw);
+
+            Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, dataNascimento, cursoEscolhido, anoAtual, emailPessoal);
+
+            if (repositorio.adicionarEstudante(novo)) {
+                // Enviar o email e capturar o resultado
+                boolean emailEnviado = utils.ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
+
+                if (emailEnviado) {
+                    view.msgSucessoEnvioEmail(novo.getEmailPessoal());
+                } else {
+                    view.msgErroEnvioEmail();
+                }
+
+                view.mostrarCredenciaisGeradas(anoAtual, numMec, email, passRaw);
+
+                // Salva o novo aluno nos CSVs
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
-                view.msgErroEnvioEmail();
+                view.msgErroLimiteEstudantes();
             }
-            view.mostrarCredenciaisGeradas(anoInscricao, numMec, email, passRaw);
         } else {
-            view.msgErroLimiteEstudantes();
+            view.msgRegistoCancelado();
         }
     }
 
@@ -413,7 +430,7 @@ public class MainController {
     }
 
     /**
-     * Verifica se um aluno obteve aproveitamento (média $\ge 9.5$) em todas as Unidades Curriculares do seu curso.
+     * Verifica se um aluno obteve aproveitamento (média > 9.5) em todas as Unidades Curriculares do seu curso.
      *
      * @param e O estudante a avaliar.
      * @return true se todas as UCs do plano de estudos constarem no histórico com nota positiva.

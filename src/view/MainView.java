@@ -104,6 +104,15 @@ public class MainView {
         System.out.println(">> Nº Mec: " + numMec + " | Email: " + email);
     }
 
+    /**
+     * Solicita a confirmação final antes de persistir os dados no sistema.
+     * @return true se o utilizador confirmar com 'S'.
+     */
+    public boolean confirmarDados() {
+        System.out.print("\nOs dados estão corretos? (S/N): ");
+        return scanner.nextLine().trim().equalsIgnoreCase("S");
+    }
+
     // ---------- TRANSIÇÃO DE ANO E VALIDAÇÃO DE CURSOS ----------
 
     public void mostrarCabecalhoTransicao() { System.out.println("\n--- TRANSIÇÃO DE ANO LETIVO ---"); }
@@ -170,5 +179,19 @@ public class MainView {
 
     public void msgErroEnvioEmail() {
         System.out.println(">> Aviso: Não foi possível enviar o email automático. Verifique a ligação à internet ou as credenciais SMTP do sistema.");
+    }
+
+    // ---------- REVISÃO E CONFIRMAÇÃO DE DADOS ----------
+
+    public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String emailPessoal, String nomeCurso) {
+        System.out.println("\n--- REVISÃO DE DADOS ---");
+        System.out.println("Nome: " + nome + " | NIF: " + nif);
+        System.out.println("Morada: " + morada + " | Nasc: " + dataNasc);
+        System.out.println("Email Pessoal: " + emailPessoal);
+        System.out.println("Curso: " + nomeCurso);
+    }
+
+    public void msgRegistoCancelado() {
+        System.out.println(">> Registo cancelado. Nenhuma alteração foi guardada.");
     }
 }
