@@ -90,10 +90,10 @@ public class PercursoAcademico {
      */
     public void limparInscricoesAtivas() {
         // Recria as matrizes, repondo os apontadores para a posição zero
-        this.ucsInscrito = new UnidadeCurricular[20];
+        this.ucsInscrito = new UnidadeCurricular[15];
         this.totalUcsInscrito = 0;
 
-        this.avaliacoes = new Avaliacao[20];
+        this.avaliacoes = new Avaliacao[15];
         this.totalAvaliacoes = 0;
     }
 }

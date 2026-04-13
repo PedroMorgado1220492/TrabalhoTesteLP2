@@ -150,12 +150,11 @@ public class RepositorioDados {
         // Itera pelo corpo estudantil, ativando a rotina de encerramento, arquivo e matrículas
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante est = estudantes[i];
-            if (est != null) {
-                est.processarFimDeAno();
+            if (est != null && est.isAtivo()) {
+                est.processarFimDeAno(this.anoAtual);
             }
         }
 
-        System.out.println(">> Sucesso: O ano letivo avançou para " + this.anoAtual + "!");
     }
 
     /**

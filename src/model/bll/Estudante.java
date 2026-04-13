@@ -289,7 +289,7 @@ public class Estudante extends Utilizador {
      * Orquestra as operações lógicas do encerramento de ciclo do estudante.
      * Envolve a desagregação das inscrições, arquivamento de classificações e auto-matrícula com base nas regras de progressão.
      */
-    public void processarFimDeAno() {
+    public void processarFimDeAno(int novoAnoLetivo) {
         if (curso == null || percursoAcademico == null) return;
 
         // 1. Identificação das Unidades Curriculares em atraso (Reprovações)
@@ -298,7 +298,7 @@ public class Estudante extends Utilizador {
 
         for (int j = 0; j < percursoAcademico.getTotalUcsInscrito(); j++) {
             UnidadeCurricular uc = percursoAcademico.getUcsInscrito()[j];
-            if (!teveAprovacao(uc.getSigla())) {
+            if (uc != null && !teveAprovacao(uc.getSigla())) {
                 ucsParaRepetir[totalRepetir++] = uc;
             }
         }
@@ -327,12 +327,17 @@ public class Estudante extends Utilizador {
             UnidadeCurricular ucCurso = curso.getUnidadesCurriculares()[j];
 
             // Lê o anoFrequencia, que já foi atualizado no Passo 2 (se o aluno progrediu)
-            if (ucCurso.getAnoCurricular() == anoFrequencia) {
+            if (ucCurso != null && ucCurso.getAnoCurricular() == anoFrequencia) {
                 // Impede reinscrições em cadeiras validadas em anos transatos
                 if (!estaInscrito(ucCurso.getSigla()) && !jaConcluiuUC(ucCurso.getSigla())) {
                     percursoAcademico.inscreverEmUc(ucCurso);
                 }
             }
+        }
+        // 7. Geração de faturação para o novo ano letivo
+        // Só gera propina se o aluno se inscreveu em alguma cadeira (continua ativo/a estudar)
+        if (percursoAcademico.getTotalUcsInscrito() > 0) {
+            adicionarPropina(novoAnoLetivo, this.valorPropinaBase);
         }
     }
 
