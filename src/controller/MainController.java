@@ -442,21 +442,19 @@ public class MainController {
         for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
             Estudante e = repositorio.getEstudantes()[i];
 
-            if (e != null && e.getCurso() != null) {
+            if (e != null && e.getCurso() != null && e.isAtivo()) {
                 if (verificarConclusaoCurso(e)) {
 
                     // 1. Gera o certificado e guarda o caminho
                     String caminhoCertificado = model.bll.Certificado.gerarCertificado(e, ano);
 
-                    // 2. Envia por e-mail!
+                    // 2. Envia por e-mail
                     if (caminhoCertificado != null && e.getEmailPessoal() != null && !e.getEmailPessoal().isEmpty()) {
-                        utils.ServicoEmail.enviarEmailComAnexo(
-                                e.getEmailPessoal(),
-                                "ISSMF - Certificado de Conclusão de Curso",
-                                "Muitos parabéns " + e.getNome() + "!\n\nÉ com enorme orgulho que lhe enviamos em anexo o seu Certificado de Conclusão de Curso.\n\nVotos de muito sucesso profissional e pessoal!\n\nA Direção do ISSMF.",
-                                caminhoCertificado
-                        );
+                        utils.ServicoEmail.enviarEmailCertificado(e.getEmailPessoal(), e.getNome(), caminhoCertificado);
                     }
+
+                    // 3. Desativa o estudante após a conclusão do curso
+                    e.setAtivo(false);
                 }
             }
         }
@@ -480,7 +478,6 @@ public class MainController {
             for (int j = 0; j < e.getTotalHistorico(); j++) {
                 Avaliacao av = e.getHistoricoAvaliacoes()[j];
 
-                // BLINDAGEM: Adicionada a verificação "av.getUc() != null" para evitar o crach!
                 if (av != null && av.getUc() != null && av.getUc().getSigla().equals(ucCurso.getSigla()) && av.calcularMedia() >= 9.5) {
                     ucsAprovadas++;
                     break;

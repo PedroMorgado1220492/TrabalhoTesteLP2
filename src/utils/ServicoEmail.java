@@ -82,7 +82,6 @@ public class ServicoEmail {
             return true; // Sucesso
 
         } catch (MessagingException e) {
-            // O erro é registado apenas para log interno do servidor, não para o utilizador final aqui
             return false; // Falha
         }
     }
@@ -121,6 +120,41 @@ public class ServicoEmail {
         } catch (MessagingException e) {
             return false;
         }
+    }
+
+    /**
+     * Prepara e envia o e-mail com o Certificado de Conclusão de Curso em anexo.
+     * * @param emailDestino O e-mail do estudante.
+     * @param nomeAluno O nome do estudante para personalizar a mensagem.
+     * @param caminhoAnexo O caminho do ficheiro .txt do certificado.
+     * @return true se foi enviado com sucesso, false caso contrário.
+     */
+    public static boolean enviarEmailCertificado(String emailDestino, String nomeAluno, String caminhoAnexo) {
+        String assunto = "ISSMF - Certificado de Conclusão de Curso";
+        String corpo = "Muitos parabéns " + nomeAluno + "!\n\n"
+                + "É com enorme orgulho que lhe enviamos em anexo o seu Certificado de Conclusão de Curso.\n\n"
+                + "Votos de muito sucesso profissional e pessoal!\n\n"
+                + "A Direção do ISSMF.";
+
+        return enviarEmailComAnexo(emailDestino, assunto, corpo, caminhoAnexo);
+    }
+
+    /**
+     * Prepara e envia o e-mail com o Recibo de Pagamento de Propinas em anexo.
+     *
+     * @param emailDestino  O e-mail pessoal do estudante.
+     * @param nomeAluno     O nome do aluno para personalizar (opcional, mas recomendado).
+     * @param caminhoRecibo O caminho do ficheiro .txt do recibo.
+     * @return true se enviado com sucesso.
+     */
+    public static boolean enviarEmailRecibo(String emailDestino, String nomeAluno, String caminhoRecibo) {
+        String assunto = "ISSMF - Recibo de Pagamento";
+        String corpo = "Caro(a) Estudante " + nomeAluno + ",\n\n"
+                + "Segue em anexo o seu recibo de pagamento das propinas.\n\n"
+                + "Com os melhores cumprimentos,\n"
+                + "Serviços Financeiros - ISSMF.";
+
+        return enviarEmailComAnexo(emailDestino, assunto, corpo, caminhoRecibo);
     }
 
     /**

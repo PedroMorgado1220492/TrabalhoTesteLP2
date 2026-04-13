@@ -214,12 +214,7 @@ public class EstudanteController {
 
             // 2. Envia por email
             if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null) {
-                utils.ServicoEmail.enviarEmailComAnexo(
-                        estudanteLogado.getEmailPessoal(),
-                        "ISSMF - Recibo de Pagamento",
-                        "Caro(a) Estudante,\n\nSegue em anexo o seu recibo de pagamento das propinas.\n\nCom os melhores cumprimentos,\nServiços Financeiros - ISSMF.",
-                        caminhoRecibo
-                );
+                utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(), estudanteLogado.getNome(), caminhoRecibo);
             }
 
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
