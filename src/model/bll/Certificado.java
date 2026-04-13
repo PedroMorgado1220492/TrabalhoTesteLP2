@@ -1,5 +1,8 @@
 package model.bll;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,10 +21,21 @@ public class Certificado {
      * @param anoConclusao O ano letivo de transição em que o curso foi finalizado.
      */
     public static void gerarCertificado(Estudante e, int anoConclusao) {
-        // Define o caminho e o nome do ficheiro, garantindo a sua unicidade através do número mecanográfico
-        String caminho = "bd/certificado_" + e.getNumeroMecanografico() + ".txt";
+// 1. Criar a pasta dedicada para certificados se ela não existir
+        File diretorio = new File("certificados");
+        if (!diretorio.exists()) {
+            diretorio.mkdirs();
+        }
 
-        try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
+        // 2. Obter o próximo número sequencial e registar no CSV
+        String csvCaminho = "bd/certificados.csv";
+        int numCertificado = obterProximoNumero(csvCaminho);
+        registarNoCSV(csvCaminho, numCertificado, e.getNumeroMecanografico(), null, "ID_CERTIFICADO;NUM_MECANOGRAFICO");
+
+        // 3. Define o caminho do documento de texto
+        String caminhoTxt = "certificados/certificado_" + numCertificado + ".txt";
+        try (PrintWriter pw = new PrintWriter(new FileWriter(caminhoTxt))) {
+
             // Impressão do cabeçalho institucional do documento
             pw.println("=====================================================");
             pw.println("             CERTIFICADO DE CONCLUSÃO                ");
@@ -55,6 +69,7 @@ public class Certificado {
                 }
             }
             pw.println("=====================================================");
+            pw.println("Certificado Nº: " + numCertificado);
         } catch (IOException ex) {
             // Falha silenciosa: a geração não bloqueia a transição global de ano letivo em caso de erro no I/O
         }
@@ -83,5 +98,42 @@ public class Certificado {
 
         // Previne erros de divisão por zero na devolução do resultado final
         return count > 0 ? soma / count : 0.0;
+    }
+
+    // --- MÉTODOS DE CONTROLO SEQUENCIAL ---
+
+    private static int obterProximoNumero(String caminhoArquivo) {
+        int ultimoNumero = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
+            String linha = br.readLine(); // Lê e ignora a primeira linha (o Cabeçalho!)
+
+            while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
+                String[] partes = linha.split(";");
+                if (partes.length > 0) {
+                    try {
+                        int numeroAAtual = Integer.parseInt(partes[0]);
+                        if (numeroAAtual > ultimoNumero) ultimoNumero = numeroAAtual;
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        } catch (IOException e) {
+            // Se o ficheiro não existir, não há problema, começamos no 1.
+        }
+        return ultimoNumero + 1;
+    }
+
+    private static void registarNoCSV(String caminho, int id, int numMec, String extra, String cabecalho) {
+        java.io.File ficheiro = new java.io.File(caminho);
+        boolean ficheiroJaExiste = ficheiro.exists(); // Verifica se é a primeira vez que criamos o CSV
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter(ficheiro, true))) {
+            // Se o ficheiro é novo, escrevemos o cabeçalho primeiro!
+            if (!ficheiroJaExiste) {
+                pw.println(cabecalho);
+            }
+            // Depois gravamos a linha de dados normal
+            pw.println(id + ";" + numMec + (extra != null ? ";" + extra : ""));
+        } catch(IOException e) {}
     }
 }

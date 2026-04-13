@@ -208,6 +208,8 @@ public class EstudanteController {
         // Regista o pagamento e sincroniza imediatamente com a base de dados CSV
         if (propina.registarPagamento(valor)) {
             view.msgSucesso();
+            // Gera recibo
+            model.bll.Recibo.gerarRecibo(estudanteLogado, valor, propina.getValorTotal());
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.msgErroDados();
