@@ -193,4 +193,13 @@ public class EstudanteView {
     public void msgErroSemPropina() { System.out.println(">> Erro: Não foi encontrada nenhuma propina gerada para o ano letivo atual."); }
 
     public void msgContaDesativada() { System.out.println(">> A sua conta foi desativada no sistema. A encerrar sessão..."); }
+
+    /**
+     * Exibe uma mensagem de erro informando que o valor inserido é inferior ao mínimo permitido.
+     * * @param valorMinimo O montante mínimo (10% ou o total da dívida restante).
+     */
+    public void msgErroValorMinimo(double valorMinimo) {
+        System.out.println("\nErro: Valor inválido! O pagamento mínimo permitido é de " + String.format("%.2f", valorMinimo) + "€.");
+        System.out.println("Por favor, introduza um valor igual ou superior.");
+    }
 }

@@ -14,10 +14,10 @@ import javax.mail.internet.*;
 public class ServicoEmail {
 
     // ---------- CONFIGURAÇÕES DO REMETENTE ----------
-    private static final String REMETENTE = "pedromorgado41@gmail.com";
+    private static final String REMETENTE = "backofficeissmf@gmail.com";
     private static final String HOST = "smtp.gmail.com";
     private static final String PORTA = "587";
-    private static final String PASSWORD_EMAIL = "nyma moxb hnsa lzsa";
+    private static final String PASSWORD_EMAIL = "pgwk vsuc hfhl cksq";
 
     /**
      * Construtor privado para garantir o padrão de classe utilitária.
@@ -116,6 +116,53 @@ public class ServicoEmail {
             message.setText(corpo.toString());
 
             Transport.send(message);
+            return true;
+
+        } catch (MessagingException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Envia um e-mail com um ficheiro em anexo.
+     * * @param destino O e-mail do destinatário.
+     * @param assunto O assunto do e-mail.
+     * @param corpoTexto A mensagem de texto no corpo do e-mail.
+     * @param caminhoAnexo O caminho (path) para o ficheiro a ser anexado.
+     * @return true se enviado com sucesso, false caso contrário.
+     */
+    public static boolean enviarEmailComAnexo(String destino, String assunto, String corpoTexto, String caminhoAnexo) {
+        if (destino == null || destino.isEmpty()) {
+            return false;
+        }
+
+        try {
+            Message message = new MimeMessage(configurarSessao());
+            message.setFrom(new InternetAddress(REMETENTE));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destino));
+            message.setSubject(assunto);
+
+            // Criação de uma mensagem multi-partes (Texto + Anexo)
+            Multipart multipart = new MimeMultipart();
+
+            // Parte 1: Corpo de Texto
+            MimeBodyPart textPart = new MimeBodyPart();
+            textPart.setText(corpoTexto);
+            multipart.addBodyPart(textPart);
+
+            // Parte 2: O Ficheiro Anexo
+            MimeBodyPart attachmentPart = new MimeBodyPart();
+            try {
+                attachmentPart.attachFile(caminhoAnexo);
+            } catch (Exception ex) {
+                return false; // Falha a ler o ficheiro
+            }
+            multipart.addBodyPart(attachmentPart);
+
+            // Junta tudo e envia
+            message.setContent(multipart);
+            Transport.send(message);
+
             return true;
 
         } catch (MessagingException e) {

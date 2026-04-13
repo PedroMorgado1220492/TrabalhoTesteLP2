@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
  */
 public class Recibo {
 
-    public static void gerarRecibo(Estudante e, double valorPago, double valorTotalCurso) {
+    public static String gerarRecibo(Estudante e, double valorPago, double valorTotalCurso, double valorEmFalta) {
 
         // 1. Criar a pasta dedicada para recibos se ela não existir
         File diretorio = new File("recibos");
@@ -49,15 +49,24 @@ public class Recibo {
             // Formatamos para duas casas decimais
             String valorPagoStr = String.format("%.2f", valorPago);
             String valorTotalStr = String.format("%.2f", valorTotalCurso);
+            String valorEmFaltaStr = String.format("%.2f", valorEmFalta);
             String nomeCurso = (e.getCurso() != null) ? e.getCurso().getNome() : "Desconhecido";
 
             pw.println("pagou " + valorPagoStr + " euros de um total de " + valorTotalStr + " euros,");
             pw.println("do curso de " + nomeCurso + ".");
+            pw.println("");
+            if (valorEmFalta <= 0) {
+                pw.println("Situação Financeira: REGULARIZADA (0.00 euros em falta).");
+            } else {
+                pw.println("Falta pagar: " + valorEmFaltaStr + " euros.");
+            }
             pw.println("=====================================================");
             pw.println("Recibo Nº " + numRecibo);
 
+            return caminhoTxt;
+
         } catch (IOException ex) {
-            // Falha silenciosa
+            return null; // Falha silenciosa
         }
     }
 

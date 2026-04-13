@@ -205,22 +205,24 @@ public class ExportadorCSV {
      */
     private static void exportarAvaliacoes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;NUM_MEC;UC;ANO_LETIVO;NOTA_NORMAL;NOTA_RECURSO;NOTA_ESPECIAL");
+
+            pw.println("TIPO;NUM_MEC;SIGLA_UC;ANO_OU_NOTA1;NOTA2_OU_NOTA1;NOTA3_OU_NOTA2;NOTA3");
 
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
                 Estudante e = repo.getEstudantes()[i];
 
                 if (e != null) {
-                    // 1. Exportação das Notas do Ano Corrente
+                    // 1. Exportação das Notas do Ano Corrente (Avaliação Contínua)
                     for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                         Avaliacao aval = e.getAvaliacoes()[j];
                         if (aval != null) {
-                            double nNormal = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
-                            double nRecurso = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
-                            double nEspecial = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
+
+                            double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
+                            double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
+                            double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
 
                             pw.println("NOTA;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
-                                    nNormal + ";" + nRecurso + ";" + nEspecial);
+                                    nota1 + ";" + nota2 + ";" + nota3);
                         }
                     }
 
@@ -228,16 +230,17 @@ public class ExportadorCSV {
                     for (int j = 0; j < e.getTotalHistorico(); j++) {
                         Avaliacao aval = e.getHistoricoAvaliacoes()[j];
                         if (aval != null) {
-                            double nNormal = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
-                            double nRecurso = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
-                            double nEspecial = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
+                            double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
+                            double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
+                            double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
 
                             pw.println("HISTORICO;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
-                                    aval.getAnoAvaliacao() + ";" + nNormal + ";" + nRecurso + ";" + nEspecial);
+                                    aval.getAnoAvaliacao() + ";" + nota1 + ";" + nota2 + ";" + nota3);
                         }
                     }
                 }
             }
-        } catch (IOException e) { }
+        } catch (IOException e) {
+        }
     }
 }

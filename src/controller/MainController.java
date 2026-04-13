@@ -114,7 +114,7 @@ public class MainController {
     private String validarDominioEmail() {
         while (true) {
             String email = view.pedirEmail();
-            if (email.toLowerCase().endsWith("@issmf.ipp.pt")) {
+            if (Validador.isEmailInstitucionalValido(email)) {
                 return email;
             }
             view.msgErroEmailDominio();
@@ -423,7 +423,19 @@ public class MainController {
 
             if (e != null && e.getCurso() != null) {
                 if (verificarConclusaoCurso(e)) {
-                    model.bll.Certificado.gerarCertificado(e, ano);
+
+                    // 1. Gera o certificado e guarda o caminho
+                    String caminhoCertificado = model.bll.Certificado.gerarCertificado(e, ano);
+
+                    // 2. Envia por e-mail!
+                    if (caminhoCertificado != null && e.getEmailPessoal() != null && !e.getEmailPessoal().isEmpty()) {
+                        utils.ServicoEmail.enviarEmailComAnexo(
+                                e.getEmailPessoal(),
+                                "ISSMF - Certificado de Conclusão de Curso",
+                                "Muitos parabéns " + e.getNome() + "!\n\nÉ com enorme orgulho que lhe enviamos em anexo o seu Certificado de Conclusão de Curso.\n\nVotos de muito sucesso profissional e pessoal!\n\nA Direção do ISSMF.",
+                                caminhoCertificado
+                        );
+                    }
                 }
             }
         }

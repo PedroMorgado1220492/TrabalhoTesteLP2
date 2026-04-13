@@ -76,4 +76,16 @@ public class Validador {
          */
         return data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$");
     }
+
+    /**
+     * Valida se um e-mail pertence ao domínio institucional.
+     * @param email O e-mail a validar.
+     * @return true se pertencer ao domínio @issmf.ipp.pt, false caso contrário.
+     */
+    public static boolean isEmailInstitucionalValido(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        return email.toLowerCase().endsWith("@issmf.ipp.pt");
+    }
 }

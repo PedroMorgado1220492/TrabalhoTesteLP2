@@ -25,7 +25,7 @@ public class Main {
         // 2. Instanciação do MODEL (Camada de Dados - Repositório em Memória)
         RepositorioDados repositorio = new RepositorioDados();
 
-        // 3. Instanciação do CONTROLLER (O "Cérebro" que liga a View ao Model)
+        // 3. Instanciação do CONTROLLER (Liga a View ao Model)
         // Passamos as referências da View e do Repositório para que o Controller os possa gerir.
         MainController mc = new MainController(view, repositorio);
 

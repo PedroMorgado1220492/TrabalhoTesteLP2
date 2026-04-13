@@ -20,7 +20,7 @@ public class Certificado {
      * @param e            A instância do estudante que concluiu o curso.
      * @param anoConclusao O ano letivo de transição em que o curso foi finalizado.
      */
-    public static void gerarCertificado(Estudante e, int anoConclusao) {
+    public static String gerarCertificado(Estudante e, int anoConclusao) {
 // 1. Criar a pasta dedicada para certificados se ela não existir
         File diretorio = new File("certificados");
         if (!diretorio.exists()) {
@@ -70,8 +70,11 @@ public class Certificado {
             }
             pw.println("=====================================================");
             pw.println("Certificado Nº: " + numCertificado);
+
+            return caminhoTxt;
+
         } catch (IOException ex) {
-            // Falha silenciosa: a geração não bloqueia a transição global de ano letivo em caso de erro no I/O
+            return null; 
         }
     }
 

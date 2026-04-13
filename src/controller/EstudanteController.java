@@ -208,23 +208,59 @@ public class EstudanteController {
         // Regista o pagamento e sincroniza imediatamente com a base de dados CSV
         if (propina.registarPagamento(valor)) {
             view.msgSucesso();
-            // Gera recibo
-            model.bll.Recibo.gerarRecibo(estudanteLogado, valor, propina.getValorTotal());
+
+            // 1. Gera o ficheiro e guarda o caminho
+            String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, propina.getValorTotal(), propina.getValorEmDivida());
+
+            // 2. Envia por email
+            if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null) {
+                utils.ServicoEmail.enviarEmailComAnexo(
+                        estudanteLogado.getEmailPessoal(),
+                        "ISSMF - Recibo de Pagamento",
+                        "Caro(a) Estudante,\n\nSegue em anexo o seu recibo de pagamento das propinas.\n\nCom os melhores cumprimentos,\nServiços Financeiros - ISSMF.",
+                        caminhoRecibo
+                );
+            }
+
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.msgErroDados();
         }
     }
 
+    /**
+     * Calcula o valor a pagar com base na opção escolhida, garantindo que
+     * respeita o montante mínimo de uma prestação (10%).
+     *
+     * @param propina A propina atual do estudante.
+     * @return O valor validado ou 0.0 se a validação falhar.
+     */
     private double calcularValorPagamento(Propina propina) {
-        int op = view.mostrarOpcoesPagamento(propina.getValorEmDivida(), propina.getValorTotal() / 10);
+        double valorMinimoPrestacao = propina.getValorTotal() / 10;
+        int op = view.mostrarOpcoesPagamento(propina.getValorEmDivida(), valorMinimoPrestacao);
 
-        return switch (op) {
+        // 1. Switch apenas atribui o valor bruto escolhido
+        double valorEscolhido = switch (op) {
             case 1 -> propina.getValorEmDivida(); // Liquidação Total
-            case 2 -> Math.min(propina.getValorTotal() / 10, propina.getValorEmDivida()); // Prestação Mensal
+            case 2 -> Math.min(valorMinimoPrestacao, propina.getValorEmDivida()); // Prestação Mensal
             case 3 -> view.pedirValorLivre(); // Montante Personalizado
-            default -> 0;
+            default -> 0.0;
         };
+
+        // 2. Se o utilizador cancelou (0), saí imediatamente
+        if (valorEscolhido <= 0) {
+            return 0.0;
+        }
+
+        // 3. O limite real é o menor entre uma prestação padrão ou o que resta da dívida
+        double limiteMinimoAceitavel = Math.min(valorMinimoPrestacao, propina.getValorEmDivida());
+
+        if (valorEscolhido < limiteMinimoAceitavel) {
+            view.msgErroValorMinimo(limiteMinimoAceitavel);
+            return 0.0;
+        }
+
+        return valorEscolhido;
     }
 
     // ---------- DESATIVAÇÃO DE CONTA ----------
