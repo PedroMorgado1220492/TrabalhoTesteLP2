@@ -341,6 +341,27 @@ public class Estudante extends Utilizador {
         }
     }
 
+    /**
+     * Calcula a média global do curso baseando-se no histórico de avaliações.
+     *
+     * @return O valor da média aritmética ponderada com as casas decimais reais, ou 0.0.
+     */
+    public double calcularMediaFinal() {
+        double soma = 0;
+        int count = 0;
+
+        for(int i = 0; i < this.totalHistorico; i++) {
+            Avaliacao av = this.historicoAvaliacoes[i];
+
+            if (av != null && av.calcularMedia() >= 9.5) {
+                soma += av.calcularMedia();
+                count++;
+            }
+        }
+
+        return count > 0 ? soma / count : 0.0;
+    }
+
     // ---------- MÉTODOS FINANCEIROS ----------
 
     /**

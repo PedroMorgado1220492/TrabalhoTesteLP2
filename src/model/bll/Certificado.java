@@ -49,8 +49,10 @@ public class Certificado {
             pw.println("no ano " + anoConclusao + ", curso de " + nomeCurso + ",");
 
             // Processamento do cálculo e arredondamento da média final (2 casas decimais)
-            double media = calcularMediaFinal(e);
-            pw.println("com média final de " + (int) media + " valores.");
+            double mediaDecimal = e.calcularMediaFinal();
+            long mediaArredondada = Math.round(mediaDecimal);
+
+            pw.println("com média final de " + mediaArredondada + " valores.");
             pw.println("=====================================================");
             pw.println("UNIDADES CURRICULARES CONCLUÍDAS:");
 
@@ -76,32 +78,6 @@ public class Certificado {
             return null;
         }
     }
-
-    /**
-     * Calcula a classificação final do curso baseando-se no histórico de avaliações do estudante.
-     *
-     * @param e A instância do estudante.
-     * @return O valor da média aritmética ponderada, ou 0.0 caso não constem avaliações.
-     */
-    private static double calcularMediaFinal(Estudante e) {
-        double soma = 0;
-        int count = 0;
-
-        // Itera pelo histórico consolidado de avaliações do aluno
-        for(int i = 0; i < e.getTotalHistorico(); i++) {
-            Avaliacao av = e.getHistoricoAvaliacoes()[i];
-
-            // Filtra e contabiliza exclusivamente as unidades curriculares realizadas com aproveitamento positivo
-            if (av != null && av.calcularMedia() >= 9.5) {
-                soma += av.calcularMedia();
-                count++;
-            }
-        }
-
-        // Previne erros de divisão por zero na devolução do resultado final
-        return count > 0 ? Math.round(soma / count) : 0.0;
-    }
-
 
     private static void registarNoCSV(String caminho, int numMec, String extra, String cabecalho) {
         java.io.File ficheiro = new java.io.File(caminho);

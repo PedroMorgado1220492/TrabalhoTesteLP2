@@ -29,12 +29,15 @@ public class Recibo {
         String csvCaminho = "bd/recibos.csv";
         int numRecibo = obterProximoNumero(csvCaminho);
 
+        // Formatação do número para 8 dígitos com zeros à esquerda ---
+        String numReciboFormatado = String.format("%08d", numRecibo);
+
         // O CSV guardará: ID_Recibo ; Num_Mecanografico ; Valor_Pago ; Data
         String detalhesCSV = String.format("%.2f", valorPago).replace(",", ".") + ";" + dataAtual;
-        registarNoCSV(csvCaminho, numRecibo, e.getNumeroMecanografico(), detalhesCSV, "ID_RECIBO;NUM_MECANOGRAFICO;VALOR_PAGO;DATA");
+        registarNoCSV(csvCaminho, numReciboFormatado, e.getNumeroMecanografico(), detalhesCSV, "ID_RECIBO;NUM_MECANOGRAFICO;VALOR_PAGO;DATA");
 
         // 4. Define o caminho do documento de texto
-        String caminhoTxt = "recibos/recibo_" + numRecibo + ".txt";
+        String caminhoTxt = "recibos/recibo_" + numReciboFormatado + ".txt";
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminhoTxt))) {
             pw.println("=====================================================");
@@ -46,7 +49,7 @@ public class Recibo {
             pw.println("morada " + e.getMorada() + ",");
             pw.println("na data " + dataAtual + ",");
 
-            // Formatamos para duas casas decimais
+            // Formatar para duas casas decimais
             String valorPagoStr = String.format("%.2f", valorPago);
             String valorTotalStr = String.format("%.2f", valorTotalCurso);
             String valorEmFaltaStr = String.format("%.2f", valorEmFalta);
@@ -61,7 +64,7 @@ public class Recibo {
                 pw.println("Falta pagar: " + valorEmFaltaStr + " euros.");
             }
             pw.println("=====================================================");
-            pw.println("Recibo Nº " + numRecibo);
+            pw.println("Recibo Nº " + numReciboFormatado);
 
             return caminhoTxt;
 
@@ -75,8 +78,9 @@ public class Recibo {
     private static int obterProximoNumero(String caminhoArquivo) {
         int ultimoNumero = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
-            String linha = br.readLine(); // Ignora o cabeçalho
+            br.readLine(); // Ignora o cabeçalho
 
+            String linha;
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
                 String[] partes = linha.split(";");
@@ -91,7 +95,7 @@ public class Recibo {
         return ultimoNumero + 1;
     }
 
-    private static void registarNoCSV(String caminho, int id, int numMec, String extra, String cabecalho) {
+    private static void registarNoCSV(String caminho, String id, int numMec, String extra, String cabecalho) {
         java.io.File ficheiro = new java.io.File(caminho);
         boolean ficheiroJaExiste = ficheiro.exists();
 

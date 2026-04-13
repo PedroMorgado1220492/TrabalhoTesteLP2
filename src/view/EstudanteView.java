@@ -131,6 +131,16 @@ public class EstudanteView {
         }
     }
 
+    /**
+     * Imprime a média global atual do aluno formatada a 2 casas decimais.
+     */
+    public void mostrarMediaGlobal(double media) {
+        System.out.println("\n-----------------------------------------------------");
+        // O %.2f obriga o Java a mostrar exatamente 2 casas decimais (ex: 14,50)
+        System.out.printf(">> MÉDIA GLOBAL ATUAL: %.2f Valores\n", media);
+        System.out.println("-----------------------------------------------------");
+    }
+
     // ---------- GESTÃO FINANCEIRA (PROPINAS) ----------
 
     /**

@@ -85,6 +85,11 @@ public class EstudanteController {
                 }
             }
         }
+
+        double mediaAtual = estudanteLogado.calcularMediaFinal();
+        if (mediaAtual > 0) {
+            view.mostrarMediaGlobal(mediaAtual);
+        }
     }
 
     /**
