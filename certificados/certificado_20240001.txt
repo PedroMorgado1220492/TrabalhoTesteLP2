@@ -4,7 +4,7 @@
 O aluno Joao Silva, com a morada Porto,
 número de contribuinte 200100101 terminou o curso
 no ano 2026, curso de Engenharia Informatica,
-com média final de 14.55 valores.
+com média final de 15 valores.
 =====================================================
 UNIDADES CURRICULARES CONCLUÍDAS:
 
