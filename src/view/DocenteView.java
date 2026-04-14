@@ -28,9 +28,8 @@ public class DocenteView {
         System.out.println("\n=== ÁREA DO DOCENTE ===");
         System.out.println("1 - Ver Dados Pessoais e Profissionais");
         System.out.println("2 - Atualizar Dados de Perfil");
-        System.out.println("3 - Lançar Nota (Aluno Específico)");
-        System.out.println("4 - Lançar Notas em Lote (Turma Completa)");
-        System.out.println("5 - Consultar as Minhas Estatísticas");
+        System.out.println("3 - Adicionar Avaliações");
+        System.out.println("4 - Consultar Estatísticas das UCs");
         System.out.println("0 - Sair / Logout");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
@@ -49,6 +48,24 @@ public class DocenteView {
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return lerOpcaoInteira();
+    }
+
+    /**
+     * Apresenta o submenu dedicado à gestão de avaliações.
+     */
+    public int mostrarMenuAvaliacoes() {
+        System.out.println("\n--- MENU AVALIAÇÕES ---");
+        System.out.println("1 - Lançar Nota Individual");
+        System.out.println("2 - Lançar Notas em Lote");
+        System.out.println("3 - Listar Avaliações da UC");
+        System.out.println("0 - Recuar");
+        System.out.print("Opção: ");
+
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     // ---------- INPUTS DE DADOS ----------
@@ -124,15 +141,6 @@ public class DocenteView {
         return scanner.nextLine().trim();
     }
 
-    /**
-     * Apresenta métricas de desempenho relativas à carga letiva do docente.
-     */
-    public void mostrarEstatisticas(double media, int totalAvaliados) {
-        System.out.println("\n--- AS MINHAS ESTATÍSTICAS ---");
-        System.out.println("Média Global das Notas Lançadas: " + media + " valores.");
-        System.out.println("Total de Estudantes Avaliados  : " + totalAvaliados);
-        System.out.println("------------------------------");
-    }
 
     // ---------- FEEDBACK E MENSAGENS DE PAUTA ----------
 
@@ -140,7 +148,7 @@ public class DocenteView {
 
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
 
-    public void msgSucesso() { System.out.println(">> SUCESSO: Operação concluída com êxito."); }
+    public void msgSucesso() { System.out.println(">> Operação concluída com êxito."); }
 
     public void msgErroFormato() { System.out.println(">> Erro: O formato do dado introduzido é inválido."); }
 
@@ -176,4 +184,53 @@ public class DocenteView {
     public void resumoLote(int totalLancadas) {
         System.out.println(">> Processamento concluído: " + totalLancadas + " notas registadas no sistema.");
     }
+
+    // ---------- MÉTODOS PARA AS ESTATISTICAS ----------
+
+    /**
+     * Imprime as estatísticas de forma visual para o docente.
+     */
+    public void mostrarEstatisticas(String siglaUC, double[] stats) {
+        int inscritos = (int) stats[0];
+        int avaliados = (int) stats[1];
+
+        if (avaliados == 0) {
+            System.out.println(">> Ainda não existem avaliações lançadas para os " + inscritos + " alunos inscritos nesta UC.");
+            return;
+        }
+
+        double max = stats[2];
+        double min = stats[3];
+        double media = stats[4];
+        int positivas = (int) stats[5];
+        int negativas = (int) stats[6];
+
+        double percPositivas = ((double) positivas / avaliados) * 100;
+        double percNegativas = ((double) negativas / avaliados) * 100;
+
+        System.out.println("\n================ ESTATÍSTICAS: " + siglaUC + " ================");
+        System.out.println(" - Estudantes Inscritos  : " + inscritos);
+        System.out.println(" - Estudantes Avaliados  : " + avaliados);
+        System.out.printf(" - Nota Mais Alta        : %.2f Valores\n", max);
+        System.out.printf(" - Nota Mais Baixa       : %.2f Valores\n", min);
+        System.out.printf(" - Média da Turma        : %.2f Valores\n", media);
+        System.out.printf(" - Positivas (>= 9.5)    : %d (%.1f%%)\n", positivas, percPositivas);
+        System.out.printf(" - Negativas (< 9.5)     : %d (%.1f%%)\n", negativas, percNegativas);
+        System.out.println("======================================================");
+    }
+
+    // Adiciona uma opção ao Menu Principal (se ainda não existir)
+    public void mostrarEstatisticasFormatadas(String estatisticas) { System.out.println("\n" + estatisticas); }
+
+    public void mostrarCabecalhoPauta(String nomeUc) { System.out.println("\n=== PAUTA DE AVALIAÇÕES: " + nomeUc + " ==="); }
+
+    // Usado pela funcionalidade de Listar Avaliações
+    public void mostrarAlunoNaPauta(int numMec, String nome, int anoFrequencia, String notasStr) { System.out.println("Num: " + numMec + " | Nome: " + nome + " | Ano: " + anoFrequencia + "º | Notas: " + notasStr); }
+
+    // ---------- FEEDBACK DE PAUTAS E LISTAGENS ----------
+
+    public void msgPautaGeradaSucesso(String caminhoTxt) { System.out.println(">> Ficheiro de Pauta gerado em: " + caminhoTxt); }
+    public void msgErroPauta() { System.out.println(">> Erro: Ocorreu um problema ao gerar o ficheiro TXT da pauta."); }
+    public void msgAvisoSemAlunosInscritos() { System.out.println(">> Aviso: Não existem alunos inscritos nesta Unidade Curricular no ano letivo atual."); }
+    public void msgNotificacaoEnviada() { System.out.println(">> Notificação enviada por e-mail para o estudante."); }
 }

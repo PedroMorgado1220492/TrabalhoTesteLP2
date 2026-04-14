@@ -220,4 +220,44 @@ public class Estatisticas {
         }
         return false;
     }
+
+    /**
+     * Calcula as estatísticas puras de uma UC para o ano letivo atual.
+     * @return Um array de double com: [inscritos, avaliados, max, min, media, positivas, negativas]
+     */
+    public static double[] calcularEstatisticasUC(model.bll.UnidadeCurricular uc, model.dal.RepositorioDados repo) {
+        double max = -1.0, min = 21.0, soma = 0;
+        int countComNotas = 0, inscritos = 0;
+        int positivas = 0, negativas = 0;
+
+        for (int i = 0; i < repo.getTotalEstudantes(); i++) {
+            model.bll.Estudante e = repo.getEstudantes()[i];
+
+            if (e != null && e.isAtivo() && e.estaInscrito(uc.getSigla())) {
+                inscritos++;
+                model.bll.Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
+
+                if (av != null && av.getTotalAvaliacoesLancadas() > 0) {
+                    double media = av.calcularMedia();
+
+                    if (media > max) max = media;
+                    if (media < min) min = media;
+
+                    soma += media;
+                    countComNotas++;
+
+                    if (media >= 9.5) positivas++;
+                    else negativas++;
+                }
+            }
+        }
+
+        if (countComNotas == 0) {
+            return new double[] { inscritos, 0, 0, 0, 0, 0, 0 };
+        }
+
+        double mediaGlobal = soma / countComNotas;
+
+        return new double[] { inscritos, countComNotas, max, min, mediaGlobal, positivas, negativas };
+    }
 }

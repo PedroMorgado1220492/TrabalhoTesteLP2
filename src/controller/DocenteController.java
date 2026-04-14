@@ -34,26 +34,18 @@ public class DocenteController {
      * Inicia o ciclo principal do menu do docente.
      * Apresenta as opções disponíveis e encaminha a execução para os métodos correspondentes.
      */
+    /**
+     * Inicia o ciclo principal do menu do docente.
+     */
     public void iniciarMenu() {
         boolean running = true;
         while (running) {
             int opcao = view.mostrarMenuPrincipal();
             switch (opcao) {
-                case 1:
-                    view.mostrarFichaDocente(docenteLogado);
-                    break;
-                case 2:
-                    menuAtualizar();
-                    break;
-                case 3:
-                    lancarNotaUnica();
-                    break;
-                case 4:
-                    lancarNotasEmLote();
-                    break;
-                case 5:
-                    verStats();
-                    break;
+                case 1: view.mostrarFichaDocente(docenteLogado); break;
+                case 2: menuAtualizar(); break;
+                case 3: menuAvaliacoes(); break;
+                case 4: verEstatisticas(); break;
                 case 0:
                     view.msgSaida();
                     running = false;
@@ -64,7 +56,24 @@ public class DocenteController {
         }
     }
 
-    // ---------- MÉTODOS DE AÇÃO (LANÇAMENTO DE NOTAS) ----------
+    /**
+     * Apresenta o submenu dedicado ao agrupamento das funcionalidades de Avaliação.
+     */
+    private void menuAvaliacoes() {
+        boolean sub = true;
+        while (sub) {
+            int op = view.mostrarMenuAvaliacoes();
+            switch (op) {
+                case 1: lancarNotaUnica(); break;
+                case 2: lancarNotasEmLote(); break;
+                case 3: listarAvaliacoesUc(); break;
+                case 0: sub = false; break;
+                default: view.msgOpcaoInvalida();
+            }
+        }
+    }
+
+    // ---------- MÉTODOS DE LANÇAMENTO DE NOTAS ----------
 
     /**
      * Processa o lançamento de uma nota individual a um estudante específico.
@@ -116,6 +125,19 @@ public class DocenteController {
                 view.msgErroNotaInvalida();
             } else if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
                 view.msgSucesso();
+
+                // Envio de e-mail com o estado atual das avaliações do Estudante
+                model.bll.Avaliacao avAtual = alu.getAvaliacaoAtual(uc.getSigla());
+                if (avAtual != null && alu.getEmailPessoal() != null && !alu.getEmailPessoal().isEmpty()) {
+                    boolean emailEnviado = utils.ServicoEmail.enviarEmailAvaliacao(alu.getEmailPessoal(), alu.getNome(), uc.getNome(), avAtual);
+
+                    if (emailEnviado) {
+                        view.msgNotificacaoEnviada();
+                    }
+                }
+
+                // Gravar as alterações no ficheiro CSV
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             }
         } catch (NumberFormatException e) {
             view.msgErroFormato();
@@ -170,6 +192,18 @@ public class DocenteController {
 
         // Apresenta o resumo final com o número de avaliações submetidas
         view.resumoLote(count);
+
+        // Se lançou pelo menos uma nota, guarda na base de dados e gera a pauta TXT
+        if (count > 0) {
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+
+            String caminhoTxt = model.bll.Pauta.gerarFicheiroPauta(uc, alunos);
+            if (caminhoTxt != null) {
+                view.msgPautaGeradaSucesso(caminhoTxt);
+            } else {
+                view.msgErroPauta();
+            }
+        }
     }
 
     // ---------- MÉTODOS DE ATUALIZAÇÃO DE PERFIL ----------
@@ -230,7 +264,6 @@ public class DocenteController {
      * Processa a atualização da password do docente.
      * Requer a confirmação da password atual e a repetição da nova password para evitar erros de dactilografia.
      */
-
     private void atualizarPassword() {
         String passAtualRaw = view.pedirPassAtual();
         // Encriptar o input para comparar com a Hash guardada
@@ -255,12 +288,67 @@ public class DocenteController {
     // ---------- OUTROS ----------
 
     /**
-     * Calcula e apresenta as estatísticas de desempenho e atividade do docente,
-     * incluindo a média das notas das suas turmas e o número total de estudantes avaliados.
+     * Lista as avaliações do ano letivo corrente dos estudantes inscritos numa UC.
      */
-    private void verStats() {
-        double media = utils.Estatisticas.calcularMediaUCsDocente(docenteLogado, repositorio);
-        int totalAlunos = utils.Estatisticas.contarAlunosAvaliadosDoDocente(docenteLogado, repositorio);
-        view.mostrarEstatisticas(media, totalAlunos);
+    /**
+     * Lista as avaliações do ano letivo corrente dos estudantes inscritos numa UC.
+     * Imprime o Número Mecanográfico, o Nome, o Ano de Frequência e as respetivas avaliações.
+     */
+    private void listarAvaliacoesUc() {
+        if (docenteLogado.getTotalUcsLecionadas() == 0) {
+            view.msgAvisoSemUCs();
+            return;
+        }
+
+        // 1. O Docente seleciona a UC da sua lista
+        int idxUC = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
+        if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
+
+        UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        view.mostrarCabecalhoPauta(uc.getNome());
+        boolean encontrou = false;
+
+        // 2. Itera por todos os estudantes do sistema
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            Estudante e = repositorio.getEstudantes()[i];
+
+            // Filtra apenas os alunos ativos e que estão inscritos na UC
+            if (e != null && e.isAtivo() && e.estaInscrito(uc.getSigla())) {
+                encontrou = true;
+
+                // Vai buscar apenas as avaliações a decorrer no ano letivo atual
+                model.bll.Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
+
+                // Formata as notas (usando a classe Pauta)
+                String notasStr = model.bll.Pauta.formatarNotasAluno(av);
+
+                // Imprime Número, Nome, Ano do Estudante e as Notas da UC
+                view.mostrarAlunoNaPauta(e.getNumeroMecanografico(), e.getNome(), e.getAnoFrequencia(), notasStr);
+            }
+        }
+
+        if (!encontrou) {
+            view.msgAvisoSemAlunosInscritos();
+        }
+    }
+
+    /**
+     * Calcula e exibe as estatísticas de desempenho para uma UC selecionada.
+     */
+    private void verEstatisticas() {
+        if (docenteLogado.getTotalUcsLecionadas() == 0) {
+            view.msgAvisoSemUCs();
+            return;
+        }
+
+        int idxUC = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
+        if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
+
+        UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        double[] stats = utils.Estatisticas.calcularEstatisticasUC(uc, repositorio);
+
+        view.mostrarEstatisticas(uc.getSigla(), stats);
     }
 }

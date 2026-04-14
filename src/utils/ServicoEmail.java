@@ -165,6 +165,14 @@ public class ServicoEmail {
      * @param caminhoAnexo O caminho (path) para o ficheiro a ser anexado.
      * @return true se enviado com sucesso, false caso contrário.
      */
+    /**
+     * Envia um e-mail com um ficheiro em anexo (se existir).
+     * @param destino O e-mail do destinatário.
+     * @param assunto O assunto do e-mail.
+     * @param corpoTexto A mensagem de texto no corpo do e-mail.
+     * @param caminhoAnexo O caminho (path) para o ficheiro a ser anexado (pode ser null).
+     * @return true se enviado com sucesso, false caso contrário.
+     */
     public static boolean enviarEmailComAnexo(String destino, String assunto, String corpoTexto, String caminhoAnexo) {
         if (destino == null || destino.isEmpty()) {
             return false;
@@ -184,16 +192,17 @@ public class ServicoEmail {
             textPart.setText(corpoTexto);
             multipart.addBodyPart(textPart);
 
-            // Parte 2: O Ficheiro Anexo
-            MimeBodyPart attachmentPart = new MimeBodyPart();
-            try {
-                attachmentPart.attachFile(caminhoAnexo);
-            } catch (Exception ex) {
-                return false; // Falha a ler o ficheiro
+            // Parte 2: O Ficheiro Anexo (Só envia se o caminho não for nulo)
+            if (caminhoAnexo != null && !caminhoAnexo.isEmpty()) {
+                MimeBodyPart attachmentPart = new MimeBodyPart();
+                try {
+                    attachmentPart.attachFile(caminhoAnexo);
+                } catch (Exception ex) {
+                    return false; // Falha a ler o ficheiro
+                }
+                multipart.addBodyPart(attachmentPart);
             }
-            multipart.addBodyPart(attachmentPart);
 
-            // Junta tudo e envia
             message.setContent(multipart);
             Transport.send(message);
 
@@ -202,5 +211,28 @@ public class ServicoEmail {
         } catch (MessagingException e) {
             return false;
         }
+    }
+
+    /**
+     * Envia um e-mail ao estudante sempre que o docente lança uma avaliação individual,
+     * listando todas as notas obtidas nessa UC no ano letivo atual.
+     */
+    public static boolean enviarEmailAvaliacao(String emailDestino, String nomeAluno, String nomeUc, model.bll.Avaliacao avaliacao) {
+        String assunto = "ISSMF - Nova Avaliação Lançada: " + nomeUc;
+
+        StringBuilder corpo = new StringBuilder();
+        corpo.append("Caro(a) Estudante ").append(nomeAluno).append(",\n\n");
+        corpo.append("Foi registada uma nova nota à unidade curricular de ").append(nomeUc).append(".\n\n");
+        corpo.append("O seu registo atual de avaliações nesta UC é o seguinte:\n");
+
+        for (int i = 0; i < avaliacao.getTotalAvaliacoesLancadas(); i++) {
+            corpo.append("- Avaliação ").append(i + 1).append(": ")
+                    .append(avaliacao.getResultadosAvaliacoes()[i]).append(" valores\n");
+        }
+
+        corpo.append("\nMédia atual: ").append(Math.round(avaliacao.calcularMedia() * 100.0) / 100.0).append(" valores\n\n");
+        corpo.append("Votos de bom estudo,\nOs Serviços Académicos - ISSMF.");
+
+        return enviarEmailComAnexo(emailDestino, assunto, corpo.toString(), null);
     }
 }
