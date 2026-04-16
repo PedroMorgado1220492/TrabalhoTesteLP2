@@ -130,4 +130,26 @@ public class Curso {
         }
         return false;
     }
+
+    /**
+     * Verifica se o curso possui pelo menos uma Unidade Curricular ativa
+     * em cada um dos 3 anos curriculares (1º, 2º e 3º ano).
+     * @return true se a estrutura for válida, false caso falte algum ano.
+     */
+    public boolean temEstruturaValida() {
+        boolean temAno1 = false, temAno2 = false, temAno3 = false;
+
+        for (int i = 0; i < totalUCs; i++) {
+            UnidadeCurricular uc = unidadesCurriculares[i];
+
+            // Só contabiliza as UCs que estão ativas
+            if (uc != null && uc.isAtivo()) {
+                if (uc.getAnoCurricular() == 1) temAno1 = true;
+                if (uc.getAnoCurricular() == 2) temAno2 = true;
+                if (uc.getAnoCurricular() == 3) temAno3 = true;
+            }
+        }
+
+        return temAno1 && temAno2 && temAno3;
+    }
 }

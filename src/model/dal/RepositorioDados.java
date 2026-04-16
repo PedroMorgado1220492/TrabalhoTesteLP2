@@ -300,6 +300,26 @@ public class RepositorioDados {
     }
 
     /**
+     * Remove um Gestor do sistema através do seu email.
+     * @param email O email do gestor a ser removido.
+     * @return true se removido com sucesso, false caso contrário.
+     */
+    public boolean removerGestor(String email) {
+        for (int i = 0; i < totalGestores; i++) {
+            if (gestores[i] != null && gestores[i].getEmail().equalsIgnoreCase(email)) {
+                // Desloca o resto do array uma posição à esquerda para não deixar buracos (null)
+                for (int j = i; j < totalGestores - 1; j++) {
+                    gestores[j] = gestores[j + 1];
+                }
+                gestores[totalGestores - 1] = null;
+                totalGestores--;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Efetua uma busca transversal nas coleções para devolver um utilizador genérico pelo seu email.
      * Essencial para o processo de recuperação de palavra-passe.
      *

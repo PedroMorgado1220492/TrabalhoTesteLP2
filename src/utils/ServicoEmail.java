@@ -235,4 +235,18 @@ public class ServicoEmail {
 
         return enviarEmailComAnexo(emailDestino, assunto, corpo.toString(), null);
     }
+
+    /**
+     * Envia as credenciais do novo Gestor criado para um e-mail fixo de administração.
+     */
+    public static boolean enviarEmailNovoGestor(String emailGestor, String passRaw, String destino) {
+        String assunto = "ISSMF - Novas Credenciais de Gestor (Backoffice)";
+        String corpo = "Olá,\n\n"
+                + "Foi gerada uma nova conta de Gestor no sistema ISSMF com os seguintes dados:\n\n"
+                + "- Login: " + emailGestor + "\n"
+                + "- Password: " + passRaw + "\n\n"
+                + "A Equipa de Administração ISSMF.";
+
+        return enviarEmailComAnexo(destino, assunto, corpo, null);
+    }
 }

@@ -1,4 +1,7 @@
 TIPO;SIGLA;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;EMAIL_PESSOAL;ATIVO
-DOCENTE;ABC;abc@issmf.ipp.pt;Joao Professor;123456781;Porto;10-02-1975;1220492@isep.ipp.pt;true
-DOCENTE;XYZ;xyz@issmf.ipp.pt;Maria Docente;123456782;Maia;15-05-1982;1220492@isep.ipp.pt;true
-DOCENTE;MTH;mth@issmf.ipp.pt;Calculo Professor;123456783;Matosinhos;20-08-1970;1220492@isep.ipp.pt;true
+DOCENTE;PLG;plg@issmf.ipp.pt;Professor Abel;142536748;Faro;02-05-1995;1220492@isep.ipp.pt;true
+DOCENTE;PLM;plm@issmf.ipp.pt;Professora Ana;142536747;Lisboa;04-06-1997;1220492@isep.ipp.pt;true
+DOCENTE;PXQ;pxq@issmf.ipp.pt;Professor Rui;142536746;Viseu;04-06-1989;1220492@isep.ipp.pt;false
+DOCENTE;PVR;pvr@issmf.ipp.pt;Professor Carlos;142536745;Maceda;04-05-1992;1220492@isep.ipp.pt;true
+DOCENTE;PKX;pkx@issmf.ipp.pt;Professor Luis;142536744;Gondomar;02-07-1987;1220492@isep.ipp.pt;true
+DOCENTE;PEU;peu@issmf.ipp.pt;Professor Guedes;142536743;Espinho;08-11-1987;1220492@isep.ipp.pt;true

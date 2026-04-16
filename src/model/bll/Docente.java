@@ -99,4 +99,17 @@ public class Docente extends Utilizador {
         }
         return false;
     }
+
+    public void removerUcResponsavel(String siglaUC) {
+        for (int i = 0; i < totalUcsResponsavel; i++) {
+            if (ucsResponsavel[i] != null && ucsResponsavel[i].getSigla().equalsIgnoreCase(siglaUC)) {
+                for (int j = i; j < totalUcsResponsavel - 1; j++) {
+                    ucsResponsavel[j] = ucsResponsavel[j + 1];
+                }
+                ucsResponsavel[totalUcsResponsavel - 1] = null;
+                totalUcsResponsavel--;
+                break;
+            }
+        }
+    }
 }

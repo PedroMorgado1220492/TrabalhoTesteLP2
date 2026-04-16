@@ -1,4 +1,7 @@
 package utils;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * Classe utilitária responsável pela validação de dados de entrada (Input Validation).
@@ -60,21 +63,42 @@ public class Validador {
 
     /**
      * Valida se uma data de nascimento respeita o formato estrutural e lógico do sistema.
-     * Critério: Seguir rigorosamente o padrão DD-MM-AAAA com limites para dias (01-31) e meses (01-12).
+     * Critério: Seguir rigorosamente o padrão DD-MM-AAAA, ser uma data real do calendário e não estar no futuro.
      * * @param data A data de nascimento em formato String.
-     * @return true se a data respeitar o formato e os intervalos lógicos; false caso contrário.
+     * @return true se a data for válida, real e no passado; false caso contrário.
      */
     public static boolean isDataNascimentoValida(String data) {
         if (data == null) {
             return false;
         }
 
-        /* * Expressão Regular detalhada:
-         * ^(0[1-9]|[12][0-9]|3[01]) -> Valida o dia entre 01 e 31
-         * -(0[1-9]|1[0-2])         -> Valida o separador e o mês entre 01 e 12
-         * -[0-9]{4}$               -> Valida o separador e o ano com 4 dígitos
+        /* * 1. Validação de Formato Base (Regex)
+         * Garante que tem a estrutura DD-MM-AAAA
          */
-        return data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$");
+        if (!data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$")) {
+            return false;
+        }
+
+        /*
+         * 2. Validação Lógica de Calendário e Futuro
+         */
+        try {
+            // Define o formato esperado
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            // Tenta converter a String para um objeto de Data (falha se for ex: 31 de Fevereiro)
+            LocalDate dataNascimento = LocalDate.parse(data, formatter);
+
+            // Verifica se a data introduzida é depois da data de hoje (futuro)
+            if (dataNascimento.isAfter(LocalDate.now())) {
+                return false;
+            }
+
+            return true;
+
+        } catch (DateTimeParseException e) {
+
+            return false;
+        }
     }
 
     /**
@@ -87,5 +111,20 @@ public class Validador {
             return false;
         }
         return email.toLowerCase().endsWith("@issmf.ipp.pt");
+    }
+
+    /**
+     * Valida se o nome do Gestor é composto por apenas uma única palavra.
+     * Aceita apenas letras (incluindo acentuação portuguesa), sem espaços.
+     *
+     * @param nome A string a validar.
+     * @return true se for uma única palavra válida, false caso contrário.
+     */
+    public static boolean isNomeGestorValido(String nome) {
+        if (nome == null || nome.trim().isEmpty()) {
+            return false;
+        }
+        // A expressão regular ^[a-zA-ZÀ-ÿ]+$ garante que tem apenas letras e nenhum espaço
+        return nome.trim().matches("^[a-zA-ZÀ-ÿ]+$");
     }
 }

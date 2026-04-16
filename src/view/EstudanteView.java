@@ -1,7 +1,6 @@
 package view;
 
 import model.bll.Estudante;
-import java.util.Scanner;
 
 /**
  * Interface de utilizador (View) dedicada ao perfil de Estudante.
@@ -10,10 +9,8 @@ import java.util.Scanner;
  */
 public class EstudanteView {
 
-    private Scanner scanner;
-
     public EstudanteView() {
-        this.scanner = new Scanner(System.in);
+
     }
 
     // ---------- MENUS DE NAVEGAÇÃO ----------
@@ -49,26 +46,50 @@ public class EstudanteView {
         return lerOpcaoInteira();
     }
 
+    /**
+     * Menu de opções para liquidação de valores.
+     * @param divida Valor total em falta.
+     * @param prestacao Valor sugerido para uma prestação simples.
+     * @return Opção de pagamento selecionada.
+     */
+    public int mostrarOpcoesPagamento(double divida, double prestacao) {
+        System.out.println("\n--- REALIZAR PAGAMENTO ---");
+        System.out.println("1 - Pagamento Integral (" + divida + "€)");
+        System.out.println("2 - Pagar 1 Prestação (" + prestacao + "€)");
+        System.out.println("3 - Introduzir outro valor");
+        System.out.println("0 - Cancelar");
+        System.out.print("Opção: ");
+        return lerOpcaoInteira();
+    }
+
     // ---------- INPUTS DE DADOS ----------
 
-    public String pedirNovoNome() { System.out.print("Introduza o novo Nome: "); return scanner.nextLine().trim(); }
+    public String pedirNovoNome() {
+        return utils.Consola.lerString("Introduza o novo Nome e Sobrenome: ");
+    }
 
-    public String pedirNovoNif() { System.out.print("Introduza o novo NIF: "); return scanner.nextLine().trim(); }
+    public String pedirNovoNif() {
+        return utils.Consola.lerString("Introduza o novo NIF: ");
+    }
 
-    public String pedirNovaMorada() { System.out.print("Introduza a nova Morada: "); return scanner.nextLine().trim(); }
+    public String pedirNovaMorada() {
+        return utils.Consola.lerString("Introduza a nova Morada: ");
+    }
 
-    public String pedirPassAtual() { System.out.print("Password Atual: "); return scanner.nextLine().trim(); }
+    public String pedirPassAtual() {
+        return utils.Consola.lerString("Password Atual: ");
+    }
 
-    public String pedirNovaPass() { System.out.print("Nova Password: "); return scanner.nextLine().trim(); }
+    public String pedirNovaPass() {
+        return utils.Consola.lerString("Nova Password: ");
+    }
 
-    public String pedirConfirmacaoPass() { System.out.print("Confirme Nova Password: "); return scanner.nextLine().trim(); }
+    public String pedirConfirmacaoPass() {
+        return utils.Consola.lerString("Confirme Nova Password: ");
+    }
 
-    private int lerOpcaoInteira() {
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+    public double pedirValorLivre() {
+        return utils.Consola.lerDouble("Introduza o valor a liquidar (€): ");
     }
 
     /**
@@ -77,11 +98,18 @@ public class EstudanteView {
      */
     public boolean pedirConfirmacaoDesativacao() {
         System.out.println("\n[AVISO CRÍTICO] Se desativar a conta, perderá o acesso imediato ao sistema.");
-        System.out.print("Tem a certeza que deseja prosseguir com a desativação? (S/N): ");
-        return scanner.nextLine().trim().equalsIgnoreCase("S");
+        String input = utils.Consola.lerString("Tem a certeza que deseja prosseguir com a desativação? (S/N): ");
+        return input.equalsIgnoreCase("S");
     }
 
-    // ---------- EXIBIÇÃO DE DADOS ACADÉMICOS ----------
+    /**
+     * Método auxiliar para garantir a leitura segura de inteiros nos menus.
+     */
+    private int lerOpcaoInteira() {
+        return utils.Consola.lerOpcaoMenu();
+    }
+
+    // ---------- EXIBIÇÃO DE DADOS ACADÉMICOS E FINANCEIROS ----------
 
     /**
      * Imprime os dados demográficos e académicos contidos na ficha do aluno.
@@ -117,7 +145,7 @@ public class EstudanteView {
 
     /**
      * Transforma códigos de estado técnicos em mensagens legíveis para o aluno.
-     * * @param estado Código numérico do estado.
+     * @param estado Código numérico do estado.
      * @param nota Classificação obtida.
      * @return String formatada com o estado e nota arredondada.
      */
@@ -141,8 +169,6 @@ public class EstudanteView {
         System.out.println("-----------------------------------------------------");
     }
 
-    // ---------- GESTÃO FINANCEIRA (PROPINAS) ----------
-
     /**
      * Apresenta o extrato financeiro detalhado do aluno para o ano corrente.
      */
@@ -156,31 +182,6 @@ public class EstudanteView {
             System.out.println(">> ESTADO: REGULARIZADO. Obrigado.");
         } else {
             System.out.println(">> ESTADO: PAGAMENTO PENDENTE.");
-        }
-    }
-
-    /**
-     * Menu de opções para liquidação de valores.
-     * @param divida Valor total em falta.
-     * @param prestacao Valor sugerido para uma prestação simples.
-     * @return Opção de pagamento selecionada.
-     */
-    public int mostrarOpcoesPagamento(double divida, double prestacao) {
-        System.out.println("\n--- REALIZAR PAGAMENTO ---");
-        System.out.println("1 - Pagamento Integral (" + divida + "€)");
-        System.out.println("2 - Pagar 1 Prestação (" + prestacao + "€)");
-        System.out.println("3 - Introduzir outro valor");
-        System.out.println("0 - Cancelar");
-        System.out.print("Opção: ");
-        return lerOpcaoInteira();
-    }
-
-    public double pedirValorLivre() {
-        System.out.print("Introduza o valor a liquidar (€): ");
-        try {
-            return Double.parseDouble(scanner.nextLine());
-        } catch (Exception e) {
-            return -1;
         }
     }
 
@@ -206,7 +207,7 @@ public class EstudanteView {
 
     /**
      * Exibe uma mensagem de erro informando que o valor inserido é inferior ao mínimo permitido.
-     * * @param valorMinimo O montante mínimo (10% ou o total da dívida restante).
+     * @param valorMinimo O montante mínimo (10% ou o total da dívida restante).
      */
     public void msgErroValorMinimo(double valorMinimo) {
         System.out.println("\nErro: Valor inválido! O pagamento mínimo permitido é de " + String.format("%.2f", valorMinimo) + "€.");

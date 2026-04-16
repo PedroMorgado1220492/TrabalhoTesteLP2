@@ -101,20 +101,22 @@ public class ImportadorCSV {
      * @param repositorio O repositório central.
      */
     public static void importarGestores(String caminho, RepositorioDados repositorio) {
-        try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(caminho))) {
             String linha;
             br.readLine();
-
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
-
                 String[] dados = linha.split(";");
-                // Mapeamento inter-ficheiros: vai buscar a password ao logins.csv
-                String pass = procurarPasswordNoLogins("bd/logins.csv", dados[1]);
 
-                repositorio.adicionarGestor(new Gestor(dados[1], pass, dados[2], dados[3]));
+                String pass = procurarPasswordNoLogins("bd/logins.csv", dados[1]);
+                Gestor novoGestor = new Gestor(dados[1], pass, dados[2], dados[3]);
+                if (dados.length > 4) {
+                    novoGestor.setAtivo(Boolean.parseBoolean(dados[4]));
+                }
+
+                repositorio.adicionarGestor(novoGestor);
             }
-        } catch (IOException e) { }
+        } catch (java.io.IOException e) { }
     }
 
     /**
@@ -194,29 +196,37 @@ public class ImportadorCSV {
     public static void importarUCs(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha;
-            br.readLine();
+            br.readLine(); // Cabeçalho
 
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
-
                 String[] dados = linha.split(";");
+
                 Docente doc = procurarDocente(dados[4], repositorio);
-                Curso cursoUC = procurarCurso(dados[5], repositorio);
+                if (doc == null) continue;
 
-                if (doc != null && cursoUC != null) {
-                    UnidadeCurricular novaUc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
-                    if (dados.length > 6) novaUc.setAtivo(Boolean.parseBoolean(dados[6]));
+                int numAv = (dados.length > 7) ? Integer.parseInt(dados[7]) : 3;
+                UnidadeCurricular novaUc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc, numAv);
+                if (dados.length > 6) novaUc.setAtivo(Boolean.parseBoolean(dados[6]));
 
-                    if (repositorio.adicionarUnidadeCurricular(novaUc)) {
-                        // Estabelecimento de vínculos cruzados na hierarquia
-                        cursoUC.adicionarUnidadeCurricular(novaUc);
-                        novaUc.adicionarCurso(cursoUC);
-                        doc.adicionarUcResponsavel(novaUc);
-                        doc.adicionarUcLecionada(novaUc);
+                if (repositorio.adicionarUnidadeCurricular(novaUc)) {
+                    doc.adicionarUcResponsavel(novaUc);
+                    doc.adicionarUcLecionada(novaUc);
+
+                    // PROCESSAR MÚLTIPLOS CURSOS
+                    if (dados.length > 5 && !dados[5].trim().isEmpty()) {
+                        String[] siglasCursos = dados[5].split(","); // Separa por vírgula
+                        for (String sigla : siglasCursos) {
+                            Curso c = procurarCurso(sigla.trim(), repositorio);
+                            if (c != null) {
+                                c.adicionarUnidadeCurricular(novaUc);
+                                novaUc.adicionarCurso(c);
+                            }
+                        }
                     }
                 }
             }
-        } catch (IOException e) { }
+        } catch (IOException | NumberFormatException e) { }
     }
 
     /**

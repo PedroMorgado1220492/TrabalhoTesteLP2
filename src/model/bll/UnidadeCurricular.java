@@ -13,6 +13,7 @@ public class UnidadeCurricular {
     private int anoCurricular;
     private Docente docenteResponsavel;
     private boolean ativo;
+    private int numAvaliacoes;
 
     // Estruturas para suportar a partilha da UC por vários cursos
     private Curso[] cursos;
@@ -30,11 +31,12 @@ public class UnidadeCurricular {
      * @param anoCurricular      O ano letivo padrão em que a disciplina é lecionada.
      * @param docenteResponsavel O docente encarregue da regência/coordenação.
      */
-    public UnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel) {
+    public UnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel, int numAvaliacoes) {
         this.sigla = sigla;
         this.nome = nome;
         this.anoCurricular = anoCurricular;
         this.docenteResponsavel = docenteResponsavel;
+        this.numAvaliacoes = numAvaliacoes;
         this.ativo = true; // A UC é criada ativa por defeito
         this.cursos = new Curso[10]; // Limite de partilha fixado em 10 cursos
         this.totalCursos = 0;
@@ -52,9 +54,9 @@ public class UnidadeCurricular {
 
     public Curso[] getCursos() { return cursos; }
 
-    public int getTotalCursos() { return totalCursos; }
-
     public boolean isAtivo() { return ativo; }
+
+    public int getNumAvaliacoes() { return numAvaliacoes; }
 
     // ---------- SETTERS ----------
 
@@ -67,6 +69,8 @@ public class UnidadeCurricular {
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
 
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
+
+    public void setNumAvaliacoes(int numAvaliacoes) { this.numAvaliacoes = numAvaliacoes; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
@@ -83,6 +87,26 @@ public class UnidadeCurricular {
             cursos[totalCursos] = curso;
             totalCursos++;
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove o vínculo de um curso a esta UC, reorganizando o array.
+     * @param siglaCurso A sigla do curso a desassociar.
+     * @return true se removeu com sucesso, false caso contrário.
+     */
+    public boolean removerCurso(String siglaCurso) {
+        for (int i = 0; i < totalCursos; i++) {
+            if (cursos[i] != null && cursos[i].getSigla().equalsIgnoreCase(siglaCurso)) {
+                // Desliza os restantes cursos para a esquerda para não deixar buracos nulos no meio
+                for (int j = i; j < totalCursos - 1; j++) {
+                    cursos[j] = cursos[j + 1];
+                }
+                cursos[totalCursos - 1] = null;
+                totalCursos--;
+                return true;
+            }
         }
         return false;
     }

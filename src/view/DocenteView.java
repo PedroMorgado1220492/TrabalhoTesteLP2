@@ -3,7 +3,6 @@ package view;
 import model.bll.Docente;
 import model.bll.Estudante;
 import model.bll.UnidadeCurricular;
-import java.util.Scanner;
 
 /**
  * Interface de utilizador (View) dedicada ao perfil de Docente.
@@ -12,10 +11,8 @@ import java.util.Scanner;
  */
 public class DocenteView {
 
-    private Scanner scanner;
-
     public DocenteView() {
-        this.scanner = new Scanner(System.in);
+
     }
 
     // ---------- MENUS DE NAVEGAÇÃO ----------
@@ -58,55 +55,37 @@ public class DocenteView {
         System.out.println("1 - Lançar Nota Individual");
         System.out.println("2 - Lançar Notas em Lote");
         System.out.println("3 - Listar Avaliações da UC");
+        System.out.println("4 - Definir N.º de Momentos de Avaliação");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
 
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+        return utils.Consola.lerOpcaoMenu();
     }
 
     // ---------- INPUTS DE DADOS ----------
 
-    public String pedirNovoNome() { System.out.print("Introduza o novo Nome: "); return scanner.nextLine().trim(); }
-
-    public String pedirNovoNif() { System.out.print("Introduza o novo NIF: "); return scanner.nextLine().trim(); }
-
-    public String pedirNovaMorada() { System.out.print("Introduza a nova Morada: "); return scanner.nextLine().trim(); }
-
-    public String pedirPassAtual() { System.out.print("Password Atual: "); return scanner.nextLine().trim(); }
-
-    public String pedirNovaPass() { System.out.print("Nova Password: "); return scanner.nextLine().trim(); }
-
-    public String pedirConfirmacaoPass() { System.out.print("Confirme Nova Password: "); return scanner.nextLine().trim(); }
-
-    /**
-     * Método auxiliar para garantir a leitura segura de inteiros.
-     */
-    private int lerOpcaoInteira() {
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+    public String pedirNovoNome() {
+        return utils.Consola.lerString("Introduza o novo Nome e Sobrenome: ");
     }
 
-    // ---------- EXIBIÇÃO E SELEÇÃO DE DADOS ----------
+    public String pedirNovoNif() {
+        return utils.Consola.lerString("Introduza o novo NIF: ");
+    }
 
-    /**
-     * Imprime a ficha biográfica do docente.
-     */
-    public void mostrarFichaDocente(Docente d) {
-        System.out.println("\n--- FICHA DE DOCENTE ---");
-        System.out.println("Sigla Institucional : " + d.getSigla());
-        System.out.println("Nome Completo       : " + d.getNome());
-        System.out.println("Email Institucional : " + d.getEmail());
-        System.out.println("NIF                 : " + d.getNif());
-        System.out.println("Morada de Residência: " + d.getMorada());
-        System.out.println("Data de Nascimento  : " + d.getDataNascimento());
-        System.out.println("------------------------");
+    public String pedirNovaMorada() {
+        return utils.Consola.lerString("Introduza a nova Morada: ");
+    }
+
+    public String pedirPassAtual() {
+        return utils.Consola.lerString("Password Atual: ");
+    }
+
+    public String pedirNovaPass() {
+        return utils.Consola.lerString("Nova Password: ");
+    }
+
+    public String pedirConfirmacaoPass() {
+        return utils.Consola.lerString("Confirme Nova Password: ");
     }
 
     /**
@@ -136,49 +115,52 @@ public class DocenteView {
     /**
      * Pede a nota para um aluno específico, indicando qual a avaliação (N1, N2 ou N3).
      */
-    public String pedirNotaIndividual(String nome, int numAvaliacao) {
-        System.out.print("Introduza a Nota (" + numAvaliacao + "/3) para " + nome + " [0.0 - 20.0]: ");
-        return scanner.nextLine().trim();
+    public String pedirNotaIndividual(String nome, int numAvaliacao, int maxAvaliacoes) {
+        return utils.Consola.lerString("Introduza a Nota (" + numAvaliacao + "/" + maxAvaliacoes + ") para " + nome + " [0.0 - 20.0] ou '/' para cancelar: ");
     }
 
+    /**
+     * Pede o numero de avaliações para a UC.
+     */
+    public int pedirNovoNumAvaliacoes() {
+        return utils.Consola.lerInt("Introduza o novo número de avaliações (1 a 3): ");
+    }
 
-    // ---------- FEEDBACK E MENSAGENS DE PAUTA ----------
+    /**
+     * Input específico para a pauta rápida (lote).
+     */
+    public String inputNotaLote(int atual, int total, String nome, int numAvaliacao, int maxAvaliacoes) {
+        return utils.Consola.lerString("[" + atual + "/" + total + "] Nota para " + nome + " (" + numAvaliacao + "/" + maxAvaliacoes + ") ou '/' para cancelar: ");
+    }
 
-    public void msgSaida() { System.out.println(">> A terminar sessão de Docente..."); }
+    /**
+     * Método auxiliar para garantir a leitura segura de inteiros.
+     */
+    private int lerOpcaoInteira() {
+        return utils.Consola.lerOpcaoMenu();
+    }
 
-    public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
+    // ---------- EXIBIÇÃO E SELEÇÃO DE DADOS ----------
 
-    public void msgSucesso() { System.out.println(">> Operação concluída com êxito."); }
-
-    public void msgErroFormato() { System.out.println(">> Erro: O formato do dado introduzido é inválido."); }
-
-    public void msgErroNotaInvalida() { System.out.println(">> Erro: A classificação deve situar-se entre 0.0 e 20.0."); }
-
-    public void msgErroLimiteNotas() { System.out.println(">> Erro: O estudante já atingiu o limite máximo de 3 avaliações nesta UC."); }
-
-    public void msgErroPassIncorreta() { System.out.println(">> Erro: A password atual não coincide com os nossos registos."); }
-
-    public void msgErroPassNaoCoincidem() { System.out.println(">> Erro: A nova password e a confirmação não são idênticas."); }
-
-    public void msgAvisoSemUCs() { System.out.println(">> AVISO: Atualmente não possui Unidades Curriculares atribuídas."); }
-
-    public void msgAvisoTurmaVazia() { System.out.println(">> AVISO: Não existem alunos inscritos nesta turma."); }
-
-    public void msgErroAlunoInativo() { System.out.println(">> Erro: O estudante está inativo. Não é possível lançar avaliações."); }
+    /**
+     * Imprime a ficha biográfica do docente.
+     */
+    public void mostrarFichaDocente(Docente d) {
+        System.out.println("\n--- FICHA DE DOCENTE ---");
+        System.out.println("Sigla Institucional : " + d.getSigla());
+        System.out.println("Nome Completo       : " + d.getNome());
+        System.out.println("Email Institucional : " + d.getEmail());
+        System.out.println("NIF                 : " + d.getNif());
+        System.out.println("Morada de Residência: " + d.getMorada());
+        System.out.println("Data de Nascimento  : " + d.getDataNascimento());
+        System.out.println("------------------------");
+    }
 
     // ---------- MÉTODOS PARA LANÇAMENTO EM LOTE ----------
 
     public void cabecalhoLote(String uc) {
         System.out.println("\n--- LANÇAMENTO DE PAUTA EM LOTE: " + uc + " ---");
         System.out.println("(Pressione ENTER sem digitar nada para saltar um aluno)");
-    }
-
-    /**
-     * Input específico para a pauta rápida (lote).
-     */
-    public String inputNotaLote(int atual, int total, String nome, int numAvaliacao) {
-        System.out.print("[" + atual + "/" + total + "] Nota para " + nome + " (" + numAvaliacao + "/3): ");
-        return scanner.nextLine().trim();
     }
 
     public void resumoLote(int totalLancadas) {
@@ -226,6 +208,34 @@ public class DocenteView {
 
     // Usado pela funcionalidade de Listar Avaliações
     public void mostrarAlunoNaPauta(int numMec, String nome, int anoFrequencia, String notasStr) { System.out.println("Num: " + numMec + " | Nome: " + nome + " | Ano: " + anoFrequencia + "º | Notas: " + notasStr); }
+
+    // ---------- FEEDBACK E MENSAGENS DE PAUTA ----------
+
+    public void msgSaida() { System.out.println(">> A terminar sessão de Docente..."); }
+
+    public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
+
+    public void msgSucesso() { System.out.println(">> Operação concluída com êxito."); }
+
+    public void msgErroFormato() { System.out.println(">> Erro: O formato do dado introduzido é inválido."); }
+
+    public void msgErroNotaInvalida() { System.out.println(">> Erro: A classificação deve situar-se entre 0.0 e 20.0."); }
+
+    public void msgErroLimiteNotas() { System.out.println(">> Erro: O estudante já atingiu o limite máximo de 3 avaliações nesta UC."); }
+
+    public void msgErroPassIncorreta() { System.out.println(">> Erro: A password atual não coincide com os nossos registos."); }
+
+    public void msgErroPassNaoCoincidem() { System.out.println(">> Erro: A nova password e a confirmação não são idênticas."); }
+
+    public void msgAvisoSemUCs() { System.out.println(">> AVISO: Atualmente não possui Unidades Curriculares atribuídas."); }
+
+    public void msgAvisoTurmaVazia() { System.out.println(">> AVISO: Não existem alunos inscritos nesta turma."); }
+
+    public void msgErroAlunoInativo() { System.out.println(">> Erro: O estudante está inativo. Não é possível lançar avaliações."); }
+
+    public void msgErroNumAvaliacoes() { System.out.println(">> Erro: O número de momentos de avaliação deve situar-se entre 1 e 3."); }
+
+    public void msgErroLimiteNotas(int maxAvaliacoes) { System.out.println(">> Erro: O estudante já atingiu o limite de " + maxAvaliacoes + " avaliações definido para esta UC.");}
 
     // ---------- FEEDBACK DE PAUTAS E LISTAGENS ----------
 

@@ -24,41 +24,37 @@ public class GestorController {
     private Gestor gestorAtivo;
     private RepositorioDados repositorio;
 
-    /**
-     * Construtor do controlador do Gestor.
-     *
-     * @param gestorAtivo A instância do gestor (administrador) que iniciou a sessão.
-     * @param repositorio O repositório centralizado onde todos os dados estão armazenados.
-     */
     public GestorController(Gestor gestorAtivo, RepositorioDados repositorio) {
         this.view = new GestorView();
         this.gestorAtivo = gestorAtivo;
         this.repositorio = repositorio;
     }
 
-    /**
-     * Inicia o ciclo principal de execução do painel de administração do Gestor.
-     */
     public void iniciarMenuGestor() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuPrincipalGestor();
-            switch (opcao) {
-                case 1: gerirDepartamentos(); break;
-                case 2: gerirCursos(); break;
-                case 3: gerirUCs(); break;
-                case 4: gerirEstudantes(); break;
-                case 5: gerirDocentes(); break;
-                case 6: avancarAnoLetivo(); break;
-                case 7: gerirRelatorios(); break;
-                case 8: listarAlunosComDividas(); break;
-                case 9: alterarPrecoCurso(); break;
-                case 0:
-                    view.mostrarMensagemSaida();
-                    aExecutar = false;
-                    break;
-                default:
-                    view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: gerirDepartamentos(); break;
+                    case 2: gerirCursos(); break;
+                    case 3: gerirUCs(); break;
+                    case 4: gerirEstudantes(); break;
+                    case 5: gerirDocentes(); break;
+                    case 6: avancarAnoLetivo(); break;
+                    case 7: gerirRelatorios(); break;
+                    case 8: listarAlunosComDividas(); break;
+                    case 9: alterarPrecoCurso(); break;
+                    case 10: gerirGestores(); break;
+                    case 0:
+                        view.mostrarMensagemSaida();
+                        aExecutar = false;
+                        break;
+                    default:
+                        view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu do Gestor...");
             }
         }
     }
@@ -67,30 +63,26 @@ public class GestorController {
     // 1. GESTÃO DE DEPARTAMENTOS
     // =========================================================
 
-    /**
-     * Apresenta o submenu dedicado à gestão de Departamentos (Adicionar, Editar e Listar).
-     */
     private void gerirDepartamentos() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuDepartamentos();
-            switch (opcao) {
-                case 1: adicionarDepartamento(); break;
-                case 2: alterarDepartamento(); break;
-                case 3: view.mostrarListaDepartamentos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos()); break;
-                case 0: aExecutar = false; break;
-                default: view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: adicionarDepartamento(); break;
+                    case 2: alterarDepartamento(); break;
+                    case 3: view.mostrarListaDepartamentos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos()); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de Departamentos...");
             }
         }
     }
 
-    /**
-     * Processa o registo de um novo Departamento.
-     * Exige uma sigla única no sistema para garantir a integridade dos dados e pede confirmação antes de gravar.
-     */
     private void adicionarDepartamento() {
         String sigla;
-        // Validação contínua até que seja inserida uma sigla não existente
         while (true) {
             sigla = view.pedirSiglaDepartamento();
             if (repositorio.existeSiglaDepartamento(sigla)) {
@@ -105,7 +97,7 @@ public class GestorController {
             Departamento novoDep = gestorAtivo.criarDepartamento(sigla, nome);
             if (repositorio.adicionarDepartamento(novoDep)) {
                 view.mostrarSucessoRegistoDepartamento(nome);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio); // Grava logo
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteDepartamentos();
             }
@@ -114,26 +106,33 @@ public class GestorController {
         }
     }
 
-    /**
-     * Processa a alteração do nome de um Departamento existente.
-     * A sigla atua como chave primária e não pode ser modificada.
-     */
     private void alterarDepartamento() {
-        String siglaDep = view.pedirSiglaDepartamentoAlterar();
-        Departamento depEditar = encontrarDepartamento(siglaDep);
+        // Verifica se existem departamentos antes de tentar listar
+        if (repositorio.getTotalDepartamentos() == 0) {
+            view.mostrarAvisoSemDepartamentos();
+            return;
+        }
 
-        if (depEditar != null) {
-            String novoNomeDep = view.pedirNovoNome(depEditar.getNome());
-            // Permite manter o nome atual se for submetido um valor vazio
-            if (!novoNomeDep.isEmpty()) {
-                depEditar.setNome(novoNomeDep);
-                view.mostrarSucessoAtualizacao();
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-            } else {
-                view.mostrarAvisoSemAlteracao();
+        int escolha;
+        while (true) {
+            escolha = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
+
+            if (escolha >= 0 && escolha < repositorio.getTotalDepartamentos()) {
+                break;
             }
+            view.mostrarOpcaoInvalida();
+        }
+
+        Departamento depEditar = repositorio.getDepartamentos()[escolha];
+        view.mostrarInfoEdicao(depEditar.getNome());
+
+        String novoNomeDep = view.pedirNovoNome(depEditar.getNome());
+        if (!novoNomeDep.trim().isEmpty()) {
+            depEditar.setNome(novoNomeDep);
+            view.mostrarSucessoAtualizacao();
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
-            view.mostrarErroDepartamentoNaoEncontrado();
+            view.mostrarAvisoSemAlteracao();
         }
     }
 
@@ -141,30 +140,27 @@ public class GestorController {
     // 2. GESTÃO DE CURSOS
     // =========================================================
 
-    /**
-     * Apresenta o submenu dedicado à gestão de Cursos.
-     */
     private void gerirCursos() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuCursos();
-            switch (opcao) {
-                case 1: adicionarCurso(); break;
-                case 2: alterarCurso(); break;
-                case 3: view.mostrarListaCursos(repositorio.getCursos(), repositorio.getTotalCursos()); break;
-                case 4: alternarEstadoCurso(); break;
-                case 0: aExecutar = false; break;
-                default: view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: adicionarCurso(); break;
+                    case 2: alterarCurso(); break;
+                    case 3: view.mostrarListaCursos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos(), repositorio.getCursos(), repositorio.getTotalCursos()); break;
+                    case 4: alternarEstadoCurso(); break;
+                    case 5: verPercursoAcademicoCurso(); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de Cursos...");
             }
         }
     }
 
-    /**
-     * Cria um novo Curso, associando-o obrigatoriamente a um Departamento existente.
-     * Pede confirmação final antes de instanciar o objeto.
-     */
     private void adicionarCurso() {
-        // Bloqueia a criação se a infraestrutura base (Departamentos) não existir
         if (repositorio.getTotalDepartamentos() == 0) {
             view.mostrarErroFaltaDepartamento();
             return;
@@ -179,15 +175,19 @@ public class GestorController {
         }
 
         String nomeCurso = view.pedirNomeCurso();
-        int escolhaIndex = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
 
-        if (escolhaIndex < 0 || escolhaIndex >= repositorio.getTotalDepartamentos()) {
+        int escolhaIndex;
+
+        while (true) {
+            escolhaIndex = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
+
+            if (escolhaIndex >= 0 && escolhaIndex < repositorio.getTotalDepartamentos()) {
+                break; // Opção correta, sai do ciclo
+            }
             view.mostrarOpcaoInvalida();
-            return;
         }
 
         Departamento dep = repositorio.getDepartamentos()[escolhaIndex];
-
         view.mostrarRevisaoCurso(siglaCurso, nomeCurso, dep.getSigla());
 
         if (view.confirmarDados()) {
@@ -203,93 +203,119 @@ public class GestorController {
         }
     }
 
-    /**
-     * Permite editar os dados de um Curso.
-     * Cursos que já possuam estudantes inscritos ou UCs agregadas ficam bloqueados a edições estruturais para prevenir inconsistências.
-     */
     private void alterarCurso() {
-        String siglaBusca = view.pedirSiglaCursoAlterar();
-        Curso cursoEditar = encontrarCurso(siglaBusca);
+        // Verifica se existem cursos antes de tentar listar
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarAvisoSemCursos();
+            return;
+        }
 
-        if (cursoEditar != null) {
-            if (verificarCursoBloqueado(cursoEditar)) {
-                view.mostrarErroCursoBloqueado();
-            } else {
-                String novoNomeCurso = view.pedirNovoNome(cursoEditar.getNome());
-                if (!novoNomeCurso.isEmpty()) {
-                    cursoEditar.setNome(novoNomeCurso);
-                    view.mostrarSucessoAtualizacao();
-                    model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-                } else {
-                    view.mostrarAvisoSemAlteracao();
-                }
+        int escolha;
+        while (true) {
+            escolha = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
+
+            if (escolha >= 0 && escolha < repositorio.getTotalCursos()) {
+                break;
             }
+            view.mostrarOpcaoInvalida();
+        }
+
+        Curso cursoEditar = repositorio.getCursos()[escolha];
+
+        // Impede alterar cursos bloqueados
+        if (verificarCursoBloqueado(cursoEditar)) {
+            view.mostrarErroCursoBloqueado();
         } else {
-            view.mostrarErroCursoNaoEncontrado();
+            view.mostrarInfoEdicao(cursoEditar.getNome());
+
+            String novoNomeCurso = view.pedirNovoNome(cursoEditar.getNome());
+            if (!novoNomeCurso.trim().isEmpty()) {
+                cursoEditar.setNome(novoNomeCurso);
+                view.mostrarSucessoAtualizacao();
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarAvisoSemAlteracao();
+            }
         }
     }
 
-    /**
-     * Alterna o estado de um Curso entre Ativo e Inativo.
-     * Cursos inativos não permitem novas matrículas. Não é possível inativar cursos com estudantes no ativo.
-     */
     private void alternarEstadoCurso() {
-        String sigla = view.pedirSiglaCursoAlterar();
-        Curso curso = encontrarCurso(sigla);
+        // Verifica se existem cursos antes de tentar listar
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarAvisoSemCursos();
+            return;
+        }
+
+        int escolha;
+        // Ciclo de validação de escolha
+        while (true) {
+            escolha = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
+
+            if (escolha >= 0 && escolha < repositorio.getTotalCursos()) {
+                break;
+            }
+            view.mostrarOpcaoInvalida();
+        }
+
+        Curso curso = repositorio.getCursos()[escolha];
+
+        // Não permite desativar se tiver alunos ativos
+        if (curso.isAtivo()) {
+            boolean temAtivos = false;
+            for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+                Estudante e = repositorio.getEstudantes()[i];
+                if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla()) && e.isAtivo()) {
+                    temAtivos = true;
+                    break;
+                }
+            }
+            if (temAtivos) {
+                view.msgAvisoCursoComAlunosAtivos(curso.getSigla());
+                return;
+            }
+        }
+
+        curso.setAtivo(!curso.isAtivo());
+        view.msgSucessoEstadoAlterado("Curso", curso.isAtivo());
+        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+    }
+
+    private void verPercursoAcademicoCurso() {
+        String siglaCurso = view.pedirSiglaCursoBusca();
+        Curso curso = encontrarCurso(siglaCurso);
 
         if (curso != null) {
-            // Regra de Negócio: Impede a inativação se existirem alunos a frequentar o curso
-            if (curso.isAtivo()) {
-                boolean temAtivos = false;
-                for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-                    Estudante e = repositorio.getEstudantes()[i];
-                    if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla()) && e.isAtivo()) {
-                        temAtivos = true;
-                        break;
-                    }
-                }
-                if (temAtivos) {
-                    view.msgAvisoCursoComAlunosAtivos(curso.getSigla());
-                    return;
-                }
-            }
-
-            curso.setAtivo(!curso.isAtivo());
-            view.msgSucessoEstadoAlterado("Curso", curso.isAtivo());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            // Manda a View imprimir os dados, enviando a lista de estudantes para ela poder contar os inscritos!
+            view.mostrarPercursoAcademicoCurso(curso, repositorio.getEstudantes(), repositorio.getTotalEstudantes());
         } else {
             view.mostrarErroCursoNaoEncontrado();
         }
     }
-
     // =========================================================
     // 3. GESTÃO DE UCs
     // =========================================================
 
-    /**
-     * Apresenta o submenu dedicado à gestão de Unidades Curriculares.
-     */
     private void gerirUCs() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuUCs();
-            switch (opcao) {
-                case 1: criarUC(); break;
-                case 2: partilharUC(); break;
-                case 3: alterarUC(); break;
-                case 4: view.mostrarListaUCs(repositorio.getUcs(), repositorio.getTotalUcs()); break;
-                case 5: alternarEstadoUC(); break;
-                case 6: removerUcDeCurso(); break;
-                case 0: aExecutar = false; break;
-                default: view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: criarUC(); break;
+                    case 2: partilharUC(); break;
+                    case 3: alterarUC(); break;
+                    case 4: view.mostrarListaUCs(repositorio.getUcs(), repositorio.getTotalUcs()); break;
+                    case 5: alternarEstadoUC(); break;
+                    case 6: removerUcDeCurso(); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de UCs...");
             }
         }
     }
 
-    /**
-     * Cria uma nova Unidade Curricular e pede confirmação antes de persistir.
-     * Requer a atribuição obrigatória de um Docente Responsável e o vínculo a um Curso existente.
-     */
     private void criarUC() {
         if (repositorio.getTotalDocentes() == 0 || repositorio.getTotalCursos() == 0) {
             view.mostrarErroFaltaDocenteOuCurso();
@@ -314,32 +340,54 @@ public class GestorController {
             return;
         }
 
-        // Seleção do docente coordenador
-        int escolhaDocente = view.pedirEscolhaDocente(repositorio.getDocentes(), repositorio.getTotalDocentes());
-        if (escolhaDocente < 0 || escolhaDocente >= repositorio.getTotalDocentes()) {
-            view.mostrarOpcaoInvalida();
-            return;
-        }
-        Docente docenteResponsavel = repositorio.getDocentes()[escolhaDocente];
+        // 1 e 2: Pesquisa por Sigla e valida se o Docente está Ativo
+        Docente docenteResponsavel = null;
+        while (true) {
+            String siglaDoc = view.pedirSiglaDocenteBusca();
+            docenteResponsavel = encontrarDocente(siglaDoc);
 
-        // Seleção do curso base
-        int escolhaCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
-        if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
-            view.mostrarOpcaoInvalida();
-            return;
+            if (docenteResponsavel == null) {
+                view.mostrarErroDocenteNaoEncontrado();
+            } else if (!docenteResponsavel.isAtivo()) {
+                view.mostrarErroDocenteInativo(); // Impede associação de Inativos!
+            } else {
+                break;
+            }
         }
-        Curso cursoAssociado = repositorio.getCursos()[escolhaCurso];
 
-        // Regra de negócio: Valida se o curso não excedeu o limite de UCs por ano
+        // 3: Pesquisa de Curso por Sigla
+        Curso cursoAssociado = null;
+        while (true) {
+            String siglaCurso = view.pedirSiglaCursoBusca();
+            cursoAssociado = encontrarCurso(siglaCurso);
+
+            if (cursoAssociado == null) {
+                view.mostrarErroCursoNaoEncontrado();
+            } else if (!cursoAssociado.isAtivo()) {
+                view.mostrarErroCursoInativo();
+            } else {
+                break;
+            }
+        }
+
         if (!cursoAssociado.podeAdicionarUcNoAno(anoCurricular)) {
             view.mostrarErroLimiteUCsAno(cursoAssociado.getSigla(), anoCurricular);
             return;
         }
 
-        view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla());
+        int numAvaliacoes;
+        while (true) {
+            numAvaliacoes = view.pedirNumAvaliacoesUC();
+            if (numAvaliacoes >= 1 && numAvaliacoes <= 3) {
+                break;
+            }
+            view.mostrarErroNumAvaliacoes();
+        }
+
+        view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla(), numAvaliacoes);
 
         if (view.confirmarDados()) {
-            UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
+            UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel, numAvaliacoes);
             if (repositorio.adicionarUnidadeCurricular(novaUc)) {
                 vincularUC(novaUc, cursoAssociado, docenteResponsavel);
                 view.mostrarSucessoRegistoUC(nomeUc);
@@ -352,9 +400,6 @@ public class GestorController {
         }
     }
 
-    /**
-     * Permite que uma mesma UC pertença a múltiplos cursos (ex: UC de Matemática partilhada).
-     */
     private void partilharUC() {
         String siglaPartilha = view.pedirSiglaUCPartilhar();
         UnidadeCurricular ucPartilhar = encontrarUC(siglaPartilha);
@@ -369,20 +414,26 @@ public class GestorController {
             return;
         }
 
-        int indexCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
-        if (indexCurso < 0 || indexCurso >= repositorio.getTotalCursos()) {
-            view.mostrarOpcaoInvalida();
-            return;
-        }
-        Curso cursoAlvo = repositorio.getCursos()[indexCurso];
+        // Substituído para pesquisa direta por Sigla do Curso
+        Curso cursoAlvo = null;
+        while (true) {
+            String siglaCurso = view.pedirSiglaCursoBusca();
+            cursoAlvo = encontrarCurso(siglaCurso);
 
-        // Previne partilhas redundantes
+            if (cursoAlvo == null) {
+                view.mostrarErroCursoNaoEncontrado();
+            } else if (!cursoAlvo.isAtivo()) {
+                view.mostrarErroCursoInativo();
+            } else {
+                break;
+            }
+        }
+
         if (isUCNoCurso(ucPartilhar, cursoAlvo)) {
             view.mostrarErroUCJaNoCurso();
             return;
         }
 
-        // Verifica o limite de carga curricular do curso alvo
         if (!cursoAlvo.podeAdicionarUcNoAno(ucPartilhar.getAnoCurricular())) {
             view.mostrarErroLimiteUCsAno(cursoAlvo.getSigla(), ucPartilhar.getAnoCurricular());
             return;
@@ -394,41 +445,49 @@ public class GestorController {
         model.dal.ExportadorCSV.exportarDados("bd", repositorio);
     }
 
-    /**
-     * Remove a associação lógica de uma Unidade Curricular a um determinado Curso.
-     */
     private void removerUcDeCurso() {
-        int idxCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
-        if (idxCurso < 0 || idxCurso >= repositorio.getTotalCursos()) {
-            view.mostrarOpcaoInvalida();
-            return;
+        Curso curso = null;
+        while (true) {
+            String siglaCurso = view.pedirSiglaCursoBusca();
+            curso = encontrarCurso(siglaCurso);
+            if (curso == null) view.mostrarErroCursoNaoEncontrado();
+            else break;
         }
-        Curso curso = repositorio.getCursos()[idxCurso];
 
-        // Apresenta as UCs associadas a este curso para referência
         view.mostrarRelatorioUCsPorCurso(new Curso[]{curso}, 1);
+
+        // Se o curso não tem UCs, não faz sentido pedir a sigla para remover
+        if (curso.getTotalUCs() == 0) return;
 
         String sigla = view.pedirSiglaUCRemover();
 
+        // 1º Remove a UC da lista do Curso
         if (curso.removerUnidadeCurricular(sigla)) {
+            // 2º Remove o Curso da lista da UC (Bidirecional!)
+            UnidadeCurricular uc = encontrarUC(sigla);
+            if (uc != null) {
+                uc.removerCurso(curso.getSigla());
+            }
+
             view.mostrarSucessoAtualizacao();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio); // Sincroniza a remoção com o CSV
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroUCNaoEncontrada();
         }
     }
 
-    /**
-     * Permite atualizar as características fundamentais (Nome e Ano Curricular) de uma UC.
-     */
     private void alterarUC() {
         String siglaBusca = view.pedirSiglaUCAlterar();
         UnidadeCurricular ucEditar = encontrarUC(siglaBusca);
 
         if (ucEditar != null) {
+            view.mostrarInfoEdicao(ucEditar.getNome());
+
+            // 1. Alterar Nome
             String novoNomeUc = view.pedirNovoNome(ucEditar.getNome());
             if (!novoNomeUc.trim().isEmpty()) ucEditar.setNome(novoNomeUc);
 
+            // 2. Alterar Ano Curricular
             String novoAnoStr = view.pedirNovoAnoCurricular(ucEditar.getAnoCurricular());
             if (!novoAnoStr.trim().isEmpty()) {
                 try {
@@ -437,6 +496,38 @@ public class GestorController {
                     view.mostrarErroAnoNumericoMantido();
                 }
             }
+
+            // 3. Alterar Docente Responsável
+            String siglaNovoDoc = view.pedirNovoDocenteUC(ucEditar.getDocenteResponsavel().getSigla());
+            if (!siglaNovoDoc.trim().isEmpty()) {
+                Docente novoDoc = encontrarDocente(siglaNovoDoc);
+                if (novoDoc == null) {
+                    view.mostrarErroDocenteNaoEncontrado();
+                } else if (!novoDoc.isAtivo()) {
+                    view.mostrarErroDocenteInativo();
+                } else {
+                    // Remove a UC do docente antigo e adiciona ao novo
+                    ucEditar.getDocenteResponsavel().removerUcResponsavel(ucEditar.getSigla());
+                    ucEditar.setDocenteResponsavel(novoDoc);
+                    novoDoc.adicionarUcResponsavel(ucEditar);
+                }
+            }
+
+            // 4. Alterar Número de Avaliações (Nova Funcionalidade)
+            String novoNumAvStr = view.pedirNovoNumAvaliacoes(ucEditar.getNumAvaliacoes());
+            if (!novoNumAvStr.trim().isEmpty()) {
+                try {
+                    int novoNum = Integer.parseInt(novoNumAvStr);
+                    if (novoNum >= 1 && novoNum <= 3) {
+                        ucEditar.setNumAvaliacoes(novoNum);
+                    } else {
+                        view.mostrarErroNumAvaliacoes();
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println(">> Erro: Formato numérico inválido.");
+                }
+            }
+
             view.mostrarSucessoAtualizacao();
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
@@ -444,28 +535,28 @@ public class GestorController {
         }
     }
 
-    /**
-     * Alterna o estado de ativação de uma UC.
-     * UCs que compõem a matriz de algum Curso não podem ser inativadas para não corromper planos de estudo.
-     */
     private void alternarEstadoUC() {
         String sigla = view.pedirSiglaUCAlterar();
         UnidadeCurricular uc = encontrarUC(sigla);
 
         if (uc != null) {
+            // Se a UC está ativa e vamos tentar desativar, temos de garantir que NÃO TEM cursos associados
             if (uc.isAtivo()) {
-                boolean associada = false;
+                boolean temCursos = false;
                 for (int i = 0; i < uc.getCursos().length; i++) {
                     if (uc.getCursos()[i] != null) {
-                        associada = true;
+                        temCursos = true;
                         break;
                     }
                 }
-                if (associada) {
+
+                // Se ainda tiver cursos, recusa a inativação
+                if (temCursos) {
                     view.msgAvisoUCAssociada(uc.getSigla());
                     return;
                 }
             }
+
             uc.setAtivo(!uc.isAtivo());
             view.msgSucessoEstadoAlterado("Unidade Curricular", uc.isAtivo());
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
@@ -478,49 +569,42 @@ public class GestorController {
     // 4. GESTÃO DE UTILIZADORES (ESTUDANTES E DOCENTES)
     // =========================================================
 
-    /**
-     * Apresenta o submenu dedicado à gestão de Estudantes.
-     */
     private void gerirEstudantes() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuEstudantes();
-            switch (opcao) {
-                case 1: adicionarEstudante(); break;
-                case 2: alterarEstudante(); break;
-                case 3: view.mostrarListaEstudantes(repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
-                case 4: alternarEstadoEstudante(); break;
-                case 0: aExecutar = false; break;
-                default: view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: adicionarEstudante(); break;
+                    case 2: alterarEstudante(); break;
+                    case 3: view.mostrarListaEstudantes(repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
+                    case 4: alternarEstadoEstudante(); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de Estudantes...");
             }
         }
     }
 
-    /**
-     * Regista um novo Estudante no sistema, pedindo confirmação prévia.
-     * O sistema gera automaticamente as credenciais (Nº Mecanográfico sequencial, Email institucional e Password)
-     * e notifica o utilizador via email.
-     */
     private void adicionarEstudante() {
-        // Filtrar os cursos ativos antes de qualquer outra operação
         Curso[] cursosAtivos = new Curso[repositorio.getTotalCursos()];
         int totalAtivos = 0;
 
         for (int i = 0; i < repositorio.getTotalCursos(); i++) {
             Curso c = repositorio.getCursos()[i];
-            if (c != null && c.isAtivo()) {
+            if (c != null && c.isAtivo() && c.temEstruturaValida()) {
                 cursosAtivos[totalAtivos] = c;
                 totalAtivos++;
             }
         }
 
-        // Validação se existem cursos disponíveis para matrícula
         if (totalAtivos == 0) {
             view.mostrarErroFaltaCurso();
             return;
         }
 
-        // Recolha de dados
         String nome = validarNome();
         String nif = validarNif();
         String morada = view.pedirMorada();
@@ -539,7 +623,6 @@ public class GestorController {
         view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoSelecionado.getSigla());
 
         if (view.confirmarDados()) {
-            // Geração automática de credenciais baseadas no ano de inscrição
             int anoInscricao = repositorio.getAnoAtual();
             int numeroMecanografico = repositorio.gerarNumeroMecanografico(anoInscricao);
             String emailAcesso = GeradorEmail.gerarEmailEstudante(numeroMecanografico);
@@ -551,14 +634,12 @@ public class GestorController {
             );
 
             if (repositorio.adicionarEstudante(novoEstudante)) {
-                // Integração com sistema de envio de credenciais simulado
                 vincularUcsIniciais(novoEstudante, cursoSelecionado);
 
                 boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
                 view.mostrarStatusEmail(emailEnviado, novoEstudante.getEmailPessoal());
                 view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
 
-                // Salva as alterações no disco
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteEstudantes();
@@ -568,11 +649,6 @@ public class GestorController {
         }
     }
 
-    /**
-     * Inscreve o estudante nas Unidades Curriculares correspondentes ao seu ano de frequência.
-     * * @param est   O estudante a inscrever.
-     * @param curso O curso que define o plano de estudos.
-     */
     private void vincularUcsIniciais(Estudante est, Curso curso) {
         for (int i = 0; i < curso.getTotalUCs(); i++) {
             UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
@@ -582,9 +658,6 @@ public class GestorController {
         }
     }
 
-    /**
-     * Permite ao Gestor corrigir os dados demográficos de um estudante.
-     */
     private void alterarEstudante() {
         try {
             int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
@@ -612,9 +685,6 @@ public class GestorController {
         }
     }
 
-    /**
-     * Inativa (suspende) ou Reativa o perfil de um Estudante.
-     */
     private void alternarEstadoEstudante() {
         try {
             int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
@@ -631,28 +701,26 @@ public class GestorController {
         }
     }
 
-    /**
-     * Apresenta o submenu dedicado à gestão do Corpo Docente.
-     */
     private void gerirDocentes() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuDocentes();
-            switch (opcao) {
-                case 1: adicionarDocente(); break;
-                case 2: alterarDocente(); break;
-                case 3: view.mostrarListaDocentes(repositorio.getDocentes(), repositorio.getTotalDocentes()); break;
-                case 4: alternarEstadoDocente(); break;
-                case 0: aExecutar = false; break;
-                default: view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: adicionarDocente(); break;
+                    case 2: alterarDocente(); break;
+                    case 3: view.mostrarListaDocentes(repositorio.getDocentes(), repositorio.getTotalDocentes()); break;
+                    case 4: alternarEstadoDocente(); break;
+                    case 5: verFichaDocente(); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de Docentes...");
             }
         }
     }
 
-    /**
-     * Contrata/Regista um novo Docente pedindo confirmação.
-     * Gera uma sigla única baseada no nome inserido, bem como o email institucional e password.
-     */
     private void adicionarDocente() {
         String nome = validarNome();
         String siglaGerada = gerarSiglaDocente(nome);
@@ -686,14 +754,13 @@ public class GestorController {
         }
     }
 
-    /**
-     * Permite corrigir dados do Docente.
-     */
     private void alterarDocente() {
-        String siglaDoc = view.pedirSiglaDocenteAlterar();
+        String siglaDoc = view.pedirSiglaDocenteBusca();
         Docente docEditar = encontrarDocente(siglaDoc);
 
         if (docEditar != null) {
+            view.mostrarInfoEdicao(docEditar.getNome());
+
             String novoNomeDoc = view.pedirNovoNome(docEditar.getNome());
             if (!novoNomeDoc.trim().isEmpty()) {
                 if (Validador.isNomeValido(novoNomeDoc)) docEditar.setNome(novoNomeDoc);
@@ -703,6 +770,11 @@ public class GestorController {
             String novaMoradaDoc = view.pedirNovaMorada(docEditar.getMorada());
             if (!novaMoradaDoc.trim().isEmpty()) docEditar.setMorada(novaMoradaDoc);
 
+            String novoEmail = view.pedirNovoEmailPessoal(docEditar.getEmailPessoal());
+            if (!novoEmail.trim().isEmpty()) {
+                docEditar.setEmailPessoal(novoEmail);
+            }
+
             view.mostrarSucessoAtualizacao();
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
@@ -710,23 +782,32 @@ public class GestorController {
         }
     }
 
-    /**
-     * Suspende funções de um Docente.
-     * Impede a inativação se o docente for o titular responsável por alguma UC.
-     */
     private void alternarEstadoDocente() {
-        String siglaDoc = view.pedirSiglaDocenteAlterar();
+        String siglaDoc = view.pedirSiglaDocenteBusca();
         Docente doc = encontrarDocente(siglaDoc);
 
         if (doc != null) {
+            // Regra de negócio: não deixa desativar se tiver UCs associadas
             if (doc.isAtivo() && doc.getTotalUcsLecionadas() > 0) {
                 view.msgAvisoDocenteComUCs(doc.getSigla());
                 view.mostrarUcsAgregadasDocente(doc.getUcsLecionadas(), doc.getTotalUcsLecionadas());
                 return;
             }
+
             doc.setAtivo(!doc.isAtivo());
             view.msgSucessoEstadoAlterado("Docente", doc.isAtivo());
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.mostrarErroDocenteNaoEncontrado();
+        }
+    }
+
+    private void verFichaDocente() {
+        String siglaDoc = view.pedirSiglaDocenteBusca();
+        Docente docSelecionado = encontrarDocente(siglaDoc);
+
+        if (docSelecionado != null) {
+            view.mostrarFichaDocente(docSelecionado);
         } else {
             view.mostrarErroDocenteNaoEncontrado();
         }
@@ -736,10 +817,6 @@ public class GestorController {
     // 5. OPERAÇÕES DE SISTEMA, RELATÓRIOS E AUXILIARES
     // =========================================================
 
-    /**
-     * Executa a transição global para o próximo Ano Letivo.
-     * Despoleta o fecho de pautas, processamento de transições e geração de novas propinas no repositório.
-     */
     private void avancarAnoLetivo() {
         view.mostrarAvisoTransicaoAno();
         int proximoAno = repositorio.getAnoAtual() + 1;
@@ -753,28 +830,25 @@ public class GestorController {
         }
     }
 
-    /**
-     * Apresenta relatórios institucionais estáticos.
-     */
     private void gerirRelatorios() {
         boolean aExecutar = true;
         while (aExecutar) {
             int opcao = view.mostrarMenuRelatorios();
-            switch (opcao) {
-                case 1: view.mostrarRelatorioAlunosPorCurso(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
-                case 2: view.mostrarRelatorioAlunosPorUC(repositorio.getUcs(), repositorio.getTotalUcs(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
-                case 3: view.mostrarRelatorioUCsPorCurso(repositorio.getCursos(), repositorio.getTotalCursos()); break;
-                case 4: view.mostrarRelatorioCursosPorDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos()); break;
-                case 5: verEstatisticas(); break;
-                case 0: aExecutar = false; break;
-                default: view.mostrarOpcaoInvalida();
+            try {
+                switch (opcao) {
+                    case 1: view.mostrarRelatorioAlunosPorCurso(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
+                    case 2: view.mostrarRelatorioAlunosPorUC(repositorio.getUcs(), repositorio.getTotalUcs(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
+                    case 3: view.mostrarRelatorioUCsPorCurso(repositorio.getCursos(), repositorio.getTotalCursos()); break;
+                    case 4: verEstatisticas(); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de Relatórios...");
             }
         }
     }
 
-    /**
-     * Calcula e apresenta métricas dinâmicas da instituição com recurso à classe utilitária de Estatísticas.
-     */
     private void verEstatisticas() {
         double mediaGlobal = utils.Estatisticas.calcularMediaGlobalInstituicao(repositorio);
         String melhorAluno = utils.Estatisticas.identificarMelhorAluno(repositorio);
@@ -782,9 +856,6 @@ public class GestorController {
         view.mostrarEstatisticas(mediaGlobal, melhorAluno, cursoTop != null ? cursoTop.getNome() : null);
     }
 
-    /**
-     * Procura e lista todos os estudantes que apresentem propinas em atraso no ano letivo corrente.
-     */
     private void listarAlunosComDividas() {
         Estudante[] devedores = new Estudante[repositorio.getTotalEstudantes()];
         double[] dividas = new double[repositorio.getTotalEstudantes()];
@@ -792,20 +863,30 @@ public class GestorController {
 
         for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
             Estudante e = repositorio.getEstudantes()[i];
+
             if (e != null && e.temDividas()) {
-                model.bll.Propina propinaAtual = e.getPropinaDoAno(repositorio.getAnoAtual());
-                devedores[totalDevedores] = e;
-                dividas[totalDevedores] = (propinaAtual != null) ? propinaAtual.getValorEmDivida() : 0.0;
-                totalDevedores++;
+                double dividaTotal = 0.0;
+
+                // Percorre todos os anos do estudante (desde o ingresso até ao ano atual) e soma as dívidas
+                for (int ano = e.getAnoPrimeiraInscricao(); ano <= repositorio.getAnoAtual(); ano++) {
+                    model.bll.Propina p = e.getPropinaDoAno(ano);
+                    if (p != null) {
+                        dividaTotal += p.getValorEmDivida();
+                    }
+                }
+
+                // Só adiciona o aluno ao relatório se a dívida real for superior a 0 euros
+                if (dividaTotal > 0.0) {
+                    devedores[totalDevedores] = e;
+                    dividas[totalDevedores] = dividaTotal;
+                    totalDevedores++;
+                }
             }
         }
+
+        // Envia as arrays filtradas para a View
         view.mostrarListaDevedores(devedores, dividas, totalDevedores);
     }
-
-    /**
-     * Altera a propina anual base de um curso.
-     * Afeta apenas as matrículas em anos letivos subsequentes à alteração.
-     */
     private void alterarPrecoCurso() {
         int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos());
         if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
@@ -824,7 +905,96 @@ public class GestorController {
         }
     }
 
-    // --- MÉTODOS AUXILIARES PRIVADOS (Mecanismos de Busca e Validação) ---
+    // =========================================================
+    // 6. GESTÃO DE GESTORES
+    // =========================================================
+
+    private void gerirGestores() {
+        boolean aExecutar = true;
+        while (aExecutar) {
+            int opcao = view.mostrarMenuGestores();
+            try {
+                switch (opcao) {
+                    case 1: adicionarGestor(); break;
+                    case 2: desativarGestor(); break;
+                    case 3: view.mostrarListaGestores(repositorio.getGestores(), repositorio.getTotalGestores()); break;
+                    case 0: aExecutar = false; break;
+                    default: view.mostrarOpcaoInvalida();
+                }
+            } catch (utils.CancelamentoException e) {
+                System.out.println("\n>> Operação cancelada. A regressar ao menu de Gestores...");
+            }
+        }
+    }
+
+    private void adicionarGestor() {
+        String nome = validarNomeGestor();
+        String morada = view.pedirMorada();
+
+        String emailGerado = "backoffice_" + nome.toLowerCase() + "@issmf.ipp.pt";
+
+        view.mostrarRevisaoGestor(nome, morada, emailGerado);
+
+        if (view.confirmarDados()) {
+            String passRaw = utils.GeradorPassword.generatePassword();
+            String passEnc = utils.Seguranca.encriptar(passRaw);
+
+            Gestor novoGestor = new Gestor(emailGerado, passEnc, nome, morada);
+
+            if (repositorio.adicionarGestor(novoGestor)) {
+                view.mostrarSucessoRegistoGestor(emailGerado);
+
+                String destinoHardcoded = "1220492@isep.ipp.pt";
+                boolean emailEnviado = utils.ServicoEmail.enviarEmailNovoGestor(emailGerado, passRaw, destinoHardcoded);
+                view.mostrarStatusEmail(emailEnviado, destinoHardcoded);
+
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarErroLimiteGestores();
+            }
+        } else {
+            view.mostrarAvisoSemAlteracao();
+        }
+    }
+
+    private void desativarGestor() {
+        String email = view.pedirEmailGestor();
+
+        if (email.equalsIgnoreCase(gestorAtivo.getEmail())) {
+            view.mostrarErroDesativarGestorProprio();
+            return;
+        }
+
+        String pass = view.pedirPasswordGestor();
+        String passEnc = utils.Seguranca.encriptar(pass);
+
+        model.bll.Utilizador alvo = repositorio.autenticar(email, passEnc);
+
+        if (alvo != null && alvo instanceof Gestor) {
+            Gestor gestorAlvo = (Gestor) alvo;
+
+            // Impede desativar alguém que já está desativado
+            if (!gestorAlvo.isAtivo()) {
+                System.out.println(">> Aviso: Esta conta de Gestor já se encontra desativada.");
+                return;
+            }
+
+            view.mostrarAvisoDesativacaoGestor(gestorAlvo.getNome());
+
+            if (view.confirmarDados()) {
+                // Apenas muda o estado, sem apagar do Repositório ---
+                gestorAlvo.setAtivo(false);
+                view.mostrarSucessoDesativacaoGestor();
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.mostrarAvisoSemAlteracao();
+            }
+        } else {
+            view.mostrarErroCredenciaisGestor();
+        }
+    }
+
+    // --- MÉTODOS AUXILIARES ---
 
     private Departamento encontrarDepartamento(String sigla) {
         for (int i = 0; i < repositorio.getTotalDepartamentos(); i++) {
@@ -917,6 +1087,17 @@ public class GestorController {
             char let2 = alfabeto.charAt((int)(Math.random() * alfabeto.length()));
             String sigla = "" + primeiraLetra + let1 + let2;
             if (!repositorio.existeSiglaDocente(sigla)) return sigla;
+        }
+    }
+
+    private String validarNomeGestor() {
+        while (true) {
+            String nome = view.pedirNomeGestor();
+            if (Validador.isNomeGestorValido(nome)) {
+                return nome.trim();
+            }
+
+            view.mostrarErroNomeGestor();
         }
     }
 }

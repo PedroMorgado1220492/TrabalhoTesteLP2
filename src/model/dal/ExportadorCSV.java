@@ -88,15 +88,16 @@ public class ExportadorCSV {
      * Exporta os dados administrativos e demográficos dos Gestores.
      */
     private static void exportarGestores(String caminho, RepositorioDados repo) {
-        try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;EMAIL;NOME;MORADA");
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(caminho))) {
+            pw.println("TIPO;EMAIL;NOME;MORADA;ATIVO");
             for (int i = 0; i < repo.getTotalGestores(); i++) {
-                Gestor g = repo.getGestores()[i];
-                if (g != null) {
-                    pw.println("GESTOR;" + g.getEmail() + ";" + g.getNome() + ";" + g.getMorada());
+                Gestor gestor = repo.getGestores()[i];
+                if (gestor != null) {
+                    pw.println("GESTOR;" + gestor.getEmail() + ";"
+                            + gestor.getNome() + ";" + gestor.getMorada() + ";" + gestor.isAtivo());
                 }
             }
-        } catch (IOException e) { }
+        } catch (java.io.IOException e) { }
     }
 
     /**
@@ -150,16 +151,23 @@ public class ExportadorCSV {
      */
     private static void exportarUCs(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSO;ATIVO");
+            pw.println("TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSOS;ATIVO;NUM_AVALIACOES");
             for (int i = 0; i < repo.getTotalUcs(); i++) {
                 UnidadeCurricular uc = repo.getUcs()[i];
                 if (uc != null) {
                     String siglaDocente = (uc.getDocenteResponsavel() != null) ? uc.getDocenteResponsavel().getSigla() : "";
-                    // Assume-se a primeira posição do array de cursos para exportação simples
-                    String siglaCurso = (uc.getCursos()[0] != null) ? uc.getCursos()[0].getSigla() : "";
+
+                    // Criar a lista de cursos separados por vírgula
+                    StringBuilder listaCursos = new StringBuilder();
+                    for (int j = 0; j < uc.getCursos().length; j++) {
+                        if (uc.getCursos()[j] != null) {
+                            if (listaCursos.length() > 0) listaCursos.append(",");
+                            listaCursos.append(uc.getCursos()[j].getSigla());
+                        }
+                    }
 
                     pw.println("UC;" + uc.getSigla() + ";" + uc.getNome() + ";" + uc.getAnoCurricular() + ";" +
-                            siglaDocente + ";" + siglaCurso + ";" + uc.isAtivo());
+                            siglaDocente + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + uc.getNumAvaliacoes());
                 }
             }
         } catch (IOException e) { }

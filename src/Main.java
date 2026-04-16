@@ -26,7 +26,6 @@ public class Main {
         RepositorioDados repositorio = new RepositorioDados();
 
         // 3. Instanciação do CONTROLLER (Liga a View ao Model)
-        // Passamos as referências da View e do Repositório para que o Controller os possa gerir.
         MainController mc = new MainController(view, repositorio);
 
         // 4. Início do ciclo de vida do sistema

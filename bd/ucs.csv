@@ -1,12 +1,14 @@
-TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSO;ATIVO
-UC;LP1;Linguagens Prog 1;1;ABC;LEI;true
-UC;LP2;Linguagens Prog 2;1;ABC;LEI;true
-UC;MAT1;Matematica 1;1;MTH;LEI;true
-UC;BD;Bases de Dados;2;XYZ;LEI;true
-UC;ES;Eng Software;2;XYZ;LEI;true
-UC;PI;Projeto Inf;3;ABC;LEI;true
-UC;IA;Inteligencia Art;3;XYZ;LEI;true
-UC;CONT1;Contabilidade 1;1;MTH;LGE;true
-UC;GES1;Gestao 1;1;XYZ;LGE;true
-UC;ECO1;Economia 1;2;MTH;LGE;true
-UC;MARK1;Marketing;3;XYZ;LGE;true
+TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSOS;ATIVO;NUM_AVALIACOES
+UC;MAT;Matematica Antiga;1;PXQ;;false;2
+UC;MAT1;Matematica 1;1;PLM;LEC,LEM,LEE;true;2
+UC;MAT2;Matematica 2;2;PLM;LEC,LEM;true;2
+UC;EM1;Engenharia dos Materiais 1;1;PLG;LEC;true;3
+UC;EST1;Estruturas 1;2;PVR;LEC;true;1
+UC;EST2;Estruturas 2;3;PVR;LEC;true;1
+UC;COM1;Construções Mecanicas 1;2;PKX;LEM;true;1
+UC;COM2;Construções Mecanicas 2;3;PKX;LEM;true;1
+UC;PRO1;Programacao 1;1;PEU;LEE;true;1
+UC;CIR;Circuitos;1;PEU;LEE;true;1
+UC;ELE;Eletromagnetismo;1;PEU;LEE;true;2
+UC;SDE;Sistemas Digitais Eletricos;1;PEU;LEE;true;1
+UC;PRO2;Programacao 2;2;PEU;LEE;true;2
