@@ -8,20 +8,23 @@ import view.MainView;
 import model.dal.RepositorioDados;
 
 /**
- * Controlador principal da aplicação (Entry Point).
- * Responsável por gerir o menu inicial (público), processos de autenticação,
- * registo de novos alunos, transições de ano letivo e a persistência base dos dados.
+ * Controlador principal da aplicação (Entry Point do Sistema).
+ * Atua como o coordenador geral do padrão MVC. É responsável por exibir o menu inicial (público),
+ * processar a autenticação global, gerir o auto-registo de novos alunos e coordenar a transição
+ * global de ano letivo (incluindo validações financeiras e académicas delegadas aos respetivos Models).
  */
 public class MainController {
 
+    // ---------- ATRIBUTOS ----------
     private MainView view;
     private RepositorioDados repositorio;
 
+    // ---------- CONSTRUTOR ----------
+
     /**
      * Construtor do MainController.
-     *
-     * @param view        A view principal de interação com o utilizador (MainView).
-     * @param repositorio O repositório centralizado de dados.
+     * @param view        A view principal de interação com o utilizador visitante (MainView).
+     * @param repositorio O repositório centralizado de dados (em memória).
      */
     public MainController(MainView view, RepositorioDados repositorio) {
         this.view = view;
@@ -29,8 +32,8 @@ public class MainController {
     }
 
     /**
-     * Inicia o ciclo principal do sistema (Ponto de Entrada).
-     * Gere o menu público e encaminha a execução para os fluxos correspondentes (Login, Registo, etc.).
+     * Inicia o ciclo principal do sistema.
+     * Mantém o ecrã de boas-vindas ativo até indicação de encerramento.
      */
     public void iniciarSistema() {
         boolean aExecutar = true;
@@ -42,18 +45,10 @@ public class MainController {
 
             try {
                 switch (opcao) {
-                    case 1:
-                        processarLogin();
-                        break;
-                    case 2:
-                        processarRegistoEstudante();
-                        break;
-                    case 3:
-                        processarTransicaoAno();
-                        break;
-                    case 4:
-                        processarRecuperacaoPassword();
-                        break;
+                    case 1: processarLogin(); break;
+                    case 2: processarRegistoEstudante(); break;
+                    case 3: processarTransicaoAno(); break;
+                    case 4: processarRecuperacaoPassword(); break;
                     case 0:
                         view.msgEncerramento();
                         aExecutar = false;
@@ -62,15 +57,21 @@ public class MainController {
                         view.msgOpcaoInvalida();
                 }
             } catch (utils.CancelamentoException e) {
-                System.out.println("\n>> Operação cancelada. A regressar ao menu principal...");
+                view.mostrarCancelamento();
             }
         }
     }
 
+
     // =========================================================
-    // 1. LÓGICA DE LOGIN E SESSÃO (CASE 1)
+    // 1. LÓGICA DE LOGIN E SESSÃO
     // =========================================================
 
+    /**
+     * Coordena o fluxo de autenticação.
+     * Verifica os ficheiros parciais para acesso rápido e, em caso de sucesso,
+     * carrega toda a base de dados em memória e redireciona para o respetivo sub-controlador (Role).
+     */
     private void processarLogin() {
         view.mostrarCabecalhoLogin();
 
@@ -78,6 +79,7 @@ public class MainController {
         String passwordLogin = view.pedirPassword();
         String passEncriptada = utils.Seguranca.encriptar(passwordLogin);
 
+        // Verificação leve (sem carregar toda a base de dados)
         String tipoUtilizador = model.dal.ImportadorCSV.verificarLoginRapido("bd/logins.csv", emailLogin, passEncriptada);
 
         if (tipoUtilizador == null) {
@@ -92,18 +94,17 @@ public class MainController {
         view.msgValidacaoSucesso(tipoUtilizador);
         carregarBaseDeDadosCompleta();
 
+        // Autenticação forte (agora que os objetos estão em memória)
         Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
+
         if (userLogado != null) {
-            if (userLogado instanceof Estudante && !((Estudante) userLogado).isAtivo()) {
+            // Delegação do controlo de estado às classes filhas
+            if (userLogado instanceof Estudante && !((Estudante) userLogado).isAtivo() ||
+                    userLogado instanceof Docente && !((Docente) userLogado).isAtivo() ||
+                    userLogado instanceof Gestor && !((Gestor) userLogado).isAtivo()) {
+
                 view.msgErroInativo();
                 return;
-            }
-            if (userLogado instanceof Docente && !((Docente) userLogado).isAtivo()) {
-                view.msgErroInativo();
-                return;
-            }
-            if (userLogado instanceof Gestor && !((Gestor) userLogado).isAtivo()) {
-                view.msgErroInativo(); return;
             }
             abrirMenuPorRole(tipoUtilizador, userLogado);
         }
@@ -111,16 +112,9 @@ public class MainController {
         encerrarSessaoESalvar();
     }
 
-    private String validarDominioEmail() {
-        while (true) {
-            String email = view.pedirEmail();
-            if (Validador.isEmailInstitucionalValido(email)) {
-                return email;
-            }
-            view.msgErroEmailDominio();
-        }
-    }
-
+    /**
+     * Instancia e executa o Controlador apropriado consoante a função (Role) do utilizador.
+     */
     private void abrirMenuPorRole(String tipo, Utilizador user) {
         if (tipo.equals("GESTOR")) {
             view.msgBemVindoRole("Gestor");
@@ -134,10 +128,14 @@ public class MainController {
         }
     }
 
+
     // =========================================================
-    // 2. REGISTO DE ESTUDANTE (CASE 2)
+    // 2. REGISTO PÚBLICO DE ESTUDANTE
     // =========================================================
 
+    /**
+     * Coordena o auto-registo de um novo aluno através da interface pública.
+     */
     private void processarRegistoEstudante() {
         view.msgPrepararRegisto();
         carregarBaseDeDadosCompleta();
@@ -145,39 +143,174 @@ public class MainController {
         encerrarSessaoESalvar();
     }
 
+    private void registarEstudanteNoSistema() {
+        view.mostrarCabecalhoRegisto();
+
+        // Delegação de pesquisa ao Repositório
+        Curso[] cursosAtivos = repositorio.obterCursosDisponiveisParaMatricula();
+
+        if (cursosAtivos.length == 0) {
+            view.msgSemCursosParaRegisto();
+            return;
+        }
+
+        String nome = validarNome();
+        String nif = validarNif();
+        String morada = view.pedirMorada();
+        String dataNascimento = validarDataNascimento();
+        String emailPessoal = view.pedirEmailPessoal();
+
+        int indexCurso = view.pedirEscolhaCurso(cursosAtivos, cursosAtivos.length);
+
+        if (indexCurso < 0 || indexCurso >= cursosAtivos.length) {
+            view.msgErroNumeroInvalido();
+            return;
+        }
+
+        Curso cursoEscolhido = cursosAtivos[indexCurso];
+        view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoEscolhido.getNome());
+
+        if (view.confirmarDados()) {
+            int anoAtual = repositorio.getAnoAtual();
+            int numMec = repositorio.gerarNumeroMecanografico(anoAtual);
+
+            String email = utils.GeradorEmail.gerarEmailEstudante(numMec);
+            String passRaw = utils.GeradorPassword.generatePassword();
+            String passEnc = utils.Seguranca.encriptar(passRaw);
+
+            Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, dataNascimento, cursoEscolhido, anoAtual, emailPessoal);
+
+            if (repositorio.adicionarEstudante(novo)) {
+                // Delegação de responsabilidade ao Estudante (Matricular nas próprias UCs)
+                novo.matricularNasUcsIniciais();
+
+                boolean emailEnviado = utils.ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
+
+                if (emailEnviado) {
+                    view.msgSucessoEnvioEmail(novo.getEmailPessoal());
+                } else {
+                    view.msgErroEnvioEmail();
+                }
+
+                view.mostrarCredenciaisGeradas(anoAtual, numMec, email, passRaw);
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.msgErroLimiteEstudantes();
+            }
+        } else {
+            view.msgRegistoCancelado();
+        }
+    }
+
+
     // =========================================================
-    // 3. TRANSIÇÃO DE ANO LETIVO E GESTÃO GLOBAL (CASE 3)
+    // 3. TRANSIÇÃO DE ANO LETIVO E VALIDAÇÕES MACRO
     // =========================================================
 
+    /**
+     * Executa os processos pesados de fecho e abertura de ano letivo.
+     * Inclui validação de viabilidade de cursos (Mínimo 5 inscritos) e geração de diplomas.
+     */
     private void processarTransicaoAno() {
         view.mostrarCabecalhoTransicao();
         carregarBaseDeDadosCompleta();
 
         int proximoAno = repositorio.getAnoAtual() + 1;
+
+        // Fase 1: Auditar se os cursos têm condições de abrir no próximo ano
         validarArranqueDeCursos(proximoAno);
 
         if (view.pedirConfirmacaoAvanco(proximoAno)) {
             repositorio.avancarAno();
+
+            // Fase 2: Processar formaturas do ano que está a terminar
             gerarCertificadosConcluintes(proximoAno - 1);
+
             view.msgSucessoAvancoAno(repositorio.getAnoAtual());
             ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.msgCancelamentoAvancoAno(repositorio.getAnoAtual());
         }
 
+        // Limpa a memória após processo global
         this.repositorio = new RepositorioDados();
     }
 
+    /**
+     * Analisa todos os cursos e encerra os que não atingirem a quota mínima de 5 alunos no 1º ano.
+     */
+    private void validarArranqueDeCursos(int anoAlvo) {
+        view.mostrarAvisoValidacaoCursos();
+        if (repositorio.getTotalCursos() == 0) return;
+
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            Curso curso = repositorio.getCursos()[i];
+
+            if (curso != null && curso.isAtivo()) {
+
+                // Valida a estrutura estrutural do Curso delegada ao Model
+                if (!curso.temEstruturaValida()) {
+                    view.mostrarCursoCanceladoFaltaUCs(curso.getSigla());
+                    curso.setAtivo(false);
+                    repositorio.anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
+                    continue;
+                }
+
+                // Verifica a regra financeira (mínimo de alunos) delegada ao Repositório
+                int inscritos = repositorio.contarInscritosPrimeiroAno(curso.getSigla(), anoAlvo);
+
+                if (inscritos > 0 && inscritos < 5) {
+                    view.mostrarCursoCancelado(curso.getSigla(), inscritos);
+                    repositorio.anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
+                    curso.setAtivo(false);
+                } else if (inscritos >= 5) {
+                    view.mostrarCursoAprovado(curso.getSigla(), inscritos);
+                }
+            }
+        }
+        view.mostrarFimValidacao();
+    }
+
+    /**
+     * Itera por todos os alunos para verificar se concluíram o curso, gerando os respetivos diplomas (PDF/TXT)
+     * e inativando as contas.
+     */
+    private void gerarCertificadosConcluintes(int ano) {
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            Estudante e = repositorio.getEstudantes()[i];
+
+            if (e != null && e.getCurso() != null && e.isAtivo()) {
+
+                // Delegação de regras académicas ao Model Estudante
+                if (e.concluiuCurso()) {
+                    String caminhoCertificado = model.bll.Certificado.gerarCertificado(e, ano);
+
+                    if (caminhoCertificado != null && e.getEmailPessoal() != null && !e.getEmailPessoal().isEmpty()) {
+                        utils.ServicoEmail.enviarEmailCertificado(e.getEmailPessoal(), e.getNome(), caminhoCertificado);
+                    }
+                    // A conta é desativada pois o aluno tornou-se diplomado/alumnni
+                    e.setAtivo(false);
+                }
+            }
+        }
+    }
+
+
     // =========================================================
-    // 4. RECUPERAÇÃO DA PASSWORD (CASE 4)
+    // 4. RECUPERAÇÃO DA PASSWORD E UTILITÁRIOS
     // =========================================================
 
+    /**
+     * Lida com os pedidos públicos de redefinição de palavra-passe.
+     */
     private void processarRecuperacaoPassword() {
         view.mostrarCabecalhoLogin();
         String email = view.pedirEmail();
-        String nif = view.pedirNif();
+        String nif = view.pedirNifRecuperacao();
 
         carregarBaseDeDadosCompleta();
+
+        // Delegação de lógica de segurança aos Utilitários
         boolean sucesso = utils.Seguranca.recuperarPassword(email, nif, repositorio);
 
         if (sucesso) {
@@ -190,16 +323,24 @@ public class MainController {
         this.repositorio = new RepositorioDados();
     }
 
+
     // =========================================================
-    // MÉTODOS AUXILIARES E PRIVADOS (REGRAS E DADOS)
+    // 5. MÉTODOS AUXILIARES E PRIVADOS
     // =========================================================
 
+    /**
+     * Fecha a sessão do utilizador logado, força a exportação do estado atual
+     * e apaga a instância em memória por questões de segurança.
+     */
     private void encerrarSessaoESalvar() {
         ExportadorCSV.exportarDados("bd", repositorio);
-        this.repositorio = new RepositorioDados();
+        this.repositorio = new RepositorioDados(); // Reset à memória
         view.msgSessaoEncerrada();
     }
 
+    /**
+     * Invoca os importadores de CSV para reconstruir toda a matriz de objetos em memória RAM.
+     */
     private void carregarBaseDeDadosCompleta() {
         ImportadorCSV.importarGestores("bd/gestores.csv", repositorio);
         ImportadorCSV.importarDepartamentos("bd/departamentos.csv", repositorio);
@@ -208,6 +349,14 @@ public class MainController {
         ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
         ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
         ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
+    }
+
+    private String validarDominioEmail() {
+        while (true) {
+            String email = view.pedirEmail();
+            if (Validador.isEmailInstitucionalValido(email)) return email;
+            view.msgErroEmailDominio();
+        }
     }
 
     private String validarNome() {
@@ -232,165 +381,5 @@ public class MainController {
             if (Validador.isDataNascimentoValida(data)) return data;
             view.msgErroData();
         }
-    }
-
-    private void registarEstudanteNoSistema() {
-        view.mostrarCabecalhoRegisto();
-
-        Curso[] cursosAtivos = new Curso[repositorio.getTotalCursos()];
-        int totalAtivos = 0;
-
-        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
-            Curso c = repositorio.getCursos()[i];
-            if (c != null && c.isAtivo() && c.temEstruturaValida()) {
-                cursosAtivos[totalAtivos] = c;
-                totalAtivos++;
-            }
-        }
-
-        if (totalAtivos == 0) {
-            view.msgSemCursosParaRegisto();
-            return;
-        }
-
-        String nome = validarNome();
-        String nif = validarNif();
-        String morada = view.pedirMorada();
-        String dataNascimento = validarDataNascimento();
-        String emailPessoal = view.pedirEmailPessoal();
-
-        int indexCurso = view.pedirEscolhaCurso(cursosAtivos, totalAtivos);
-
-        if (indexCurso < 0 || indexCurso >= totalAtivos) {
-            view.msgErroNumeroInvalido();
-            return;
-        }
-
-        Curso cursoEscolhido = cursosAtivos[indexCurso];
-        view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoEscolhido.getNome());
-
-        if (view.confirmarDados()) {
-            int anoAtual = repositorio.getAnoAtual();
-            int numMec = repositorio.gerarNumeroMecanografico(anoAtual);
-            String email = utils.GeradorEmail.gerarEmailEstudante(numMec);
-            String passRaw = utils.GeradorPassword.generatePassword();
-            String passEnc = utils.Seguranca.encriptar(passRaw);
-
-            Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, dataNascimento, cursoEscolhido, anoAtual, emailPessoal);
-
-            if (repositorio.adicionarEstudante(novo)) {
-                vincularUcsIniciais(novo, cursoEscolhido);
-                boolean emailEnviado = utils.ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
-
-                if (emailEnviado) {
-                    view.msgSucessoEnvioEmail(novo.getEmailPessoal());
-                } else {
-                    view.msgErroEnvioEmail();
-                }
-
-                view.mostrarCredenciaisGeradas(anoAtual, numMec, email, passRaw);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-            } else {
-                view.msgErroLimiteEstudantes();
-            }
-        } else {
-            view.msgRegistoCancelado();
-        }
-    }
-
-    private void vincularUcsIniciais(Estudante est, Curso curso) {
-        for (int i = 0; i < curso.getTotalUCs(); i++) {
-            UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-            if (uc != null && uc.getAnoCurricular() == est.getAnoFrequencia()) {
-                est.getPercursoAcademico().inscreverEmUc(uc);
-            }
-        }
-    }
-
-    private void validarArranqueDeCursos(int anoAlvo) {
-        view.mostrarAvisoValidacaoCursos();
-        if (repositorio.getTotalCursos() == 0) return;
-
-        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
-            Curso curso = repositorio.getCursos()[i];
-
-            // Valida a estrutura de UCs do Curso
-            if (curso != null && curso.isAtivo()) {
-                if (!curso.temEstruturaValida()) {
-                    view.mostrarCursoCanceladoFaltaUCs(curso.getSigla());
-                    curso.setAtivo(false);
-                    anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
-                    continue;
-                }
-
-                int inscritos = contarInscritosPrimeiroAno(curso, anoAlvo);
-
-                if (inscritos > 0 && inscritos < 5) {
-                    view.mostrarCursoCancelado(curso.getSigla(), inscritos);
-                    anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
-                    curso.setAtivo(false);
-                } else if (inscritos >= 5) {
-                    view.mostrarCursoAprovado(curso.getSigla(), inscritos);
-                }
-            }
-        }
-        view.mostrarFimValidacao();
-    }
-
-    private int contarInscritosPrimeiroAno(Curso curso, int anoAlvo) {
-        int conta = 0;
-        for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
-            Estudante e = repositorio.getEstudantes()[j];
-            if (e != null && e.getCurso() != null &&
-                    e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoPrimeiraInscricao() == anoAlvo) {
-                conta++;
-            }
-        }
-        return conta;
-    }
-
-    private void anularMatriculasPrimeiroAno(String siglaCurso, int anoAlvo) {
-        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-            Estudante e = repositorio.getEstudantes()[i];
-            if (e != null && e.getCurso() != null &&
-                    e.getCurso().getSigla().equals(siglaCurso) && e.getAnoPrimeiraInscricao() == anoAlvo) {
-                repositorio.removerEstudante(e.getNumeroMecanografico());
-                i--;
-            }
-        }
-    }
-
-    private void gerarCertificadosConcluintes(int ano) {
-        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
-            Estudante e = repositorio.getEstudantes()[i];
-
-            if (e != null && e.getCurso() != null && e.isAtivo()) {
-                if (verificarConclusaoCurso(e)) {
-                    String caminhoCertificado = model.bll.Certificado.gerarCertificado(e, ano);
-                    if (caminhoCertificado != null && e.getEmailPessoal() != null && !e.getEmailPessoal().isEmpty()) {
-                        utils.ServicoEmail.enviarEmailCertificado(e.getEmailPessoal(), e.getNome(), caminhoCertificado);
-                    }
-                    e.setAtivo(false);
-                }
-            }
-        }
-    }
-
-    private boolean verificarConclusaoCurso(Estudante e) {
-        Curso c = e.getCurso();
-        if (c.getTotalUCs() == 0) return false;
-
-        int ucsAprovadas = 0;
-        for (int i = 0; i < c.getTotalUCs(); i++) {
-            UnidadeCurricular ucCurso = c.getUnidadesCurriculares()[i];
-            for (int j = 0; j < e.getTotalHistorico(); j++) {
-                Avaliacao av = e.getHistoricoAvaliacoes()[j];
-                if (av != null && av.getUc() != null && av.getUc().getSigla().equals(ucCurso.getSigla()) && av.calcularMedia() >= 9.5) {
-                    ucsAprovadas++;
-                    break;
-                }
-            }
-        }
-        return ucsAprovadas == c.getTotalUCs();
     }
 }

@@ -1,28 +1,31 @@
 package model.bll;
 
 /**
- * Representa o estado corrente das inscrições e avaliações de um Estudante durante um ano letivo.
- * Funciona como um "buffer" anual que regista as disciplinas em que o aluno está ativamente
- * matriculado antes de as notas transitarem para o registo histórico no final do ano.
+ * Representa o estado corrente das inscrições e avaliações de um Estudante num determinado ano letivo.
+ * No padrão MVC, atua como um sub-modelo agregado ao Estudante.
+ * Funciona como um "buffer" (memória temporária) anual que regista as disciplinas em que o aluno
+ * está ativamente matriculado, isolando-as do registo histórico permanente até ao encerramento do ano.
  */
 public class PercursoAcademico {
 
     // ---------- ATRIBUTOS ----------
-    private Estudante estudante;
 
-    // Estruturas de dados para o ano letivo corrente
+    private Estudante estudante; // O titular deste registo académico
+
+    // Estruturas de dados voláteis (referentes apenas ao ano letivo corrente)
     private UnidadeCurricular[] ucsInscrito;
     private int totalUcsInscrito;
 
     private Avaliacao[] avaliacoes;
     private int totalAvaliacoes;
 
+
     // ---------- CONSTRUTOR ----------
 
     /**
      * Construtor da classe PercursoAcademico.
      * Aloca memória para armazenar as inscrições do ano corrente, estabelecendo
-     * um teto máximo compatível com a carga de um plano de estudos normal.
+     * um teto máximo de salvaguarda compatível com um plano de estudos muito sobrecarregado.
      *
      * @param estudante A instância do estudante titular deste percurso.
      */
@@ -30,6 +33,7 @@ public class PercursoAcademico {
         this.estudante = estudante;
 
         // Limite estrutural estabelecido em 15 UCs por ano letivo
+        // (suficiente para cobrir cadeiras normais + repetições de anos anteriores)
         this.ucsInscrito = new UnidadeCurricular[15];
         this.totalUcsInscrito = 0;
 
@@ -37,28 +41,29 @@ public class PercursoAcademico {
         this.totalAvaliacoes = 0;
     }
 
+
     // ---------- GETTERS ----------
 
     public Estudante getEstudante() { return estudante; }
-
     public UnidadeCurricular[] getUcsInscrito() { return ucsInscrito; }
-
     public int getTotalUcsInscrito() { return totalUcsInscrito; }
-
     public Avaliacao[] getAvaliacoes() { return avaliacoes; }
-
     public int getTotalAvaliacoes() { return totalAvaliacoes; }
 
-    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    // =========================================================
+    // LÓGICA DE NEGÓCIO: GESTÃO DO ANO LETIVO CORRENTE
+    // =========================================================
 
     /**
-     * Efetiva a inscrição (matrícula) do estudante numa específica Unidade Curricular para o ano letivo corrente.
+     * Efetiva a inscrição (matrícula) do estudante numa específica Unidade Curricular.
+     * Regista a intenção do aluno de frequentar a cadeira durante o atual ano letivo.
      *
      * @param uc A Unidade Curricular na qual o estudante será inscrito.
-     * @return true se a inscrição for processada com sucesso; false caso o limite anual do vetor (15) seja atingido.
+     * @return true se a inscrição for processada com sucesso; false caso o limite anual estrutural seja atingido.
      */
     public boolean inscreverEmUc(UnidadeCurricular uc) {
-        // Valida a disponibilidade de "vagas" no array do percurso do aluno
+        // Valida a disponibilidade de "vagas" no array limite do percurso do aluno
         if (totalUcsInscrito < ucsInscrito.length) {
             ucsInscrito[totalUcsInscrito] = uc;
             totalUcsInscrito++;
@@ -68,13 +73,14 @@ public class PercursoAcademico {
     }
 
     /**
-     * Vincula um boletim de avaliação relativo a uma Unidade Curricular ao registo corrente do estudante.
+     * Vincula um boletim de avaliação (relativo a uma UC) ao registo corrente do estudante.
+     * Este método liga a folha de notas à matrícula ativa do aluno.
      *
      * @param avaliacao A instância de Avaliacao contendo as notas parciais ou finais da UC.
      * @return true se a operação for concluída; false se a matriz de avaliações anuais estiver cheia.
      */
     public boolean registarAvaliacao(Avaliacao avaliacao) {
-        // Verifica limite de espaço no buffer do ano letivo
+        // Verifica o limite de espaço no buffer do ano letivo
         if (totalAvaliacoes < avaliacoes.length) {
             avaliacoes[totalAvaliacoes] = avaliacao;
             totalAvaliacoes++;
@@ -84,12 +90,13 @@ public class PercursoAcademico {
     }
 
     /**
-     * Repõe o estado do percurso académico (inscrições e notas correntes).
-     * Este método é acionado estritamente no final do ano letivo (após a transição de notas para o Histórico)
-     * para preparar o processo de auto-matrícula do ano civil seguinte.
+     * Repõe o estado do percurso académico (eliminando inscrições e notas correntes da memória de curto prazo).
+     * Regra de Negócio: Este método é acionado estritamente no final do ano letivo pela classe Estudante
+     * (logo após a transição das notas para o Histórico de longo prazo) com o intuito de
+     * preparar e libertar espaço para o processo de auto-matrícula do ano civil seguinte.
      */
     public void limparInscricoesAtivas() {
-        // Recria as matrizes, repondo os apontadores para a posição zero
+        // Recria fisicamente as matrizes na memória, repondo os contadores a zero
         this.ucsInscrito = new UnidadeCurricular[15];
         this.totalUcsInscrito = 0;
 

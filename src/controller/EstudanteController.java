@@ -1,6 +1,5 @@
 package controller;
 
-import model.bll.Avaliacao;
 import model.bll.Curso;
 import model.bll.UnidadeCurricular;
 import model.bll.Propina;
@@ -12,21 +11,41 @@ import utils.Seguranca;
 
 /**
  * Controlador responsável pela gestão das operações e interações do Estudante.
- * Atua como intermediário entre a interface gráfica do estudante (EstudanteView)
- * e a camada de dados (RepositorioDados), garantindo a integridade do percurso académico.
+ * No padrão MVC, esta classe atua como intermediária (Controlador), encaminhando
+ * as intenções do utilizador (capturadas na EstudanteView) para as respetivas lógicas de negócio
+ * presentes nos modelos (Estudante, Propina, Curso, etc.) e na base de dados (RepositorioDados).
  */
 public class EstudanteController {
 
+    // ---------- ATRIBUTOS ----------
     private EstudanteView view;
     private Estudante estudanteLogado;
     private RepositorioDados repositorio;
 
+    // ---------- CONSTRUTOR ----------
+
+    /**
+     * Construtor do EstudanteController.
+     * Inicializa a interface visual (View) e injeta as dependências do modelo e repositório.
+     *
+     * @param estudanteLogado A instância do estudante que efetuou o login com sucesso no sistema.
+     * @param repositorio     A referência para a base de dados central em memória.
+     */
     public EstudanteController(Estudante estudanteLogado, RepositorioDados repositorio) {
         this.view = new EstudanteView();
         this.estudanteLogado = estudanteLogado;
         this.repositorio = repositorio;
     }
 
+
+    // =========================================================
+    // 1. FLUXO PRINCIPAL
+    // =========================================================
+
+    /**
+     * Inicia o ciclo principal de execução do menu do Estudante.
+     * Mantém o utilizador neste ecrã até que seja escolhida a opção de saída ou a conta seja desativada.
+     */
     public void iniciarMenu() {
         boolean running = true;
         while (running) {
@@ -48,13 +67,22 @@ public class EstudanteController {
                         view.msgErroOpcao();
                 }
             } catch (utils.CancelamentoException e) {
-                System.out.println("\n>> Operação cancelada. A regressar ao menu do Estudante...");
+                // Captura o cancelamento do utilizador (ex: introduzir '0' a meio de uma operação)
+                view.mostrarCancelamento("do Estudante");
             }
         }
     }
 
-    // ---------- MÉTODOS DE CONSULTA ACADÉMICA ----------
 
+    // =========================================================
+    // 2. CONSULTA ACADÉMICA
+    // =========================================================
+
+    /**
+     * Processa a visualização do percurso académico do estudante.
+     * O Controller itera sobre o plano de estudos do curso e interroga o Model (Estudante)
+     * sobre o estado e as notas em cada disciplina, delegando a formatação visual à View.
+     */
     private void verPercurso() {
         Curso curso = estudanteLogado.getCurso();
         if (curso == null) {
@@ -63,12 +91,21 @@ public class EstudanteController {
         }
 
         view.mostrarCabecalhoPercurso();
+
+        // Itera sobre os 3 anos estruturais da Licenciatura
         for (int ano = 1; ano <= 3; ano++) {
             view.mostrarAnoPercurso(ano);
+
             for (int i = 0; i < curso.getTotalUCs(); i++) {
                 UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-                if (uc.getAnoCurricular() == ano) {
-                    String statusStr = processarStatusParaView(uc.getSigla());
+
+                if (uc != null && uc.getAnoCurricular() == ano) {
+                    // Delegação de regras ao Model Estudante (saber se está aprovado, inscrito, etc.)
+                    int estado = estudanteLogado.obterCodigoEstadoUc(uc.getSigla());
+                    double nota = estudanteLogado.obterNotaUc(uc.getSigla());
+
+                    // A View formata a string consoante o estado e a nota devolvidos pelo Model
+                    String statusStr = view.formatarStatusUC(estado, nota);
                     view.mostrarLinhaUC(uc.getSigla(), uc.getNome(), ano, statusStr);
                 }
             }
@@ -80,31 +117,14 @@ public class EstudanteController {
         }
     }
 
-    private String processarStatusParaView(String sigla) {
-        int estado = 0;
-        double nota = 0.0;
 
-        if (estudanteLogado.estaInscrito(sigla)) {
-            Avaliacao av = estudanteLogado.getAvaliacaoAtual(sigla);
-            if (av != null) {
-                estado = 1;
-                nota = av.calcularMedia();
-            } else {
-                estado = 2;
-            }
-        } else {
-            Avaliacao hist = estudanteLogado.getAvaliacaoHistorico(sigla);
-            if (hist != null && hist.calcularMedia() >= 9.5) {
-                estado = 3;
-                nota = hist.calcularMedia();
-            }
-        }
+    // =========================================================
+    // 3. ATUALIZAÇÃO DE PERFIL
+    // =========================================================
 
-        return view.formatarStatusUC(estado, nota);
-    }
-
-    // ---------- MÉTODOS DE ATUALIZAÇÃO DE PERFIL ----------
-
+    /**
+     * Gere o sub-menu dedicado à atualização dos dados pessoais do estudante logado.
+     */
     private void menuAtualizar() {
         boolean sub = true;
         while (sub) {
@@ -119,11 +139,14 @@ public class EstudanteController {
                     default: view.msgErroOpcao();
                 }
             } catch (utils.CancelamentoException e) {
-                System.out.println("\n>> Operação cancelada. A regressar ao menu de Atualização...");
+                view.mostrarCancelamento("de Atualização");
             }
         }
     }
 
+    /**
+     * Coordena o fluxo de atualização do Nome, validando o input antes de delegar a alteração ao Modelo.
+     */
     private void atualizarNome() {
         String n = view.pedirNovoNome();
         if (Validador.isNomeValido(n)) {
@@ -134,6 +157,9 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Coordena o fluxo de atualização do NIF.
+     */
     private void atualizarNif() {
         String nif = view.pedirNovoNif();
         if (Validador.isNifValido(nif)) {
@@ -144,16 +170,23 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Coordena o fluxo de atualização da Morada.
+     */
     private void atualizarMorada() {
         estudanteLogado.setMorada(view.pedirNovaMorada());
         view.msgSucesso();
     }
 
+    /**
+     * Coordena o fluxo de alteração de palavra-passe, garantindo a segurança através da validação da password atual.
+     */
     private void atualizarPassword() {
         String passAtualRaw = view.pedirPassAtual();
         String passAtualEnc = Seguranca.encriptar(passAtualRaw);
 
-        if (passAtualEnc.equals(estudanteLogado.getPassword())) {
+        // Validação de segurança delegada ao modelo (herança de Utilizador)
+        if (estudanteLogado.verificarPassword(passAtualEnc)) {
             String novaPassRaw = view.pedirNovaPass();
             String confirmacaoRaw = view.pedirConfirmacaoPass();
 
@@ -168,10 +201,18 @@ public class EstudanteController {
         }
     }
 
-    // ---------- GESTÃO FINANCEIRA (PROPINAS) ----------
 
+    // =========================================================
+    // 4. GESTÃO FINANCEIRA (PROPINAS)
+    // =========================================================
+
+    /**
+     * Coordena o fluxo de consulta e pagamento de propinas referentes ao ano letivo em curso.
+     * Trata da interação com a View, processa o pagamento e emite o respetivo recibo (PDF e Email).
+     */
     private void gerirPropinas() {
         Propina propina = estudanteLogado.getPropinaDoAno(repositorio.getAnoAtual());
+
         if (propina == null) {
             view.msgErroSemPropina();
             return;
@@ -181,16 +222,20 @@ public class EstudanteController {
                 propina.getValorEmDivida(), propina.getHistoricoPagamentos(),
                 propina.getTotalPagamentos(), propina.isPagaTotalmente());
 
+        // Se a propina já estiver liquidada, não prossegue para o pagamento
         if (propina.isPagaTotalmente()) return;
 
         double valor = calcularValorPagamento(propina);
         if (valor <= 0) return;
 
+        // Efetua o registo do pagamento no Modelo
         if (propina.registarPagamento(valor)) {
             view.msgSucesso();
 
+            // Despoleta a geração do recibo em ficheiro texto/PDF
             String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, propina.getValorTotal(), propina.getValorEmDivida());
 
+            // Dispara o envio do recibo por email
             if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null) {
                 utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(), estudanteLogado.getNome(), caminhoRecibo);
             }
@@ -201,14 +246,21 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Calcula e valida o valor a ser pago pelo estudante, mediante as regras da instituição.
+     * * @param propina A propina alvo de pagamento.
+     * @return O valor final aprovado para pagamento, ou 0.0 em caso de cancelamento/erro.
+     */
     private double calcularValorPagamento(Propina propina) {
-        double valorMinimoPrestacao = propina.getValorTotal() / 10;
+        // Regra de negócio (valor mínimo de prestação) delegada ao model Propina
+        double valorMinimoPrestacao = propina.calcularValorMinimoPrestacao();
+
         int op = view.mostrarOpcoesPagamento(propina.getValorEmDivida(), valorMinimoPrestacao);
 
         double valorEscolhido = switch (op) {
-            case 1 -> propina.getValorEmDivida();
-            case 2 -> Math.min(valorMinimoPrestacao, propina.getValorEmDivida());
-            case 3 -> view.pedirValorLivre();
+            case 1 -> propina.getValorEmDivida(); // Pagamento Integral
+            case 2 -> Math.min(valorMinimoPrestacao, propina.getValorEmDivida()); // Prestação Mínima
+            case 3 -> view.pedirValorLivre(); // Outro Valor
             default -> 0.0;
         };
 
@@ -218,6 +270,7 @@ public class EstudanteController {
 
         double limiteMinimoAceitavel = Math.min(valorMinimoPrestacao, propina.getValorEmDivida());
 
+        // Validação: O valor introduzido não pode ser inferior ao limite mínimo estipulado
         if (valorEscolhido < limiteMinimoAceitavel) {
             view.msgErroValorMinimo(limiteMinimoAceitavel);
             return 0.0;
@@ -226,11 +279,19 @@ public class EstudanteController {
         return valorEscolhido;
     }
 
-    // ---------- DESATIVAÇÃO DE CONTA ----------
 
+    // =========================================================
+    // 5. GESTÃO DE CONTA
+    // =========================================================
+
+    /**
+     * Permite que o estudante desative voluntariamente a sua conta no sistema.
+     * * @return true se a conta foi efetivamente desativada, false se a operação foi cancelada.
+     */
     private boolean desativarConta() {
         if (view.pedirConfirmacaoDesativacao()) {
-            estudanteLogado.setAtivo(false);
+            estudanteLogado.setAtivo(false); // Altera o estado no Modelo
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio); // Grava a desativação
             view.msgContaDesativada();
             return true;
         }

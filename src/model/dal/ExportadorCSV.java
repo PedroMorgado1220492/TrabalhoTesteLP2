@@ -1,44 +1,45 @@
 package model.dal;
 
 import model.bll.*;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.File;
 
 /**
- * Classe utilitária responsável pela exportação e persistência de dados em ficheiros CSV.
- * Implementa a camada de acesso a dados (DAL) para escrita, garantindo que o estado
- * dos objetos em memória é guardado de forma estruturada no disco.
+ * Classe utilitária responsável pela persistência de dados em formato CSV.
+ * Implementa a camada DAL (Data Access Layer) de escrita.
+ * Esta classe é responsável por serializar a árvore de objetos presente na memória
+ * para ficheiros físicos no disco, garantindo a integridade referencial entre as entidades.
  */
 public class ExportadorCSV {
 
     /**
      * Construtor privado para impedir a instanciação da classe.
-     * Sendo uma classe de utilidade, todos os métodos são estáticos.
+     * Segue o padrão Utility Class, onde todos os métodos são estáticos.
      */
     private ExportadorCSV() {}
 
     /**
-     * Ponto de entrada central para o processo de gravação global.
-     * Coordena a exportação sequencial de todas as entidades do sistema para a diretoria especificada.
+     * Coordena o processo global de gravação da base de dados.
+     * Normaliza os caminhos de ficheiro e invoca sequencialmente os exportadores individuais.
      *
-     * @param pastaBD O caminho da diretoria onde os ficheiros serão armazenados (ex: "bd/").
-     * @param repo    O repositório de dados contendo as instâncias a exportar.
+     * @param pastaBD O caminho da diretoria de destino (ex: "bd").
+     * @param repo    A instância do RepositorioDados contendo as informações a salvar.
      */
     public static void exportarDados(String pastaBD, RepositorioDados repo) {
-        // Normalização do caminho da diretoria
+        // Normalização do delimitador de pastas
         if (!pastaBD.endsWith("/")) {
             pastaBD += "/";
         }
 
-        // Verificação e criação automática da diretoria caso esta não exista
-        java.io.File diretorio = new java.io.File(pastaBD);
+        // Garante a existência física da diretoria antes de tentar escrever
+        File diretorio = new File(pastaBD);
         if (!diretorio.exists()) {
             diretorio.mkdirs();
         }
 
-        // Execução da exportação individual por tipo de entidade
+        // Sequência lógica de exportação (do topo para a base)
         exportarLogins(pastaBD + "logins.csv", repo);
         exportarGestores(pastaBD + "gestores.csv", repo);
         exportarDepartamentos(pastaBD + "departamentos.csv", repo);
@@ -49,59 +50,38 @@ public class ExportadorCSV {
         exportarAvaliacoes(pastaBD + "avaliacoes.csv", repo);
     }
 
+
     // =========================================================
-    // MÉTODOS DE EXPORTAÇÃO INDIVIDUAL
+    // MÉTODOS DE EXPORTAÇÃO DE INFRAESTRUTURA
     // =========================================================
 
     /**
-     * Exporta as credenciais de acesso (Email e Password Hash) de todos os perfis.
-     * Este ficheiro serve como base para o mecanismo de "Login Rápido" do sistema.
-     *
-     * @param caminho O destino final do ficheiro logins.csv.
-     * @param repo    O repositório de dados.
+     * Exporta as credenciais de acesso rápido para validação de login sem carga total.
+     * Formato: TIPO;EMAIL;PASSWORD (encriptada).
      */
     private static void exportarLogins(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
             pw.println("TIPO;EMAIL;PASSWORD");
 
-            // Processamento dos Gestores
             for (int i = 0; i < repo.getTotalGestores(); i++) {
                 Gestor g = repo.getGestores()[i];
                 if (g != null) pw.println("GESTOR;" + g.getEmail() + ";" + g.getPassword());
             }
-            // Processamento dos Docentes
             for (int i = 0; i < repo.getTotalDocentes(); i++) {
                 Docente d = repo.getDocentes()[i];
                 if (d != null) pw.println("DOCENTE;" + d.getEmail() + ";" + d.getPassword());
             }
-            // Processamento dos Estudantes
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
                 Estudante e = repo.getEstudantes()[i];
                 if (e != null) pw.println("ESTUDANTE;" + e.getEmail() + ";" + e.getPassword());
             }
         } catch (IOException e) {
-            // Em caso de erro de I/O, a falha é ignorada silenciosamente para não interromper o fluxo principal
+            // Falha de I/O ignorada para manter a resiliência do sistema
         }
     }
 
     /**
-     * Exporta os dados administrativos e demográficos dos Gestores.
-     */
-    private static void exportarGestores(String caminho, RepositorioDados repo) {
-        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(caminho))) {
-            pw.println("TIPO;EMAIL;NOME;MORADA;ATIVO");
-            for (int i = 0; i < repo.getTotalGestores(); i++) {
-                Gestor gestor = repo.getGestores()[i];
-                if (gestor != null) {
-                    pw.println("GESTOR;" + gestor.getEmail() + ";"
-                            + gestor.getNome() + ";" + gestor.getMorada() + ";" + gestor.isAtivo());
-                }
-            }
-        } catch (java.io.IOException e) { }
-    }
-
-    /**
-     * Exporta a lista de Departamentos registados no sistema.
+     * Exporta a estrutura administrativa dos Departamentos.
      */
     private static void exportarDepartamentos(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -113,24 +93,28 @@ public class ExportadorCSV {
         } catch (IOException e) { }
     }
 
+
+    // =========================================================
+    // MÉTODOS DE EXPORTAÇÃO DE UTILIZADORES E CARGOS
+    // =========================================================
+
     /**
-     * Serializa a informação dos Cursos e a sua respetiva ligação aos Departamentos.
+     * Exporta os dados detalhados da equipa de Backoffice.
      */
-    private static void exportarCursos(String caminho, RepositorioDados repo) {
+    private static void exportarGestores(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO");
-            for (int i = 0; i < repo.getTotalCursos(); i++) {
-                Curso c = repo.getCursos()[i];
-                if (c != null && c.getDepartamento() != null) {
-                    pw.println("CURSO;" + c.getSigla() + ";" + c.getNome() + ";" +
-                            c.getDepartamento().getSigla() + ";" + c.isAtivo());
+            pw.println("TIPO;EMAIL;NOME;MORADA;ATIVO");
+            for (int i = 0; i < repo.getTotalGestores(); i++) {
+                Gestor g = repo.getGestores()[i];
+                if (g != null) {
+                    pw.println("GESTOR;" + g.getEmail() + ";" + g.getNome() + ";" + g.getMorada() + ";" + g.isAtivo());
                 }
             }
         } catch (IOException e) { }
     }
 
     /**
-     * Exporta os dados pessoais e profissionais de cada Docente.
+     * Exporta a ficha profissional dos Docentes.
      */
     private static void exportarDocentes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -146,8 +130,29 @@ public class ExportadorCSV {
         } catch (IOException e) { }
     }
 
+
+    // =========================================================
+    // MÉTODOS DE EXPORTAÇÃO ACADÉMICA
+    // =========================================================
+
     /**
-     * Exporta o plano curricular (UCs), mapeando os regentes e os cursos associados.
+     * Exporta a configuração dos Cursos e a sua vinculação a Departamentos.
+     */
+    private static void exportarCursos(String caminho, RepositorioDados repo) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
+            pw.println("TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO");
+            for (int i = 0; i < repo.getTotalCursos(); i++) {
+                Curso c = repo.getCursos()[i];
+                if (c != null && c.getDepartamento() != null) {
+                    pw.println("CURSO;" + c.getSigla() + ";" + c.getNome() + ";" +
+                            c.getDepartamento().getSigla() + ";" + c.isAtivo());
+                }
+            }
+        } catch (IOException e) { }
+    }
+
+    /**
+     * Exporta as Unidades Curriculares, incluindo a lista de cursos que as partilham.
      */
     private static void exportarUCs(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
@@ -155,9 +160,9 @@ public class ExportadorCSV {
             for (int i = 0; i < repo.getTotalUcs(); i++) {
                 UnidadeCurricular uc = repo.getUcs()[i];
                 if (uc != null) {
-                    String siglaDocente = (uc.getDocenteResponsavel() != null) ? uc.getDocenteResponsavel().getSigla() : "";
+                    String siglaDoc = (uc.getDocenteResponsavel() != null) ? uc.getDocenteResponsavel().getSigla() : "";
 
-                    // Criar a lista de cursos separados por vírgula
+                    // Serialização da lista de cursos vinculados (formato sigla1,sigla2,...)
                     StringBuilder listaCursos = new StringBuilder();
                     for (int j = 0; j < uc.getCursos().length; j++) {
                         if (uc.getCursos()[j] != null) {
@@ -167,42 +172,37 @@ public class ExportadorCSV {
                     }
 
                     pw.println("UC;" + uc.getSigla() + ";" + uc.getNome() + ";" + uc.getAnoCurricular() + ";" +
-                            siglaDocente + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + uc.getNumAvaliacoes());
+                            siglaDoc + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + uc.getNumAvaliacoes());
                 }
             }
         } catch (IOException e) { }
     }
 
-
     /**
-     * Exporta os dados demográficos, académicos e o estado financeiro (propinas) dos Estudantes.
+     * Exporta a ficha do Estudante e o seu estado financeiro (propinas do ano de ingresso).
      */
     private static void exportarEstudantes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
             pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;EMAIL_PESSOAL;ATIVO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
 
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-                // Tenta exportar o aluno. Se der erro, salta só este aluno e não apaga o ficheiro!
                 try {
-                    model.bll.Estudante e = repo.getEstudantes()[i];
+                    Estudante e = repo.getEstudantes()[i];
                     if (e != null) {
                         String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
 
-                        // Escrita dos dados base do estudante
                         pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
                                 e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
                                 e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" +
                                 e.isAtivo() + ";" + e.getValorPropinaBase());
 
-                        // Exportação dos dados da propina do ano de ingresso
-                        model.bll.Propina propina = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
-                        if (propina != null) {
-                            pw.print(";" + propina.getValorPago() + ";" + propina.getTotalPagamentos());
-
-                            // Verifica se o histórico não é nulo antes de imprimir
-                            if (propina.getHistoricoPagamentos() != null) {
-                                for (int j = 0; j < propina.getTotalPagamentos(); j++) {
-                                    pw.print(";" + propina.getHistoricoPagamentos()[j]);
+                        // Persistência financeira associada ao registo do aluno
+                        Propina p = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
+                        if (p != null) {
+                            pw.print(";" + p.getValorPago() + ";" + p.getTotalPagamentos());
+                            if (p.getHistoricoPagamentos() != null) {
+                                for (int j = 0; j < p.getTotalPagamentos(); j++) {
+                                    pw.print(";" + p.getHistoricoPagamentos()[j]);
                                 }
                             }
                         } else {
@@ -210,57 +210,43 @@ public class ExportadorCSV {
                         }
                         pw.println();
                     }
-                } catch (Exception ex) {
-                    // Ignora silenciosamente dados corrompidos num estudante específico
-                }
+                } catch (Exception ex) { /* Salta aluno corrompido para proteger o ficheiro */ }
             }
         } catch (IOException e) { }
     }
 
     /**
-     * Consolida todas as classificações (atuais e históricas) extraídas da árvore de objetos Estudante.
+     * Consolida e exporta todas as classificações atuais e históricas dos alunos.
      */
     private static void exportarAvaliacoes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
             pw.println("TIPO;NUM_MEC;SIGLA_UC;ANO_OU_NOTA1;NOTA2_OU_NOTA1;NOTA3_OU_NOTA2;NOTA3");
 
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-                try {
-                    Estudante e = repo.getEstudantes()[i];
+                Estudante e = repo.getEstudantes()[i];
+                if (e == null) continue;
 
-                    if (e != null) {
-                        // 1. Exportação das Notas do Ano Corrente
-                        for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
-                            Avaliacao aval = e.getAvaliacoes()[j];
-
-                            // Garante que a avaliação tem uma UC real associada antes de pedir a Sigla
-                            if (aval != null && aval.getUc() != null) {
-                                double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
-                                double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
-                                double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
-
-                                pw.println("NOTA;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
-                                        nota1 + ";" + nota2 + ";" + nota3);
-                            }
-                        }
-
-                        // 2. Exportação do Histórico Permanente
-                        for (int j = 0; j < e.getTotalHistorico(); j++) {
-                            Avaliacao aval = e.getHistoricoAvaliacoes()[j];
-
-                            // A mesma verificação para o Histórico!
-                            if (aval != null && aval.getUc() != null) {
-                                double nota1 = (aval.getTotalAvaliacoesLancadas() > 0) ? aval.getResultadosAvaliacoes()[0] : -1.0;
-                                double nota2 = (aval.getTotalAvaliacoesLancadas() > 1) ? aval.getResultadosAvaliacoes()[1] : -1.0;
-                                double nota3 = (aval.getTotalAvaliacoesLancadas() > 2) ? aval.getResultadosAvaliacoes()[2] : -1.0;
-
-                                pw.println("HISTORICO;" + e.getNumeroMecanografico() + ";" + aval.getUc().getSigla() + ";" +
-                                        aval.getAnoAvaliacao() + ";" + nota1 + ";" + nota2 + ";" + nota3);
-                            }
-                        }
+                // 1. Exportação do Buffer Anual
+                for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
+                    Avaliacao av = e.getAvaliacoes()[j];
+                    if (av != null && av.getUc() != null) {
+                        double n1 = (av.getTotalAvaliacoesLancadas() > 0) ? av.getResultadosAvaliacoes()[0] : -1.0;
+                        double n2 = (av.getTotalAvaliacoesLancadas() > 1) ? av.getResultadosAvaliacoes()[1] : -1.0;
+                        double n3 = (av.getTotalAvaliacoesLancadas() > 2) ? av.getResultadosAvaliacoes()[2] : -1.0;
+                        pw.println("NOTA;" + e.getNumeroMecanografico() + ";" + av.getUc().getSigla() + ";" + n1 + ";" + n2 + ";" + n3);
                     }
-                } catch (Exception ex) {
-                    // Previne que uma falha de conversão apague o ficheiro
+                }
+
+                // 2. Exportação do Arquivo Histórico
+                for (int j = 0; j < e.getTotalHistorico(); j++) {
+                    Avaliacao avH = e.getHistoricoAvaliacoes()[j];
+                    if (avH != null && avH.getUc() != null) {
+                        double n1 = (avH.getTotalAvaliacoesLancadas() > 0) ? avH.getResultadosAvaliacoes()[0] : -1.0;
+                        double n2 = (avH.getTotalAvaliacoesLancadas() > 1) ? avH.getResultadosAvaliacoes()[1] : -1.0;
+                        double n3 = (avH.getTotalAvaliacoesLancadas() > 2) ? avH.getResultadosAvaliacoes()[2] : -1.0;
+                        pw.println("HISTORICO;" + e.getNumeroMecanografico() + ";" + avH.getUc().getSigla() + ";" +
+                                avH.getAnoAvaliacao() + ";" + n1 + ";" + n2 + ";" + n3);
+                    }
                 }
             }
         } catch (IOException e) { }

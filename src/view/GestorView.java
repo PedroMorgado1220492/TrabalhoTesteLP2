@@ -5,594 +5,493 @@ import model.bll.Departamento;
 import model.bll.Docente;
 import model.bll.Estudante;
 import model.bll.UnidadeCurricular;
+import model.bll.Gestor;
 
 /**
- * Interface gráfica de linha de comandos (CLI) destinada ao perfil Gestor.
- * Concentra todos os menus de backoffice, inputs e outputs relacionados com a administração da instituição.
+ * Interface de utilizador (View) destinada ao perfil de Gestor.
+ * No padrão MVC, esta classe concentra todos os ecrãs de backoffice, formulários
+ * de recolha de dados administrativos e a apresentação de relatórios gerenciais.
+ * Atua estritamente na camada de apresentação via linha de comandos (CLI).
  */
 public class GestorView {
 
-    public GestorView() {
+    /**
+     * Construtor por defeito da GestorView.
+     */
+    public GestorView() { }
 
-    }
 
-    // ---------- MENUS PRINCIPAIS ----------
+    // =========================================================
+    // 1. MENUS DE NAVEGAÇÃO PRINCIPAL E SUB-MENUS
+    // =========================================================
 
+    /**
+     * Apresenta o painel de controlo principal do Gestor.
+     * @return A opção selecionada.
+     */
     public int mostrarMenuPrincipalGestor() {
-        System.out.println("\n=== BACKOFFICE - GESTOR ===");
-        System.out.println("1 - Gerir Departamentos");
-        System.out.println("2 - Gerir Cursos");
-        System.out.println("3 - Gerir Unidades Curriculares");
-        System.out.println("4 - Gerir Estudantes");
-        System.out.println("5 - Gerir Docentes");
-        System.out.println("6 - Avançar Ano Letivo");
-        System.out.println("7 - Listagens e Relatórios");
-        System.out.println("8 - Ver Alunos com Dívidas");
-        System.out.println("9 - Alterar Preço de Cursos");
+        System.out.println("\n============= BACKOFFICE - GESTÃO CENTRAL =============");
+        System.out.println("1  - Gerir Departamentos");
+        System.out.println("2  - Gerir Cursos");
+        System.out.println("3  - Gerir Unidades Curriculares");
+        System.out.println("4  - Gerir Estudantes");
+        System.out.println("5  - Gerir Docentes");
+        System.out.println("6  - Processar Transição de Ano Letivo");
+        System.out.println("7  - Consultar Relatórios Académicos");
+        System.out.println("8  - Listar Alunos com Propinas em Atraso");
+        System.out.println("9  - Atualizar Preçário de Cursos");
         System.out.println("10 - Gerir Gestores");
-        System.out.println("0 - Sair / Logout");
-        System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        System.out.println("0  - Sair (Logout)");
+        System.out.print("Escolha uma opção: ");
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuDepartamentos() {
-        System.out.println("\n--- GERIR DEPARTAMENTOS ---");
+        System.out.println("\n--- MÓDULO: DEPARTAMENTOS ---");
         System.out.println("1 - Adicionar Departamento");
-        System.out.println("2 - Alterar Departamento");
-        System.out.println("3 - Listar Departamentos");
+        System.out.println("2 - Alterar Nome de Departamento");
+        System.out.println("3 - Listar Todos os Departamentos");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuCursos() {
-        System.out.println("\n--- GERIR CURSOS ---");
-        System.out.println("1 - Adicionar Curso");
-        System.out.println("2 - Alterar Curso");
-        System.out.println("3 - Listar Cursos");
-        System.out.println("4 - Ativar/Desativar Curso");
-        System.out.println("5 - Ver Percurso Académico do Curso");
+        System.out.println("\n--- MÓDULO: CURSOS ---");
+        System.out.println("1 - Registar Novo Curso");
+        System.out.println("2 - Alterar Nome do Curso");
+        System.out.println("3 - Listar Cursos por Departamento");
+        System.out.println("4 - Alternar Estado (Ativo/Inativo)");
+        System.out.println("5 - Consultar Percurso Académico do Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuUCs() {
-        System.out.println("\n--- GERIR UNIDADES CURRICULARES ---");
-        System.out.println("1 - Criar Nova Unidade Curricular");
-        System.out.println("2 - Associar UC Existente a outro Curso");
-        System.out.println("3 - Alterar Unidade Curricular");
-        System.out.println("4 - Listar Unidades Curriculares");
-        System.out.println("5 - Ativar/Desativar UC");
-        System.out.println("6 - Remover UC de um Curso");
+        System.out.println("\n--- MÓDULO: UNIDADES CURRICULARES ---");
+        System.out.println("1 - Criar Nova UC");
+        System.out.println("2 - Partilhar UC Existente com outro Curso");
+        System.out.println("3 - Alterar Detalhes da UC");
+        System.out.println("4 - Listar Todas as UCs");
+        System.out.println("5 - Alternar Estado (Ativo/Inativo)");
+        System.out.println("6 - Remover UC de um Plano de Estudos");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuEstudantes() {
-        System.out.println("\n--- GERIR ESTUDANTES ---");
-        System.out.println("1 - Adicionar Estudante");
-        System.out.println("2 - Alterar Estudante");
-        System.out.println("3 - Listar Estudantes");
-        System.out.println("4 - Ativar/Desativar Estudante");
+        System.out.println("\n--- MÓDULO: ESTUDANTES ---");
+        System.out.println("1 - Registar Novo Estudante");
+        System.out.println("2 - Atualizar Ficha de Estudante");
+        System.out.println("3 - Listar Corpo Estudantil");
+        System.out.println("4 - Alternar Estado de Matrícula");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuDocentes() {
-        System.out.println("\n--- GERIR DOCENTES ---");
-        System.out.println("1 - Adicionar Docente");
-        System.out.println("2 - Alterar Docente");
-        System.out.println("3 - Listar Docentes");
-        System.out.println("4 - Ativar/Desativar Docente");
-        System.out.println("5 - Ver Ficha de Docente");
+        System.out.println("\n--- MÓDULO: DOCENTES ---");
+        System.out.println("1 - Registar Novo Docente");
+        System.out.println("2 - Atualizar Ficha de Docente");
+        System.out.println("3 - Listar Corpo Docente");
+        System.out.println("4 - Alternar Estado de Colaboração");
+        System.out.println("5 - Visualizar Ficha Profissional");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuRelatorios() {
-        System.out.println("\n--- RELATÓRIOS E ESTATÍSTICAS ---");
-        System.out.println("1 - Alunos agrupados por Curso");
-        System.out.println("2 - Alunos agrupados por UC");
-        System.out.println("3 - UCs agrupadas por Curso");
-        System.out.println("4 - Ver Estatísticas Globais da Faculdade");
+        System.out.println("\n--- MÓDULO: RELATÓRIOS E KPI ---");
+        System.out.println("1 - Listar Alunos por Curso");
+        System.out.println("2 - Listar Alunos por Unidade Curricular");
+        System.out.println("3 - Listar Unidades Curriculares por Curso");
+        System.out.println("4 - Consultar Estatísticas Globais da Faculdade");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
     public int mostrarMenuGestores() {
-        System.out.println("\n--- GERIR GESTORES ---");
-        System.out.println("1 - Adicionar Gestor");
-        System.out.println("2 - Desativar Gestor");
-        System.out.println("3 - Listar Gestores");
+        System.out.println("\n--- MÓDULO: EQUIPA ADMINISTRATIVA ---");
+        System.out.println("1 - Adicionar Novo Gestor");
+        System.out.println("2 - Desativar Acesso de Gestor");
+        System.out.println("3 - Listar Administradores");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerOpcaoMenu();
     }
 
-    public void mostrarFichaDocente(model.bll.Docente d) {
-        System.out.println("\n--- FICHA DO DOCENTE ---");
+
+    // =========================================================
+    // 2. FORMULÁRIOS DE INPUT ESPECÍFICOS
+    // =========================================================
+
+    public String pedirSiglaDepartamento() { return utils.Consola.lerString("Sigla do Departamento: "); }
+    public String pedirNomeDepartamento() { return utils.Consola.lerString("Nome do Departamento: "); }
+
+    public String pedirSiglaCurso() { return utils.Consola.lerString("Sigla do Curso: "); }
+    public String pedirNomeCurso() { return utils.Consola.lerString("Nome do Curso: "); }
+
+    public String pedirSiglaUC() { return utils.Consola.lerString("Sigla da Unidade Curricular: "); }
+    public String pedirNomeUC() { return utils.Consola.lerString("Nome da UC: "); }
+    public String pedirAnoCurricularUC() { return utils.Consola.lerString("Ano Curricular (1, 2 ou 3): "); }
+    public int pedirNumAvaliacoesUC() { return utils.Consola.lerInt("Número de avaliações planeadas (1-3): "); }
+
+    public String pedirSiglaUCPartilhar() { return utils.Consola.lerString("Sigla da UC a partilhar: "); }
+    public String pedirSiglaUCAlterar() { return utils.Consola.lerString("Sigla da UC a editar: "); }
+    public String pedirSiglaUCRemover() { return utils.Consola.lerString("Sigla da UC a desassociar: "); }
+
+    public String pedirNomePessoa() { return utils.Consola.lerString("Nome Completo: "); }
+    public String pedirNif() { return utils.Consola.lerString("NIF (9 dígitos): "); }
+    public String pedirMorada() { return utils.Consola.lerString("Morada: "); }
+    public String pedirDataNascimento() { return utils.Consola.lerString("Data de Nascimento (DD-MM-AAAA): "); }
+    public String pedirEmailPessoal() { return utils.Consola.lerString("Email Pessoal: "); }
+
+    public String pedirNumMecEstudanteAlterar() { return utils.Consola.lerString("Nº Mecanográfico do Estudante: "); }
+    public String pedirSiglaDocenteBusca() { return utils.Consola.lerString("Sigla do Docente: "); }
+    public String pedirSiglaCursoBusca() { return utils.Consola.lerString("Sigla do Curso: "); }
+
+    public String pedirEmailGestor() { return utils.Consola.lerString("Email do Gestor: "); }
+    public String pedirPasswordGestor() { return utils.Consola.lerString("Palavra-passe de confirmação: "); }
+    public String pedirNomeGestor() { return utils.Consola.lerString("Nome do Novo Gestor: "); }
+
+    public String pedirNovoNome(String atual) { return utils.Consola.lerString("Novo Nome [Enter p/ manter]: "); }
+    public String pedirNovoAnoCurricular(int atual) { return utils.Consola.lerString("Novo Ano [Enter p/ manter]: "); }
+    public String pedirNovaMorada(String atual) { return utils.Consola.lerString("Nova Morada [Enter p/ manter]: "); }
+    public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal [Enter p/ manter]: "); }
+    public double pedirNovoPreco() { return utils.Consola.lerDouble("Novo valor de propina anual (€): "); }
+    public String pedirNovoDocenteUC(String atual) { return utils.Consola.lerString("Sigla do Novo Docente [Enter p/ manter]: "); }
+    public String pedirNovoNumAvaliacoes(int atual) { return utils.Consola.lerString("Novo nº de Avaliações [Enter p/ manter]: ");}
+
+    /**
+     * Confirmação para transição global de estado.
+     */
+    public boolean pedirConfirmacaoAvancoAno(int proximoAno) {
+        String input = utils.Consola.lerString("\nConfirmar transição para o ano " + proximoAno + "? (S/N): ");
+        return input.equalsIgnoreCase("S");
+    }
+
+    /**
+     * Confirmação de persistência de dados.
+     */
+    public boolean confirmarDados() {
+        String input = utils.Consola.lerString("\nConfirmar a gravação destes dados? (S/N): ");
+        return input.equalsIgnoreCase("S");
+    }
+
+
+    // =========================================================
+    // 3. ECRÃS DE REVISÃO E FICHAS INDIVIDUAIS
+    // =========================================================
+
+    public void mostrarRevisaoDepartamento(String sigla, String nome) {
+        System.out.println("\n--- REVISÃO: DEPARTAMENTO ---");
+        System.out.println("Sigla: " + sigla + " | Nome: " + nome);
+    }
+
+    public void mostrarRevisaoCurso(String sigla, String nome, String siglaDep) {
+        System.out.println("\n--- REVISÃO: CURSO ---");
+        System.out.println("Identificador: " + sigla + "\nDesignação: " + nome + "\nDepartamento: " + siglaDep);
+    }
+
+    public void mostrarRevisaoUC(String sigla, String nome, int ano, String nomeDocente, String siglaCurso, int numAv) {
+        System.out.println("\n--- REVISÃO: UNIDADE CURRICULAR ---");
+        System.out.printf("UC: [%s] %s | Nível: %dº Ano\nResponsável: %s | Curso Origem: %s\nInstrumentos de Avaliação: %d\n",
+                sigla, nome, ano, nomeDocente, siglaCurso, numAv);
+    }
+
+    public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String email, String siglaCurso) {
+        System.out.println("\n--- REVISÃO: ESTUDANTE ---");
+        System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
+        System.out.println("Nascimento: " + dataNasc + " | Email: " + email + " | Curso: " + siglaCurso);
+    }
+
+    public void mostrarRevisaoDocente(String nome, String nif, String morada, String dataNasc, String email, String sigla) {
+        System.out.println("\n--- REVISÃO: DOCENTE ---");
+        System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
+        System.out.println("Sigla Sistema: " + sigla + " | Email: " + email);
+    }
+
+    public void mostrarRevisaoGestor(String nome, String morada, String emailGerado) {
+        System.out.println("\n--- REVISÃO: NOVO ADMINISTRADOR ---");
+        System.out.println("Nome: " + nome + " | Morada: " + morada + "\nLogin Institucional: " + emailGerado);
+    }
+
+    public void mostrarFichaDocente(Docente d) {
+        System.out.println("\n--------- FICHA DO DOCENTE ---------");
         System.out.println("Nome          : " + d.getNome());
         System.out.println("Sigla         : " + d.getSigla());
         System.out.println("Email Inst.   : " + d.getEmail());
         System.out.println("Email Pessoal : " + d.getEmailPessoal());
         System.out.println("NIF           : " + d.getNif());
-        System.out.println("Morada        : " + d.getMorada());
-        System.out.println("Data Nasc.    : " + d.getDataNascimento());
-        System.out.println("Estado        : " + (d.isAtivo() ? "ATIVO" : "INATIVO"));
-        System.out.println("UCs Atribuídas: " + d.getTotalUcsLecionadas());
-        System.out.println("------------------------");
+        System.out.println("Estado        : " + (d.isAtivo() ? "COLABORADOR ATIVO" : "INATIVO/SUSPENSO"));
+        System.out.println("Carga Letiva  : " + d.getTotalUcsLecionadas() + " Unidades Curriculares");
+        System.out.println("------------------------------------");
     }
 
-    // ---------- INPUTS BASE ----------
 
-    private String pedirString(String mensagem) {
-        return utils.Consola.lerString(mensagem);
-    }
-
-    private int lerOpcaoInteira() {
-        return utils.Consola.lerOpcaoMenu();
-    }
-
-    // ---------- PEDIDOS DE INPUT ESPECÍFICOS ----------
-
-    public String pedirSiglaDepartamento() { return pedirString("Sigla do Departamento: "); }
-    public String pedirNomeDepartamento() { return pedirString("Nome do Departamento: "); }
-
-    public String pedirSiglaCurso() { return pedirString("Sigla do Curso: "); }
-    public String pedirNomeCurso() { return pedirString("Nome do Curso: "); }
-
-    public String pedirSiglaUC() { return pedirString("Sigla da Unidade Curricular: "); }
-    public String pedirNomeUC() { return pedirString("Nome da UC: "); }
-    public String pedirAnoCurricularUC() { return pedirString("Ano Curricular (1, 2 ou 3): "); }
-    public int pedirNumAvaliacoesUC() { return utils.Consola.lerInt("Número de momentos de avaliação (1 a 3): "); }
-    public String pedirSiglaUCPartilhar() { return pedirString("Introduza a Sigla da UC existente que quer partilhar: "); }
-    public String pedirSiglaUCAlterar() { return pedirString("Introduza a Sigla da UC a alterar: "); }
-    public String pedirSiglaUCRemover() { return pedirString("Sigla da UC a desassociar do curso: "); }
-
-    public String pedirNomePessoa() { return pedirString("Nome (Nome e Sobrenome): "); }
-    public String pedirNif() { return pedirString("NIF (9 dígitos): "); }
-    public String pedirMorada() { return pedirString("Morada: "); }
-    public String pedirDataNascimento() { return pedirString("Data de Nascimento (DD-MM-AAAA): "); }
-    public String pedirEmailPessoal() { return pedirString("Email Pessoal: "); }
-
-    public String pedirNumMecEstudanteAlterar() { return pedirString("Introduza o Nº Mecanográfico do Estudante a alterar: "); }
-    public String pedirSiglaDocenteBusca() { return pedirString("Introduza a Sigla do Docente: "); }
-    public String pedirEmailGestor() { return pedirString("Email do Gestor a desativar: "); }
-    public String pedirPasswordGestor() { return pedirString("Password de confirmação do Gestor: "); }
-
-    public String pedirNovoNome(String atual) { return pedirString("Novo Nome: "); }
-    public String pedirNovoAnoCurricular(int atual) { return pedirString("Novo Ano Curricular: "); }
-    public String pedirNovaMorada(String atual) { return pedirString("Nova Morada: "); }
-    public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter para manter]: "); }
-    public double pedirNovoPreco() { return utils.Consola.lerDouble("Introduza a nova propina anual (€): "); }
-    public String pedirNovoDocenteUC(String atual) { return utils.Consola.lerString("Sigla do Novo Docente (Atual: " + atual + ") [Enter para manter]: "); }
-    public String pedirNovoNumAvaliacoes(int atual) { return utils.Consola.lerString("Novo nº de Avaliações (1-3) (Atual: " + atual + ") [Enter para manter]: ");}
-
-    public boolean pedirConfirmacaoAvancoAno(int proximoAno) {
-        String input = utils.Consola.lerString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): ");
-        return input.equalsIgnoreCase("S");
-    }
-
-    public String pedirNomeGestor() { return pedirString("Nome do Gestor: "); }
-
-    public String pedirSiglaCursoBusca() { return pedirString("Introduza a Sigla do Curso: "); }
-
-
-    // ---------- REVISÃO DE DADOS ----------
-
-    public void mostrarRevisaoDepartamento(String sigla, String nome) {
-        System.out.println("\n--- REVISÃO DE DADOS ---");
-        System.out.println("Sigla: " + sigla + " | Nome: " + nome);
-    }
-
-    public void mostrarRevisaoCurso(String sigla, String nome, String siglaDep) {
-        System.out.println("\n--- REVISÃO DE DADOS ---");
-        System.out.println("Sigla: " + sigla + " | Nome: " + nome + " | Departamento: " + siglaDep);
-    }
-
-    public void mostrarRevisaoUC(String sigla, String nome, int ano, String nomeDocente, String siglaCurso, int numAv) {
-        System.out.println("\n--- REVISÃO DE DADOS ---");
-        System.out.println("Sigla: " + sigla + " | Nome: " + nome + " | Ano: " + ano + "º");
-        System.out.println("Docente: " + nomeDocente + " | Curso: " + siglaCurso);
-        System.out.println("Momentos de Avaliação: " + numAv);
-    }
-
-    public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String email, String siglaCurso) {
-        System.out.println("\n--- REVISÃO DE DADOS ---");
-        System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
-        System.out.println("Nasc: " + dataNasc + " | Email Pessoal: " + email);
-        System.out.println("Curso: " + siglaCurso);
-    }
-
-    public void mostrarRevisaoDocente(String nome, String nif, String morada, String dataNasc, String email, String sigla) {
-        System.out.println("\n--- REVISÃO DE DADOS ---");
-        System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
-        System.out.println("Nasc: " + dataNasc + " | Email Pessoal: " + email);
-        System.out.println("Sigla Atribuída: " + sigla);
-    }
-
-    public void mostrarRevisaoGestor(String nome, String morada, String emailGerado) {
-        System.out.println("\n--- REVISÃO DO NOVO GESTOR ---");
-        System.out.println("Nome: " + nome + " | Morada: " + morada);
-        System.out.println("Email a ser gerado: " + emailGerado);
-    }
-
-    /**
-     * Solicita a confirmação final antes de persistir os dados no sistema.
-     * @return true se o utilizador confirmar com 'S'.
-     */
-    public boolean confirmarDados() {
-        String input = utils.Consola.lerString("\nOs dados estão corretos? (S/N): ");
-        return input.equalsIgnoreCase("S");
-    }
-
-    // ---------- FEEDBACK AO UTILIZADOR (Mensagens de Erro e Sucesso) ----------
-
-    public void mostrarMensagemSaida() { System.out.println(">> A sair do Backoffice..."); }
-    public void mostrarOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
-    public void mostrarAvisoSemAlteracao() { System.out.println(">> Aviso: Nenhuma alteração efetuada."); }
-    public void mostrarSucessoAtualizacao() { System.out.println(">> Sucesso: Ficha/Entidade atualizada com sucesso!"); }
-    public void mostrarInfoEdicao(String nome) { System.out.println(">> A editar: " + nome); }
-
-    public void mostrarErroSiglaJaExiste(String sigla) { System.out.println(">> Erro: Já existe um registo com a sigla '" + sigla + "'."); }
-    public void mostrarErroNifJaExiste(String nif) { System.out.println(">> Erro: Já existe um utilizador com o NIF '" + nif + "'."); }
-
-    public void mostrarErroLimiteDepartamentos() { System.out.println(">> Erro: Limite máximo de departamentos atingido."); }
-    public void mostrarErroLimiteCursos() { System.out.println(">> Erro: Limite máximo de cursos atingido."); }
-    public void mostrarErroLimiteUCs() { System.out.println(">> Erro: Limite máximo de UCs atingido."); }
-    public void mostrarErroLimiteEstudantes() { System.out.println(">> Erro: Limite máximo de estudantes atingido."); }
-    public void mostrarErroLimiteDocentes() { System.out.println(">> Erro: Limite máximo de docentes atingido."); }
-    public void mostrarErroLimiteGestores() { System.out.println(">> Erro: Limite máximo de Gestores atingido no repositório."); }
-
-    public void mostrarAvisoSemDepartamentos() { System.out.println(">> Aviso: Não existem departamentos registados para alterar."); }
-    public void mostrarAvisoSemCursos() { System.out.println(">> Aviso: Não existem cursos registados para alterar."); }
-    public void mostrarErroUCNaoEncontrada() { System.out.println(">> Erro: Unidade Curricular não encontrada."); }
-    public void mostrarErroEstudanteNaoEncontrado() { System.out.println(">> Erro: Estudante não encontrado."); }
-    public void mostrarErroDocenteNaoEncontrado() { System.out.println(">> Erro: Docente não encontrado."); }
-    public void mostrarErroCursoNaoEncontrado() { System.out.println(">> Erro: Curso não encontrado."); }
-
-    public void mostrarSucessoRegistoDepartamento(String nome) { System.out.println(">> Sucesso: Departamento '" + nome + "' guardado com sucesso!"); }
-    public void mostrarSucessoRegistoCurso(String nome) { System.out.println(">> Sucesso: Curso '" + nome + "' adicionado com sucesso!"); }
-    public void mostrarSucessoRegistoUC(String nome) { System.out.println(">> Sucesso: UC '" + nome + "' criada com sucesso!"); }
-    public void mostrarSucessoRegistoGestor(String email) { System.out.println(">> Sucesso: Novo Gestor criado com o email " + email); }
-
-    public void mostrarErroFaltaDepartamento() { System.out.println(">> Atenção: Crie um Departamento primeiro."); }
-    public void mostrarErroFaltaCurso() { System.out.println(">> Atenção: Crie um Curso primeiro."); }
-    public void mostrarErroFaltaDocenteOuCurso() { System.out.println(">> Atenção: Precisa de ter pelo menos 1 Docente e 1 Curso registados."); }
-
-    public void mostrarErroCursoBloqueado() { System.out.println(">> Erro: O curso já tem estudantes ou professores alocados. O sistema proíbe a sua alteração!"); }
-    public void mostrarErroAnoNumerico() { System.out.println(">> Erro: O Ano Curricular deve ser um número."); }
-    public void mostrarErroAnoNumericoMantido() { System.out.println(">> Erro: O Ano Curricular deve ser um número. Mantido o original."); }
-    public void mostrarErroLimiteUCsAno(String curso, int ano) { System.out.println(">> Erro: O curso " + curso + " já atingiu o máximo de 5 UCs no " + ano + "º ano!"); }
-    public void mostrarErroUCJaNoCurso() { System.out.println(">> Erro: Esta UC já pertence a este Curso."); }
-    public void mostrarSucessoPartilhaUC(String nomeUc, String curso) { System.out.println(">> Sucesso: A UC de " + nomeUc + " foi partilhada com " + curso + "."); }
-    public void msgErroUCInativa() { System.out.println(">> Erro: Esta Unidade Curricular encontra-se INATIVA e não pode ser associada a cursos."); }
-    public void mostrarErroNumAvaliacoes() { System.out.println(">> Erro: O número de momentos de avaliação deve situar-se entre 1 e 3.");}
-
-    public void mostrarErroNomeInvalido() { System.out.println(">> Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras."); }
-    public void mostrarErroNomeInvalidoMantido() { System.out.println(">> Erro: Nome inválido. Mantido o original."); }
-    public void mostrarErroNifInvalido() { System.out.println(">> Erro: O NIF deve conter exatamente 9 dígitos numéricos."); }
-    public void mostrarErroDataInvalida() { System.out.println(">> Erro: A data deve respeitar o formato DD-MM-AAAA."); }
-    public void mostrarErroNumMecNumerico() { System.out.println(">> Erro: O número mecanográfico deve conter apenas números."); }
-    public void mostrarSiglaGerada(String sigla) { System.out.println(">> Info: Sigla gerada automaticamente pelo sistema: " + sigla); }
-
-    public void mostrarSucessoAvancoAno(int ano) { System.out.println(">> Sucesso! O sistema avançou. Bem-vindo ao ano letivo de " + ano + "."); }
-    public void mostrarCancelamentoAvancoAno(int ano) { System.out.println(">> Operação cancelada. Mantemo-nos em " + ano + "."); }
-    public void mostrarAvisoTransicaoAno() {
-        System.out.println("\n--- TRANSIÇÃO DE ANO LETIVO ---");
-        System.out.println("Atenção: Esta ação irá avaliar todos os alunos, subir o ano de frequência");
-        System.out.println("dos que tiverem aprovação (>= 60%) e arquivar todas as notas.");
-    }
-
-    public void mostrarSucessoAlteracaoPreco(String curso, double preco) { System.out.println(">> Sucesso! O curso " + curso + " custa agora " + preco + "€/ano."); }
-    public void mostrarErroPrecoInvalido() { System.out.println(">> Erro: Tem de introduzir um valor superior a 0."); }
-
-    public void msgAvisoDocenteComUCs(String sigla) { System.out.println(">> Erro: O Docente " + sigla + " tem UCs associadas e não pode ser desativado."); }
-    public void msgAvisoCursoComAlunosAtivos(String sigla) { System.out.println(">> Erro: O Curso " + sigla + " tem Estudantes Ativos e não pode ser desativado."); }
-    public void msgAvisoUCAssociada(String sigla) { System.out.println(">> Erro: A UC " + sigla + " está associada a cursos e não pode ser desativada."); }
-    public void msgSucessoEstadoAlterado(String entidade, boolean ativo) {
-        String estado = ativo ? "ATIVADO" : "DESATIVADO";
-        System.out.println(">> Sucesso: O " + entidade + " encontra-se agora " + estado + ".");
-    }
-
-    public void mostrarErroNomeGestor() { System.out.println(">> Erro: O nome do Gestor deve ser apenas uma única palavra, utilizando apenas letras."); }
-    public void mostrarErroCredenciaisGestor() { System.out.println(">> Erro: Email ou password introduzidos estão incorretos."); }
-
-    public void mostrarErroDesativarGestorProprio() { System.out.println(">> Erro: Por motivos de segurança, não pode desativar a sua própria conta."); }
-    public void mostrarSucessoDesativacaoGestor() { System.out.println(">> Sucesso: Conta de Gestor desativada permanentemente."); }
-    public void mostrarAvisoDesativacaoGestor(String nome) { System.out.println("\n[AVISO CRÍTICO] Está prestes a DESATIVAR definitivamente a conta de " + nome + "."); }
-
-    public void mostrarErroDocenteInativo() { System.out.println(">> Erro: O Docente selecionado encontra-se INATIVO e não pode ser regente da UC."); }
-    public void mostrarErroCursoInativo() { System.out.println(">> Erro: O Curso selecionado encontra-se INATIVO."); }
-
-    /**
-     * Feedback visual e de estado sobre o envio de credenciais.
-     */
-    public void mostrarStatusEmail(boolean enviado, String email) {
-        if (enviado) {
-            System.out.println(">> Notificação enviada para: " + email);
-        } else {
-            System.out.println(">> Alerta: Falha técnica no envio da notificação para " + email + ". O registo foi concluído, mas o utilizador não recebeu o email automático.");
-        }
-    }
-
-    public void mostrarCredenciaisCriadas(String tipo, String nome, String email, String password) {
-        System.out.println("\n--- NOVO " + tipo.toUpperCase() + " REGISTADO COM SUCESSO! ---");
-        System.out.println("Nome: " + nome);
-        System.out.println("Email de Acesso: " + email);
-        System.out.println("Password Provisória: " + password);
-        System.out.println("----------------------------------------------\n");
-    }
-
-    // ---------- MÉTODOS DE LISTAGEM E ESTATÍSTICAS ----------
+    // =========================================================
+    // 4. LISTAGENS, RELATÓRIOS E ESTATÍSTICAS
+    // =========================================================
 
     public void mostrarListaDepartamentos(Departamento[] deps, int total) {
-        System.out.println("\n--- LISTA DE DEPARTAMENTOS ---");
-        if (total == 0) System.out.println("Não existem departamentos registados.");
-        else for (int i = 0; i < total; i++) System.out.println("- " + deps[i].getSigla() + " : " + deps[i].getNome());
+        System.out.println("\n========== LISTA DE DEPARTAMENTOS ==========");
+        if (total == 0) System.out.println(">> Sem registos.");
+        else for (int i = 0; i < total; i++) System.out.printf("- [%s] %s\n", deps[i].getSigla(), deps[i].getNome());
     }
 
     public int pedirEscolhaDepartamento(Departamento[] deps, int total) {
-        System.out.println("\n--- Escolha o Departamento ---");
-        for (int i = 0; i < total; i++) System.out.println((i + 1) + " - " + deps[i].getSigla() + " (" + deps[i].getNome() + ")");
-        System.out.print("Número do Departamento: ");
-        return lerOpcaoInteira() - 1;
+        System.out.println("\n--- SELECIONAR DEPARTAMENTO ---");
+        for (int i = 0; i < total; i++) System.out.printf("%d - %s (%s)\n", (i + 1), deps[i].getSigla(), deps[i].getNome());
+        return utils.Consola.lerInt("Indique o número: ") - 1;
     }
 
-    public void mostrarListaCursos(model.bll.Departamento[] departamentos, int totalDep, model.bll.Curso[] cursos, int totalCursos) {
-        System.out.println("\n--- LISTA DE CURSOS POR DEPARTAMENTO ---");
-
+    public void mostrarListaCursos(Departamento[] departamentos, int totalDep, Curso[] cursos, int totalCursos) {
+        System.out.println("\n============= CURSOS POR DEPARTAMENTO =============");
         if (totalCursos == 0) {
-            System.out.println(">> Não existem cursos registados no sistema.");
+            System.out.println(">> Não existem cursos registados.");
             return;
         }
-
-        // Percorre todos os departamentos registados
         for (int i = 0; i < totalDep; i++) {
-            model.bll.Departamento dep = departamentos[i];
-
+            Departamento dep = departamentos[i];
             if (dep != null) {
-                System.out.println(dep.getNome() + " (" + dep.getSigla() + "):");
+                System.out.println("\nDEPARTAMENTO: " + dep.getNome());
                 boolean temCursos = false;
-
-                // Procura todos os cursos que pertencem a este departamento
                 for (int j = 0; j < totalCursos; j++) {
-                    model.bll.Curso c = cursos[j];
-                    if (c != null && c.getDepartamento() != null && c.getDepartamento().getSigla().equals(dep.getSigla())) {
+                    Curso c = cursos[j];
+                    if (c != null && c.getDepartamento().getSigla().equals(dep.getSigla())) {
                         temCursos = true;
                         String estado = c.isAtivo() ? "[ATIVO]" : "[INATIVO]";
-                        System.out.println("- " + estado + " " + c.getSigla() + " - " + c.getNome());
                     }
                 }
-
-                if (!temCursos) {
-                    System.out.println("- (Nenhum curso associado)");
-                }
-                System.out.println();
+                if (!temCursos) System.out.println("  (Sem cursos associados)");
             }
         }
-        System.out.println("----------------------------------------");
     }
 
     public int pedirEscolhaCurso(Curso[] cursos, int total) {
-        System.out.println("\n--- Escolha o Curso ---");
-        for (int i = 0; i < total; i++) System.out.println((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
-        System.out.print("Número do Curso: ");
-        return lerOpcaoInteira() - 1;
+        System.out.println("\n--- SELECIONAR CURSO ---");
+        for (int i = 0; i < total; i++) System.out.printf("%d - [%s] %s\n", (i + 1), cursos[i].getSigla(), cursos[i].getNome());
+        return utils.Consola.lerInt("Indique o número: ") - 1;
     }
 
     public void mostrarListaUCs(UnidadeCurricular[] ucs, int total) {
-        System.out.println("\n--- LISTA DE UNIDADES CURRICULARES ---");
-        if (total == 0) {
-            System.out.println(">> Não existem UCs registadas.");
-            return;
-        }
-
+        System.out.println("\n=============== CATÁLOGO DE UNIDADES CURRICULARES ===============");
+        if (total == 0) { System.out.println(">> Sem registos."); return; }
         for (int i = 0; i < total; i++) {
             UnidadeCurricular uc = ucs[i];
             if (uc != null) {
-                String estado = uc.isAtivo() ? "[ATIVO]" : "[INATIVO]";
-                String nomeDocente = (uc.getDocenteResponsavel() != null)
-                        ? uc.getDocenteResponsavel().getNome() + " (" + uc.getDocenteResponsavel().getSigla() + ")"
-                        : "Sem Regente Associado";
-
-                System.out.println(estado + " " + uc.getSigla() + " : " + uc.getNome());
-                System.out.println("  -> Ano: " + uc.getAnoCurricular() + "º ano");
-                System.out.println("  -> Avaliações: " + uc.getNumAvaliacoes() + " momentos");
-                System.out.println("  -> Docente Resp.: " + nomeDocente);
-
-                // Listar também os cursos onde esta UC é dada
-                System.out.print("  -> Cursos associados: ");
-                boolean temCurso = false;
-                for (int j = 0; j < uc.getCursos().length; j++) {
-                    if (uc.getCursos()[j] != null) {
-                        System.out.print(uc.getCursos()[j].getSigla() + " ");
-                        temCurso = true;
-                    }
-                }
-                if (!temCurso) System.out.print("Nenhum");
-                System.out.println("\n-------------------------------------------");
+                String doc = (uc.getDocenteResponsavel() != null) ? uc.getDocenteResponsavel().getNome() : "Sem regente";
+                System.out.printf("[%s] %-25s | Ano: %d | Av: %d | Resp: %s\n", (uc.isAtivo() ? "A" : "I"), uc.getNome(), uc.getAnoCurricular(), uc.getNumAvaliacoes(), doc);
             }
         }
     }
 
-    public void mostrarListaDocentes(Docente[] docentes, int total) {
-        System.out.println("\n--- LISTA DE DOCENTES ---");
-        if (total == 0) System.out.println("Não existem docentes registados.");
+    public void mostrarListaDocentes(Docente[] docs, int total) {
+        System.out.println("\n========== CORPO DOCENTE ==========");
+        if (total == 0) System.out.println(">> Sem registos.");
+        else for (int i = 0; i < total; i++) System.out.printf("- [%s] %-5s : %s\n", (docs[i].isAtivo() ? "A" : "I"), docs[i].getSigla(), docs[i].getNome());
+    }
+
+    public void mostrarListaEstudantes(Estudante[] ests, int total) {
+        System.out.println("\n========== LISTAGEM DE ESTUDANTES ==========");
+        if (total == 0) System.out.println(">> Sem registos.");
         else for (int i = 0; i < total; i++) {
-            String status = docentes[i].isAtivo() ? "[ATIVO]" : "[INATIVO]";
-            System.out.println("- " + status + " " + docentes[i].getSigla() + " : " + docentes[i].getNome());
+            String c = (ests[i].getCurso() != null) ? ests[i].getCurso().getSigla() : "N/A";
+            System.out.printf("- [%s] %-10d : %-25s | Curso: %s\n", (ests[i].isAtivo() ? "A" : "I"), ests[i].getNumeroMecanografico(), ests[i].getNome(), c);
         }
     }
 
-
-    public void mostrarListaEstudantes(Estudante[] estudantes, int total) {
-        System.out.println("\n--- LISTA DE ESTUDANTES ---");
-        if (total == 0) System.out.println("Não existem estudantes registados.");
-        else {
-            for (int i = 0; i < total; i++) {
-                String siglaCurso = (estudantes[i].getCurso() != null) ? estudantes[i].getCurso().getSigla() : "N/A";
-                String status = estudantes[i].isAtivo() ? "[ATIVO]" : "[INATIVO]";
-                System.out.println("- " + status + " " + estudantes[i].getNumeroMecanografico() + " : " + estudantes[i].getNome() + " | Curso: " + siglaCurso);
-            }
-        }
+    public void mostrarEstatisticas(double media, String melhor, String cursoTop) {
+        System.out.println("\n=============== KPI - MÉTRICAS INSTITUCIONAIS ===============");
+        System.out.printf("Média Global da Instituição : %.2f Valores\n", media);
+        System.out.println("Mérito Académico (Melhor Aluno): " + melhor);
+        System.out.println("Aderência (Curso com mais inscritos): " + (cursoTop != null ? cursoTop : "N/D"));
+        System.out.println("=============================================================");
     }
 
-    public void mostrarUcsAgregadasDocente(UnidadeCurricular[] ucs, int total) {
-        System.out.println(">> UCs associadas ao docente:");
+    public void mostrarListaDevedores(Estudante[] devs, double[] divs, int total) {
+        System.out.println("\n========== ESTUDANTES COM DÍVIDAS ACTIVAS ==========");
+        if (total == 0) System.out.println(">> Situação financeira global regularizada.");
+        else for (int i = 0; i < total; i++) System.out.printf("-> %-8d %-25s | Dívida Total: %.2f€\n", devs[i].getNumeroMecanografico(), devs[i].getNome(), divs[i]);
+    }
+
+    public int mostrarCursosParaPropina(Curso[] cursos, int total) {
+        System.out.println("\n--- ATUALIZAÇÃO DE PREÇÁRIO ---");
         for (int i = 0; i < total; i++) {
-            if (ucs[i] != null) {
-                System.out.println("  -> " + ucs[i].getSigla() + " - " + ucs[i].getNome());
-            }
+            if (cursos[i] != null) System.out.printf("%d - %-20s (Atual: %.2f€)\n", (i+1), cursos[i].getNome(), cursos[i].getValorPropinaAnual());
         }
-    }
-
-    public void mostrarRelatorioAlunosPorCurso(Curso[] cursos, int totalCursos, Estudante[] estudantes, int totalEstudantes) {
-        System.out.println("\n--- ALUNOS POR CURSO ---");
-        for (int i = 0; i < totalCursos; i++) {
-            Curso c = cursos[i];
-            System.out.println("\n[" + c.getSigla() + "] " + c.getNome() + ":");
-            boolean temAlunos = false;
-            for (int j = 0; j < totalEstudantes; j++) {
-                Estudante e = estudantes[j];
-                if (e.getCurso() != null && e.getCurso().getSigla().equals(c.getSigla())) {
-                    System.out.println("  -> " + e.getNumeroMecanografico() + " - " + e.getNome());
-                    temAlunos = true;
-                }
-            }
-            if (!temAlunos) System.out.println("  (Nenhum aluno inscrito)");
-        }
-    }
-
-    public void mostrarRelatorioAlunosPorUC(UnidadeCurricular[] ucs, int totalUcs, Estudante[] estudantes, int totalEstudantes) {
-        System.out.println("\n--- ALUNOS POR UNIDADE CURRICULAR ---");
-        for (int i = 0; i < totalUcs; i++) {
-            UnidadeCurricular uc = ucs[i];
-            System.out.println("\n[" + uc.getSigla() + "] " + uc.getNome() + ":");
-            boolean temAlunos = false;
-            for (int j = 0; j < totalEstudantes; j++) {
-                Estudante e = estudantes[j];
-                if (e.estaInscrito(uc.getSigla())) {
-                    System.out.println("  -> " + e.getNumeroMecanografico() + " - " + e.getNome());
-                    temAlunos = true;
-                }
-            }
-            if (!temAlunos) System.out.println("  (Nenhum aluno inscrito)");
-        }
-    }
-
-    public void mostrarRelatorioUCsPorCurso(Curso[] cursos, int totalCursos) {
-        System.out.println("\n--- UNIDADES CURRICULARES POR CURSO ---");
-        for (int i = 0; i < totalCursos; i++) {
-            Curso c = cursos[i];
-            System.out.println("\n[" + c.getSigla() + "] " + c.getNome() + ":");
-            if (c.getTotalUCs() == 0) {
-                System.out.println("  (Nenhuma UC registada neste curso)");
-            } else {
-                for (int j = 0; j < c.getTotalUCs(); j++) {
-                    UnidadeCurricular uc = c.getUnidadesCurriculares()[j];
-                    System.out.println("  -> " + uc.getSigla() + " - " + uc.getNome() + " (Ano: " + uc.getAnoCurricular() + "º)");
-                }
-            }
-        }
-    }
-
-    public void mostrarEstatisticas(double mediaGlobal, String melhorAluno, String nomeCursoTop) {
-        System.out.println("\n--- ESTATÍSTICAS GLOBAIS DO ISSMF ---");
-        System.out.println("Média Global da Instituição: " + mediaGlobal + " valores.");
-        System.out.println("Melhor Aluno(a): " + melhorAluno);
-        if (nomeCursoTop != null) {
-            System.out.println("Curso mais popular: " + nomeCursoTop);
-        } else {
-            System.out.println("Curso mais popular: Dados insuficientes.");
-        }
-    }
-
-    // ---------- PROPINAS E DEVEDORES ----------
-
-    public void mostrarListaDevedores(Estudante[] devedores, double[] dividas, int total) {
-        System.out.println("\n--- LISTA DE DEVEDORES (PROPINAS) ---");
-        if (total == 0) System.out.println("Nenhum aluno tem propinas em atraso.");
-        else {
-            for (int i = 0; i < total; i++) {
-                System.out.println("-> " + devedores[i].getNumeroMecanografico() + " - " + devedores[i].getNome() + " | Dívida: " + dividas[i] + "€");
-            }
-        }
-    }
-
-    public int mostrarCursosParaPropina(Curso[] cursos, int totalCursos) {
-        System.out.println("\n--- ATUALIZAR PREÇO DO CURSO (PROPINAS) ---");
-        System.out.println("Aviso: Esta alteração afetará APENAS os novos alunos que se inscreverem a partir de agora.");
-        for (int i = 0; i < totalCursos; i++) {
-            if (cursos[i] != null) System.out.println((i + 1) + " - " + cursos[i].getNome() + " (Preço Atual: " + cursos[i].getValorPropinaAnual() + "€)");
-        }
-        System.out.print("Escolha o número do curso: ");
-        return lerOpcaoInteira();
+        return utils.Consola.lerInt("Indique o curso a alterar: ");
     }
 
     public void mostrarPercursoAcademicoCurso(Curso curso, Estudante[] estudantes, int totalEstudantes) {
-        System.out.println("\n--- PERCURSO ACADÉMICO: " + curso.getNome() + " (" + curso.getSigla() + ") ---");
-
-        if (curso.getTotalUCs() == 0) {
-            System.out.println(">> Este curso ainda não tem Unidades Curriculares associadas.");
-            return;
-        }
-
-        // Agrupa as UCs por Ano Curricular (1º, 2º e 3º ano)
+        System.out.println("\n============= PLANO E CARGA LECTIVA: " + curso.getNome() + " =============");
+        if (curso.getTotalUCs() == 0) { System.out.println(">> Plano de estudos vazio."); return; }
         for (int ano = 1; ano <= 3; ano++) {
-            boolean temUcNoAno = false;
-            System.out.println("\n-- " + ano + "º ANO --");
-
+            System.out.println("\n[ " + ano + "º ANO ]");
+            boolean tem = false;
             for (int i = 0; i < curso.getTotalUCs(); i++) {
                 UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-
                 if (uc != null && uc.getAnoCurricular() == ano) {
-                    temUcNoAno = true;
-
-                    // Conta quantos estudantes estão inscritos nesta UC
-                    int alunosInscritos = 0;
-                    for (int j = 0; j < totalEstudantes; j++) {
-                        Estudante e = estudantes[j];
-                        if (e != null && e.estaInscrito(uc.getSigla())) {
-                            alunosInscritos++;
-                        }
-                    }
-
-                    String nomeDocente = (uc.getDocenteResponsavel() != null) ? uc.getDocenteResponsavel().getNome() : "Sem Regente Associado";
-
-                    System.out.println(" -> " + uc.getSigla() + " - " + uc.getNome());
-                    System.out.println("    Docente: " + nomeDocente + " | Estudantes Inscritos: " + alunosInscritos);
+                    tem = true;
+                    int insc = 0;
+                    for (int j = 0; j < totalEstudantes; j++) if (estudantes[j] != null && estudantes[j].estaInscrito(uc.getSigla())) insc++;
+                    System.out.printf("  -> [%s] %-25s | Inscritos: %d\n", uc.getSigla(), uc.getNome(), insc);
                 }
             }
-
-            if (!temUcNoAno) {
-                System.out.println("    (Nenhuma UC registada para este ano)");
-            }
-        }
-        System.out.println("--------------------------------------------------");
-    }
-
-    public void mostrarListaGestores(model.bll.Gestor[] gestores, int total) {
-        System.out.println("\n--- LISTA DE GESTORES DO SISTEMA ---");
-        if (total == 0) {
-            System.out.println(">> Não existem gestores registados.");
-        } else {
-            for (int i = 0; i < total; i++) {
-                model.bll.Gestor g = gestores[i];
-                if (g != null) {
-                    String estado = g.isAtivo() ? "[ATIVO]" : "[INATIVO]";
-                    System.out.println(estado + " " + g.getNome());
-                    System.out.println("  -> Email : " + g.getEmail());
-                    System.out.println("  -> Morada: " + g.getMorada());
-                    System.out.println("------------------------------------");
-                }
-            }
+            if (!tem) System.out.println("  (Sem UCs registadas)");
         }
     }
 
+    public void mostrarListaGestores(Gestor[] gests, int total) {
+        System.out.println("\n========== EQUIPA DE BACKOFFICE ==========");
+        if (total == 0) System.out.println(">> Sem registos.");
+        else for (int i = 0; i < total; i++) {
+            if (gests[i] != null) System.out.printf("- [%s] %-20s | Login: %s\n", (gests[i].isAtivo() ? "A" : "I"), gests[i].getNome(), gests[i].getEmail());
+        }
+    }
+
+    public void mostrarRelatorioAlunosPorCurso(Curso[] cursos, int totalC, Estudante[] ests, int totalE) {
+        System.out.println("\n========== ESTUDANTES POR CURSO ==========");
+        for (int i = 0; i < totalC; i++) {
+            System.out.println("\nCURSO: " + cursos[i].getNome());
+            boolean tem = false;
+            for (int j = 0; j < totalE; j++) {
+                if (ests[j].getCurso() != null && ests[j].getCurso().getSigla().equals(cursos[i].getSigla())) {
+                    tem = true;
+                    System.out.println("  -> " + ests[j].getNumeroMecanografico() + " - " + ests[j].getNome());
+                }
+            }
+            if (!tem) System.out.println("  (Vazio)");
+        }
+    }
+
+    public void mostrarRelatorioAlunosPorUC(UnidadeCurricular[] ucs, int totalU, Estudante[] ests, int totalE) {
+        System.out.println("\n========== ESTUDANTES POR UNIDADE CURRICULAR ==========");
+        for (int i = 0; i < totalU; i++) {
+            System.out.println("\nUC: " + ucs[i].getNome());
+            boolean tem = false;
+            for (int j = 0; j < totalE; j++) {
+                if (ests[j].estaInscrito(ucs[i].getSigla())) {
+                    tem = true;
+                    System.out.println("  -> " + ests[j].getNumeroMecanografico() + " - " + ests[j].getNome());
+                }
+            }
+            if (!tem) System.out.println("  (Vazio)");
+        }
+    }
+
+    public void mostrarRelatorioUCsPorCurso(Curso[] cursos, int total) {
+        System.out.println("\n========== MATRIZES CURRICULARES ==========");
+        for (int i = 0; i < total; i++) {
+            System.out.println("\nCURSO: " + cursos[i].getNome());
+            if (cursos[i].getTotalUCs() == 0) System.out.println("  (Vazio)");
+            else for (int j = 0; j < cursos[i].getTotalUCs(); j++)
+                System.out.println("  -> " + cursos[i].getUnidadesCurriculares()[j].getSigla() + " (Ano: " + cursos[i].getUnidadesCurriculares()[j].getAnoCurricular() + ")");
+        }
+    }
+
+
+    // =========================================================
+    // 5. MENSAGENS DE FEEDBACK E ESTADO
+    // =========================================================
+
+    public void mostrarMensagemSaida() { System.out.println(">> A terminar sessão administrativa..."); }
+    public void mostrarOpcaoInvalida() { System.out.println(">> Erro: Opção inexistente no menu."); }
+    public void mostrarAvisoSemAlteracao() { System.out.println(">> Info: Nenhuma alteração foi guardada."); }
+    public void mostrarSucessoAtualizacao() { System.out.println(">> Sucesso: Alterações propagadas com êxito."); }
+    public void mostrarInfoEdicao(String nome) { System.out.println(">> Modo Edição: " + nome); }
+
+    public void mostrarErroSiglaJaExiste(String s) { System.out.println(">> Erro: A sigla '" + s + "' já está em uso."); }
+    public void mostrarErroNifJaExiste(String n) { System.out.println(">> Erro: O NIF '" + n + "' já pertence a outro utilizador."); }
+    public void mostrarErroLimiteDepartamentos() { System.out.println(">> Erro: Capacidade máxima de departamentos esgotada."); }
+    public void mostrarErroLimiteCursos() { System.out.println(">> Erro: Capacidade máxima de cursos esgotada."); }
+    public void mostrarErroLimiteUCs() { System.out.println(">> Erro: Capacidade máxima de UCs esgotada."); }
+    public void mostrarErroLimiteEstudantes() { System.out.println(">> Erro: Capacidade máxima de estudantes esgotada."); }
+    public void mostrarErroLimiteDocentes() { System.out.println(">> Erro: Capacidade máxima de docentes esgotada."); }
+    public void mostrarErroLimiteGestores() { System.out.println(">> Erro: Capacidade máxima de gestores esgotada."); }
+
+    public void mostrarAvisoSemDepartamentos() { System.out.println(">> Aviso: Não existem departamentos para gerir."); }
+    public void mostrarAvisoSemCursos() { System.out.println(">> Aviso: Não existem cursos para gerir."); }
+    public void mostrarErroUCNaoEncontrada() { System.out.println(">> Erro: Unidade Curricular inexistente."); }
+    public void mostrarErroEstudanteNaoEncontrado() { System.out.println(">> Erro: Estudante inexistente."); }
+    public void mostrarErroDocenteNaoEncontrado() { System.out.println(">> Erro: Docente inexistente."); }
+    public void mostrarErroCursoNaoEncontrado() { System.out.println(">> Erro: Curso inexistente."); }
+
+    public void mostrarSucessoRegistoDepartamento(String n) { System.out.println(">> Sucesso: Departamento '" + n + "' registado."); }
+    public void mostrarSucessoRegistoCurso(String n) { System.out.println(">> Sucesso: Curso '" + n + "' registado."); }
+    public void mostrarSucessoRegistoUC(String n) { System.out.println(">> Sucesso: UC '" + n + "' registada."); }
+    public void mostrarSucessoRegistoGestor(String e) { System.out.println(">> Sucesso: Novo Administrador criado (" + e + ")."); }
+
+    public void mostrarErroFaltaDepartamento() { System.out.println(">> Erro: Acção impossível sem Departamentos registados."); }
+    public void mostrarErroFaltaCurso() { System.out.println(">> Erro: Acção impossível sem Cursos registados."); }
+    public void mostrarErroFaltaDocenteOuCurso() { System.out.println(">> Erro: Requer pelo menos 1 Docente e 1 Curso."); }
+
+    public void mostrarErroCursoBloqueado() { System.out.println(">> Erro: Curso em funcionamento. Alterações estruturais proibidas."); }
+    public void mostrarErroAnoNumerico() { System.out.println(">> Erro: O ano deve ser um valor inteiro (1, 2 ou 3)."); }
+    public void mostrarErroAnoNumericoMantido() { System.out.println(">> Erro: Formato inválido. Valor original mantido."); }
+    public void mostrarErroLimiteUCsAno(String c, int a) { System.out.println(">> Erro: Curso " + c + " excedeu o teto de 5 UCs no " + a + "º ano."); }
+    public void mostrarErroUCJaNoCurso() { System.out.println(">> Erro: Duplicação de UC detectada no curso."); }
+    public void mostrarSucessoPartilhaUC(String u, String c) { System.out.println(">> Sucesso: UC '" + u + "' agora partilhada com '" + c + "'."); }
+    public void msgErroUCInativa() { System.out.println(">> Erro: UC inactiva. Impossível efectuar vínculos."); }
+    public void mostrarErroNumAvaliacoes() { System.out.println(">> Erro: O limite de avaliações deve ser entre 1 e 3.");}
+
+    public void mostrarErroNomeInvalido() { System.out.println(">> Erro: Introduza nome e apelido (apenas letras)."); }
+    public void mostrarErroNomeInvalidoMantido() { System.out.println(">> Erro: Nome inválido. Original mantido."); }
+    public void mostrarErroNifInvalido() { System.out.println(">> Erro: O NIF deve conter exactamente 9 algarismos."); }
+    public void mostrarErroDataInvalida() { System.out.println(">> Erro: Formato inválido. Use DD-MM-AAAA."); }
+    public void mostrarErroNumMecNumerico() { System.out.println(">> Erro: O número mecanográfico é estritamente numérico."); }
+    public void mostrarSiglaGerada(String s) { System.out.println(">> Atribuição: Sigla institucional gerada: " + s); }
+
+    public void mostrarSucessoAvancoAno(int a) { System.out.println(">> Ciclo Concluído. Sistema actualizado para o ano " + a + "."); }
+    public void mostrarCancelamentoAvancoAno(int a) { System.out.println(">> Operação Abortada. Sistema mantido em " + a + "."); }
+    public void mostrarAvisoTransicaoAno() {
+        System.out.println("\n[ATENÇÃO: ACÇÃO IRREVERSÍVEL]");
+        System.out.println("Esta operação irá processar notas, verificar progressões acadêmicas");
+        System.out.println("e emitir cobranças para o novo ciclo.");
+    }
+
+    public void mostrarSucessoAlteracaoPreco(String c, double p) { System.out.printf(">> Sucesso: Novo preçário para %s: %.2f€\n", c, p); }
+    public void mostrarErroPrecoInvalido() { System.out.println(">> Erro: O valor monetário deve ser superior a zero."); }
+
+    public void msgAvisoDocenteComUCs(String s) { System.out.println(">> Erro: Docente " + s + " possui regências activas. Impossível desactivar."); }
+    public void msgAvisoCursoComAlunosAtivos(String s) { System.out.println(">> Erro: Curso " + s + " possui matrículas activas. Impossível desactivar."); }
+    public void msgAvisoUCAssociada(String s) { System.out.println(">> Erro: UC " + s + " integra planos de estudo activos. Impossível desactivar."); }
+
+    public void msgSucessoEstadoAlterado(String e, boolean a) {
+        System.out.println(">> Sucesso: Estado de '" + e + "' alterado para " + (a ? "ACTIVO" : "INACTIVO") + ".");
+    }
+
+    public void mostrarErroNomeGestor() { System.out.println(">> Erro: O nome do gestor deve ser uma palavra única."); }
+    public void mostrarErroCredenciaisGestor() { System.out.println(">> Erro: Autenticação falhou."); }
+    public void mostrarErroDesativarGestorProprio() { System.out.println(">> Segurança: Não é permitida a auto-desactivação."); }
+    public void mostrarSucessoDesativacaoGestor() { System.out.println(">> Sucesso: Acesso administrativo revogado."); }
+    public void mostrarAvisoDesativacaoGestor(String n) { System.out.println("\n[CUIDADO] Vai revogar permanentemente o acesso de " + n + "."); }
+    public void mostrarErroDocenteInativo() { System.out.println(">> Erro: Docente inactivo. Requer colaboração activa para regência."); }
+    public void mostrarErroCursoInativo() { System.out.println(">> Erro: Curso inactivo."); }
+
+    public void mostrarStatusEmail(boolean env, String email) {
+        if (env) System.out.println(">> Canal Email: Credenciais enviadas para " + email);
+        else System.out.println(">> Canal Email: Falha no envio. Contacte o suporte técnico.");
+    }
+
+    public void mostrarCredenciaisCriadas(String tipo, String nome, String email, String pass) {
+        System.out.println("\n================ REGISTO CONCLUÍDO ================");
+        System.out.println("Utilizador : " + nome + " (" + tipo + ")");
+        System.out.println("Login      : " + email);
+        System.out.println("Password   : " + pass);
+        System.out.println("====================================================");
+    }
+
+    public void mostrarCancelamento(String menu) { System.out.println("\n>> Cancelado. Retornando ao menu " + menu + "..."); }
+    public void mostrarErroFormatoNumericoGenerico() { System.out.println(">> Erro: Requer valor numérico."); }
+    public void mostrarAvisoGestorDesativado() { System.out.println(">> Erro: Conta já se encontra inactiva."); }
+    public void mostrarUcsAgregadasDocente(UnidadeCurricular[] ucs, int total) {
+        System.out.println(">> Regências activas detectadas:");
+        for (int i = 0; i < total; i++) if (ucs[i] != null) System.out.println("   - " + ucs[i].getNome());
+    }
 }

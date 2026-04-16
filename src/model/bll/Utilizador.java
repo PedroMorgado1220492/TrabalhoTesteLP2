@@ -80,4 +80,11 @@ public abstract class Utilizador {
     public void setDataNascimento(String dataNascimento) { this.dataNascimento = dataNascimento; }
 
     public void setEmailPessoal(String emailPessoal) { this.emailPessoal = emailPessoal; }
+
+    /**
+     * Verifica se a password encriptada fornecida corresponde à password do utilizador.
+     */
+    public boolean verificarPassword(String passwordEncriptadaTeste) {
+        return this.password != null && this.password.equals(passwordEncriptadaTeste);
+    }
 }

@@ -1,208 +1,255 @@
 package view;
 
+import javax.swing.*;
+import java.io.Console;
+import java.util.Scanner;
+
 /**
  * Interface de utilizador principal (View) do sistema ISSMF.
- * Responsável por toda a interação de entrada e saída (I/O) no terminal,
- * garantindo a separação entre a lógica de apresentação e a lógica de negócio (MVC).
+ * No padrão MVC, esta classe gere o ponto de entrada visual da aplicação.
+ * É responsável pela interação no terminal (CLI) para utilizadores não autenticados,
+ * implementando mecanismos seguros para recolha de passwords e formulários de registo.
  */
 public class MainView {
 
-    public MainView() {
+    /**
+     * Construtor por defeito da MainView.
+     */
+    public MainView() { }
 
+
+    // =========================================================
+    // 1. MENUS PRINCIPAIS E CABEÇALHOS
+    // =========================================================
+
+    public void mostrarBemVindo() {
+        System.out.println("\n******************************************");
+        System.out.println("* SISTEMA ACADÉMICO ISSMF v1.0      *");
+        System.out.println("******************************************");
     }
 
-    // ---------- MENUS PRINCIPAIS E CABEÇALHOS ----------
+    public void mostrarAnoLetivo(int ano) {
+        System.out.println("\n>> CICLO CORRENTE: " + ano + " / " + (ano + 1));
+    }
 
-    public void mostrarBemVindo() { System.out.println(">> Bem-vindo ao Sistema do ISSMF!"); }
-
-    public void mostrarAnoLetivo(int ano) { System.out.println(">> --- Ano Letivo Atual: " + ano + " ---"); }
-
+    /**
+     * Apresenta o menu de entrada público do sistema.
+     * @return A opção selecionada.
+     */
     public int mostrarMenu() {
-        System.out.println("\n===== SISTEMA ISSMF =====");
-        System.out.println("1 - Login");
-        System.out.println("2 - Criar Estudante");
-        System.out.println("3 - Avançar Ano");
-        System.out.println("4 - Recuperar Password");
-        System.out.println("0 - Sair");
-        System.out.print("Opção: ");
-
+        System.out.println("\n========= MENU PRINCIPAL =========");
+        System.out.println("1 - Efetuar Login");
+        System.out.println("2 - Auto-Inscrição Estudante");
+        System.out.println("3 - Transitar Ano Letívo");
+        System.out.println("4 - Recuperar Palavra-passe");
+        System.out.println("0 - Encerrar Sistema");
+        System.out.print("Escolha uma opção: ");
         return utils.Consola.lerOpcaoMenu();
     }
 
-    public void mostrarCabecalhoLogin() { System.out.println("\n--- LOGIN DO SISTEMA ---"); }
+    public void mostrarCabecalhoLogin() { System.out.println("\n--- AUTENTICAÇÃO DE UTILIZADOR ---"); }
+    public void mostrarCabecalhoRegisto() { System.out.println("\n--- FORMULÁRIO DE CANDIDATURA ---"); }
+    public void mostrarCabecalhoTransicao() { System.out.println("\n--- PROCESSAMENTO ESTRUTURAL DE ANO ---"); }
 
-    public void mostrarCabecalhoRegisto() { System.out.println("\n--- NOVO REGISTO DE ESTUDANTE ---"); }
 
-    public void mostrarCabecalhoTransicao() { System.out.println("\n--- TRANSIÇÃO DE ANO LETIVO ---"); }
+    // =========================================================
+    // 2. INPUTS DE DADOS E SEGURANÇA (LOGINS)
+    // =========================================================
 
-    // ---------- INPUTS DE DADOS ----------
-
-    public String pedirEmail() {
+    /**
+     * Solicita o email institucional. Suporta modo texto puro ou popup gráfico
+     * se detetar execução via IDE (onde o System.console() é nulo).
+     */
+    public String pedirEmail() throws utils.CancelamentoException {
         java.io.Console console = System.console();
 
-        // Se estiver a correr num terminal real (tudo em modo texto)
         if (console != null) {
-            System.out.print("Email: ");
-            return new java.util.Scanner(System.in).nextLine().trim();
-        }
-        // A correr no IDE (Abre a janela gráfica para o Email)
-        else {
-            System.out.println(">> Por favor, introduza o Email na janela que acabou de abrir...");
-
-            javax.swing.JFrame frameFantasma = new javax.swing.JFrame();
-            frameFantasma.setAlwaysOnTop(true);
-            frameFantasma.setLocationRelativeTo(null);
+            System.out.print("Email Institucional: ");
+            String input = new java.util.Scanner(System.in).nextLine().trim();
+            if (input.equals("/")) throw new utils.CancelamentoException();
+            return input;
+        } else {
+            javax.swing.JFrame frameAux = new javax.swing.JFrame();
+            frameAux.setAlwaysOnTop(true);
+            frameAux.setLocationRelativeTo(null);
 
             String email = javax.swing.JOptionPane.showInputDialog(
-                    frameFantasma,
+                    frameAux,
                     "Introduza o Email Institucional:",
                     "Autenticação ISSMF",
                     javax.swing.JOptionPane.PLAIN_MESSAGE
             );
 
-            frameFantasma.dispose();
+            frameAux.dispose();
 
-            return email != null ? email.trim() : "";
+            if (email == null) {
+                throw new utils.CancelamentoException();
+            }
+
+            return email.trim();
         }
     }
-
     /**
-     * Lê a password do utilizador.
-     * Tenta utilizar a consola nativa para ocultar os caracteres. Se não estiver
-     * disponível (ex: execução dentro do IDE), abre um pop-up seguro nativo do Java.
+     * Lê a password de forma segura.
+     * Se correr num terminal real, oculta os caracteres.
+     * Se correr num IDE, abre um JPasswordField protegido.
      */
-    public String pedirPassword() {
+    public String pedirPassword() throws utils.CancelamentoException {
         java.io.Console console = System.console();
 
-        // Se estiver a correr num terminal real (Windows cmd, Linux shell)
         if (console != null) {
             char[] passwordArray = console.readPassword("Password: ");
+            if (passwordArray == null) throw new utils.CancelamentoException();
             return new String(passwordArray).trim();
-        }
-        // A correr no IDE (IntelliJ, Eclipse)
-        else {
-            System.out.println(">> Por favor, introduza a password na janela de segurança que acabou de abrir...");
-
-            javax.swing.JFrame frameFantasma = new javax.swing.JFrame();
-            frameFantasma.setAlwaysOnTop(true);
-            frameFantasma.setLocationRelativeTo(null);
-
+        } else {
+            javax.swing.JFrame frameAux = new javax.swing.JFrame();
+            frameAux.setAlwaysOnTop(true);
+            frameAux.setLocationRelativeTo(null);
 
             javax.swing.JPasswordField pf = new javax.swing.JPasswordField();
 
             int opcao = javax.swing.JOptionPane.showConfirmDialog(
-                    frameFantasma,
+                    frameAux,
                     pf,
-                    "Autenticação ISSMF",
+                    "Introduza a Password",
                     javax.swing.JOptionPane.OK_CANCEL_OPTION,
                     javax.swing.JOptionPane.PLAIN_MESSAGE
             );
 
-            frameFantasma.dispose();
+            frameAux.dispose();
 
-            if (opcao == javax.swing.JOptionPane.OK_OPTION) {
-                return new String(pf.getPassword()).trim();
+            if (opcao != javax.swing.JOptionPane.OK_OPTION) {
+                throw new utils.CancelamentoException();
             }
 
-            return "";
+            return new String(pf.getPassword()).trim();
         }
     }
 
-    public String pedirNome() { return utils.Consola.lerString("Nome (Nome e Sobrenome): "); }
 
+    // =========================================================
+    // 3. FORMULÁRIOS DE REGISTO E REVISÃO
+    // =========================================================
+
+    public String pedirNome() { return utils.Consola.lerString("Nome e Sobrenome: "); }
     public String pedirNif() { return utils.Consola.lerString("NIF (9 dígitos): "); }
 
+    /**
+     * Solicita o NIF especificamente para o fluxo de recuperação de password.
+     * Mantém a consistência visual (janela pop-up) com o pedido de Email.
+     */
+    public String pedirNifRecuperacao() throws utils.CancelamentoException {
+        java.io.Console console = System.console();
+
+        if (console != null) {
+            String input = utils.Consola.lerString("NIF (9 dígitos): ").trim();
+            if (input.equals("/")) throw new utils.CancelamentoException();
+            return input;
+        } else {
+            javax.swing.JFrame frameAux = new javax.swing.JFrame();
+            frameAux.setAlwaysOnTop(true);
+            frameAux.setLocationRelativeTo(null);
+
+            String nif = javax.swing.JOptionPane.showInputDialog(
+                    frameAux,
+                    "Introduza o seu NIF (9 dígitos) para confirmar a identidade:",
+                    "Recuperação de Palavra-passe",
+                    javax.swing.JOptionPane.PLAIN_MESSAGE
+            );
+
+            frameAux.dispose();
+
+            // Se o utilizador clicar em Cancelar, aborta o processo
+            if (nif == null) {
+                throw new utils.CancelamentoException();
+            }
+
+            return nif.trim();
+        }
+    }
     public String pedirMorada() { return utils.Consola.lerString("Morada: "); }
-
-    public String pedirDataNascimento() { return utils.Consola.lerString("Data de Nascimento (DD-MM-AAAA): "); }
-
+    public String pedirDataNascimento() { return utils.Consola.lerString("Data Nascimento (DD-MM-AAAA): "); }
     public String pedirEmailPessoal() { return utils.Consola.lerString("Email Pessoal: "); }
 
+    /**
+     * Lista os cursos para o candidato escolher.
+     */
     public int pedirEscolhaCurso(model.bll.Curso[] cursos, int total) {
-        System.out.println("\n--- Escolha o Curso ---");
+        System.out.println("\n--- CURSOS DISPONÍVEIS ---");
         for (int i = 0; i < total; i++) {
-            if (cursos[i] != null && cursos[i].isAtivo()) {
-                System.out.println((i + 1) + " - " + cursos[i].getNome() + " (" + cursos[i].getSigla() + ")");
-            } else if (cursos[i] != null) {
-                System.out.println((i + 1) + " - [INDISPONÍVEL] " + cursos[i].getNome());
+            if (cursos[i] != null) {
+                String estado = cursos[i].isAtivo() ? "" : "[INDISPONÍVEL] ";
+                System.out.printf("%d - %s%s (%s)\n", (i + 1), estado, cursos[i].getNome(), cursos[i].getSigla());
             }
         }
-        System.out.print("Número do Curso: ");
-        return utils.Consola.lerOpcaoMenu() - 1;
+        return utils.Consola.lerInt("Selecione o número do curso: ") - 1;
     }
 
+    public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String emailP, String curso) {
+        System.out.println("\n--- CONFIRMAÇÃO DE CANDIDATURA ---");
+        System.out.printf("Candidato: %s | NIF: %s\nResidência: %s\nContacto: %s | Curso: %s\n", nome, nif, morada, emailP, curso);
+    }
+
+    public boolean confirmarDados() {
+        String input = utils.Consola.lerString("\nConfirma a veracidade dos dados? (S/N): ");
+        return input.equalsIgnoreCase("S");
+    }
+
+    public void mostrarCredenciaisGeradas(int ano, int numMec, String email, String pass) {
+        System.out.println("\n**************************************************");
+        System.out.println("   MATRÍCULA EFETUADA COM SUCESSO! (" + ano + ")");
+        System.out.println("   Número Mecanográfico : " + numMec);
+        System.out.println("   Email Institucional  : " + email);
+        System.out.println("   Password Provisória  : " + pass);
+        System.out.println("**************************************************");
+    }
+
+    /**
+     * Solicita a confirmação para a transição global de ano letivo.
+     * @param proximoAno O ano para o qual o sistema irá avançar.
+     * @return true se o utilizador confirmar com 'S'.
+     */
     public boolean pedirConfirmacaoAvanco(int proximoAno) {
         String input = utils.Consola.lerString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): ");
         return input.equalsIgnoreCase("S");
     }
+    // =========================================================
+    // 4. FEEDBACK E MENSAGENS DE SISTEMA
+    // =========================================================
 
-    /**
-     * Solicita a confirmação final antes de persistir os dados no sistema.
-     * @return true se o utilizador confirmar com 'S'.
-     */
-    public boolean confirmarDados() {
-        String input = utils.Consola.lerString("\nOs dados estão corretos? (S/N): ");
-        return input.equalsIgnoreCase("S");
-    }
+    public void msgPrepararRegisto() { System.out.println(">> A carregar formulários de candidatura..."); }
+    public void msgErroLogin() { System.out.println(">> Erro: Credenciais inválidas."); }
+    public void msgValidacaoSucesso(String tipo) { System.out.println(">> Acesso autorizado [" + tipo + "]. A carregar perfil..."); }
+    public void msgBemVindoRole(String role) { System.out.println(">> Bem-vindo, " + role + "."); }
+    public void msgSessaoEncerrada() { System.out.println(">> Sessão terminada com segurança. Dados salvos."); }
+    public void msgSemCursosParaRegisto() { System.out.println(">> Aviso: Não existem cursos com vagas ou ativos de momento."); }
+    public void msgErroNome() { System.out.println(">> Erro: Formato de nome inválido (Use Nome e Apelido)."); }
+    public void msgErroNif() { System.out.println(">> Erro: NIF inválido (Requer 9 dígitos)."); }
+    public void msgErroData() { System.out.println(">> Erro: Use o formato DD-MM-AAAA."); }
+    public void msgErroNumeroInvalido() { System.out.println(">> Erro: Seleção fora do intervalo permitido."); }
+    public void msgErroLimiteEstudantes() { System.out.println(">> Erro: Capacidade máxima do sistema atingida."); }
+    public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção de menu inválida."); }
+    public void msgErroEmailDominio() { System.out.println(">> Erro: Use o domínio institucional (@issmf.ipp.pt)."); }
+    public void msgErroInativo() { System.out.println(">> Erro: Conta suspensa ou inativa. Contacte a administração."); }
+    public void msgRegistoCancelado() { System.out.println(">> Operação abortada. Nenhum dado foi registado."); }
+    public void msgEncerramento() { System.out.println(">> A encerrar ISSMF. Até à próxima!"); }
 
-    // ---------- REVISÃO E EXIBIÇÃO DE DADOS ----------
+    // --- Processos Globais (Ano Letivo) ---
 
-    public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String emailPessoal, String nomeCurso) {
-        System.out.println("\n--- REVISÃO DE DADOS ---");
-        System.out.println("Nome: " + nome + " | NIF: " + nif);
-        System.out.println("Morada: " + morada + " | Nasc: " + dataNasc);
-        System.out.println("Email Pessoal: " + emailPessoal);
-        System.out.println("Curso: " + nomeCurso);
-    }
+    public void msgSucessoAvancoAno(int ano) { System.out.println(">> SUCESSO: Ano letivo " + ano + " iniciado."); }
+    public void msgCancelamentoAvancoAno(int ano) { System.out.println(">> INFO: Transição cancelada. Mantemos o ano " + ano + "."); }
+    public void mostrarAvisoValidacaoCursos() { System.out.println("\n>> A auditar viabilidade de cursos (Mín. 5 alunos)..."); }
+    public void mostrarFimValidacao() { System.out.println(">> Auditoria estrutural concluída."); }
+    public void mostrarCursoAprovado(String sigla, int n) { System.out.println("   [OK] " + sigla + ": " + n + " inscritos."); }
+    public void mostrarCursoCancelado(String sigla, int n) { System.out.println("   [CANCELADO] " + sigla + ": Quota insuficiente (" + n + ")."); }
+    public void mostrarCursoCanceladoFaltaUCs(String sigla) { System.out.println("   [ERRO] " + sigla + ": Sem estrutura curricular mínima."); }
+    public void mostrarCancelamento() { System.out.println("\n>> Operação cancelada pelo utilizador."); }
 
-    public void mostrarCredenciaisGeradas(int ano, int numMec, String email, String pass) {
-        System.out.println("\n>> Estudante registado com sucesso no ano " + ano + "!");
-        System.out.println(">> Nº Mec: " + numMec + " | Email: " + email);
-    }
+    // --- Recuperação ---
 
-    // ---------- FEEDBACK AO UTILIZADOR (MENSAGENS E AVISOS) ----------
-
-    public void msgPrepararRegisto() { System.out.println(">> A preparar o sistema de registo..."); }
-    public void msgErroLogin() { System.out.println(">> Erro: Email ou Password incorretos."); }
-    public void msgValidacaoSucesso(String tipo) { System.out.println(">> Login validado (" + tipo + "). A abrir ficheiros necessários..."); }
-    public void msgBemVindoRole(String role) { System.out.println(">> Bem-vindo " + role + "!"); }
-    public void msgSessaoEncerrada() { System.out.println(">> Sessão encerrada. Dados guardados e memória libertada com sucesso."); }
-
-    public void msgSemCursosParaRegisto() { System.out.println(">> Atenção: De momento não existem cursos disponíveis no sistema para inscrição. Tente mais tarde."); }
-    public void msgErroNome() { System.out.println(">> Erro: O nome deve conter pelo menos nome e sobrenome, utilizando apenas letras."); }
-    public void msgErroNif() { System.out.println(">> Erro: O NIF deve conter exatamente 9 dígitos numéricos."); }
-    public void msgErroData() { System.out.println(">> Erro: A data deve respeitar estritamente o formato DD-MM-AAAA."); }
-    public void msgErroNumeroInvalido() { System.out.println(">> Erro: Escolha um número válido."); }
-    public void msgErroLimiteEstudantes() { System.out.println(">> Erro: Limite máximo de estudantes atingido."); }
-    public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
-    public void msgErroEmailDominio() { System.out.println(">> Erro: O email deve pertencer ao domínio '@issmf.ipp.pt'."); }
-    public void msgErroArquivoNaoEncontrado(String caminho) { System.err.println("[O Java não conseguiu encontrar o ficheiro: " + caminho); }
-    public void msgErroInativo() { System.out.println(">> Erro: Esta conta encontra-se inativa. Contacte os serviços académicos."); }
-    public void msgErroCursoInativo() { System.out.println(">> Erro: O curso selecionado encontra-se inativo e não aceita matrículas."); }
-    public void msgRegistoCancelado() { System.out.println(">> Registo cancelado. Nenhuma alteração foi guardada."); }
-
-    public void msgSucessoAvancoAno(int ano) { System.out.println(">> O sistema avançou para o ano letivo de " + ano + "."); }
-    public void msgCancelamentoAvancoAno(int ano) { System.out.println(">> Operação cancelada. Mantemo-nos em " + ano + "."); }
-    public void msgEncerramento() { System.out.println(">> A encerrar o sistema..."); }
-
-    public void mostrarAvisoValidacaoCursos() { System.out.println("\n>> A verificar o número mínimo de alunos (5) para as turmas de 1º ano..."); }
-    public void mostrarFimValidacao() { System.out.println(">> Validação concluída!\n"); }
-    public void mostrarCursoAprovado(String sigla, int inscritos) { System.out.println("   [OK] " + sigla + " aprovado para o 1º ano (" + inscritos + " inscritos)."); }
-    public void mostrarCursoCancelado(String sigla, int inscritos) { System.out.println("   [AVISO] " + sigla + " cancelado no 1º ano! Apenas " + inscritos + " inscritos."); }
-    public void mostrarCursoCanceladoFaltaUCs(String sigla) { System.out.println("   [ERRO] " + sigla + " bloqueado! O curso não possui pelo menos 1 UC em cada ano (1º, 2º e 3º)."); }
-
-    // --- Feedback de Recuperação e Emails ---
-
-    public void msgSucessoRecuperacao() { System.out.println(">> Uma nova password foi gerada e enviada para o seu Email Pessoal."); }
-
-    /**
-     * Mensagem que cobre os dois cenários de falha na recuperação (erro humano nos dados ou erro técnico de SMTP).
-     */
-    public void msgErroDadosIncorretosOuFalhaEmail() {
-        System.out.println(">> Erro: O Email/NIF estão incorretos, ou ocorreu uma falha técnica de rede no envio da notificação.");
-    }
-
-    public void msgSucessoEnvioEmail(String email) { System.out.println(">> Sucesso: Credenciais enviadas para o endereço: " + email); }
-    public void msgErroEnvioEmail() { System.out.println(">> Aviso: Não foi possível enviar o email automático. Verifique a ligação à internet ou as credenciais SMTP do sistema."); }
-
+    public void msgSucessoRecuperacao() { System.out.println(">> Sucesso: Verifique a nova senha no seu email pessoal."); }
+    public void msgErroDadosIncorretosOuFalhaEmail() { System.out.println(">> Erro: Dados não conferem ou falha no servidor de email."); }
+    public void msgSucessoEnvioEmail(String email) { System.out.println(">> Notificação enviada para: " + email); }
+    public void msgErroEnvioEmail() { System.out.println(">> Aviso: Falha no disparo do email automático."); }
+    public void msgErroArquivoNaoEncontrado(String c) { System.err.println(">> ERRO CRÍTICO: Ficheiro " + c + " não localizado."); }
 }
