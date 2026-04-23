@@ -2,7 +2,9 @@ package model.bll;
 
 /**
  * Representa a avaliação contínua ou final de um estudante numa específica Unidade Curricular.
- * Regista os resultados de avaliação durante um determinado ano letivo e processa o cálculo da respetiva média.
+ * Regista os resultados parciais obtidos durante um determinado ano letivo e processa o cálculo da respetiva média.
+ * No padrão MVC, esta classe atua como um puro Model, garantindo as regras matemáticas
+ * e os limites estruturais do percurso do estudante sem qualquer interação com a interface.
  */
 public class Avaliacao {
 
@@ -17,9 +19,9 @@ public class Avaliacao {
 
     /**
      * Construtor da classe Avaliacao.
-     * Inicializa a estrutura de dados preparada para armazenar um máximo de 3 notas.
+     * Inicializa a estrutura de dados preparada para armazenar um máximo absoluto de 3 notas.
      *
-     * @param estudante         A instância do estudante avaliado.
+     * @param estudante         A instância do estudante a ser avaliado.
      * @param unidadeCurricular A unidade curricular correspondente à avaliação.
      * @param anoAvaliacao      O ano letivo (civil) em que ocorre a avaliação.
      */
@@ -27,39 +29,41 @@ public class Avaliacao {
         this.estudante = estudante;
         this.unidadeCurricular = unidadeCurricular;
         this.anoAvaliacao = anoAvaliacao;
-        this.resultadosAvaliacoes = new double[3]; // Limite fixo estrutural de 3 avaliações
+
+        // O limite estrutural máximo do sistema para qualquer UC é de 3 avaliações.
+        // O limite real de cada UC é gerido pela variável 'numAvaliacoes' da própria UnidadeCurricular.
+        this.resultadosAvaliacoes = new double[3];
         this.totalAvaliacoesLancadas = 0;
     }
 
     // ---------- GETTERS ----------
 
     public Estudante getEstudante() { return estudante; }
-
     public UnidadeCurricular getUnidadeCurricular() { return unidadeCurricular; }
 
     /**
-     * @return A unidade curricular (método mantido para garantir a retrocompatibilidade com versões anteriores).
+     * @return A unidade curricular (método auxiliar mantido para garantir a compatibilidade com a classe Pauta/Relatórios).
      */
     public UnidadeCurricular getUc() { return unidadeCurricular; }
 
     public int getAnoAvaliacao() { return anoAvaliacao; }
-
     public double[] getResultadosAvaliacoes() { return resultadosAvaliacoes; }
-
     public int getTotalAvaliacoesLancadas() { return totalAvaliacoesLancadas; }
 
-    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
+
+    // ---------- MÉTODOS DE LÓGICA DE NEGÓCIO (MODEL) ----------
 
     /**
-     * Adiciona um novo resultado (nota) ao histórico de avaliações do aluno nesta UC.
-     * O sistema permite o lançamento de um máximo de 3 notas por cada bloco de avaliação.
+     * Adiciona um novo resultado (nota parcial) ao histórico de avaliações do aluno nesta UC.
+     * Regra de Negócio: O aluno não pode ter mais notas lançadas do que o limite estipulado
+     * pelo Docente na própria Unidade Curricular (entre 1 e 3 avaliações).
      *
-     * @param nota O valor da avaliação a registar.
-     * @return true se a nota foi adicionada com sucesso; false se o limite máximo de notas já foi atingido.
+     * @param nota O valor da avaliação parcial a registar.
+     * @return true se a nota foi adicionada com sucesso; false se o limite de notas da UC já foi atingido.
      */
     public boolean adicionarResultado(double nota) {
-        // Valida se ainda existe espaço no array antes de registar a nota
-        if (totalAvaliacoesLancadas < resultadosAvaliacoes.length) {
+        // Valida simultaneamente o espaço no array e o limite definido ativamente pela UC
+        if (totalAvaliacoesLancadas < unidadeCurricular.getNumAvaliacoes() && totalAvaliacoesLancadas < resultadosAvaliacoes.length) {
             resultadosAvaliacoes[totalAvaliacoesLancadas] = nota;
             totalAvaliacoesLancadas++;
             return true;
@@ -68,19 +72,19 @@ public class Avaliacao {
     }
 
     /**
-     * Calcula a média aritmética das notas que já foram registadas nesta avaliação.
+     * Calcula a média aritmética simples das notas parciais que já foram efetivamente registadas nesta avaliação.
      *
-     * @return O valor da média calculada, ou 0.0 se não existirem avaliações lançadas.
+     * @return O valor da média calculada, ou 0.0 se ainda não existirem avaliações lançadas.
      */
     public double calcularMedia() {
-        // Interrompe o cálculo caso o contador seja zero, prevenindo a ocorrência de divisão por zero
+        // Interrompe o cálculo caso o contador seja zero, prevenindo a ocorrência de divisão por zero (Erro matemático 'NaN')
         if (totalAvaliacoesLancadas == 0) {
             return 0.0;
         }
 
         double soma = 0;
 
-        // Itera exclusivamente sobre as notas efetivamente lançadas, ignorando as posições nulas do array
+        // Itera exclusivamente sobre as notas que já foram lançadas, ignorando as posições vazias (0.0) do array
         for (int i = 0; i < totalAvaliacoesLancadas; i++) {
             soma += resultadosAvaliacoes[i];
         }

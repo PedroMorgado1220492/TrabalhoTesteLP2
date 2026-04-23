@@ -1,6 +1,7 @@
 import controller.MainController;
 import view.MainView;
 import model.dal.RepositorioDados;
+import model.dal.ImportadorCSV;   // <-- import necessário
 
 /**
  * Classe principal (Entry Point) do Sistema de Gestão Académica ISSMF.
@@ -12,7 +13,7 @@ public class Main {
 
     /**
      * Método principal que serve de gatilho para a execução do programa.
-     * * @param args Argumentos da linha de comandos (não utilizados).
+     * @param args Argumentos da linha de comandos (não utilizados).
      */
     public static void main(String[] args) {
 
@@ -25,10 +26,14 @@ public class Main {
         // 2. Instanciação do MODEL (Camada de Dados - Repositório em Memória)
         RepositorioDados repositorio = new RepositorioDados();
 
-        // 3. Instanciação do CONTROLLER (Liga a View ao Model)
+        // 3. Carregar o ano atual persistido
+        int ano = ImportadorCSV.importarAno("bd/ano.csv");
+        repositorio.setAnoAtual(ano);
+
+        // 4. Instanciação do CONTROLLER (Liga a View ao Model)
         MainController mc = new MainController(view, repositorio);
 
-        // 4. Início do ciclo de vida do sistema
+        // 5. Início do ciclo de vida do sistema
         mc.iniciarSistema();
     }
 }

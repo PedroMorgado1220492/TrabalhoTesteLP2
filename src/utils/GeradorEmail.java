@@ -30,4 +30,15 @@ public class GeradorEmail {
     public static String gerarEmailDocente(String sigla) {
         return sigla.toLowerCase() + "@issmf.ipp.pt";
     }
+
+    /**
+     * Gera automaticamente um endereço de email institucional para um Gestor (Backoffice).
+     * O formato gerado segue o padrão: "backoffice_" + nome (em minúsculas e sem espaços nas extremidades) + "@issmf.ipp.pt".
+     * * @param nome O nome do Gestor a ser utilizado na construção do email.
+     * @return Uma {@code String} contendo o endereço de email gerado (ex: backoffice_joao@issmf.ipp.pt).
+     */
+    public static String gerarEmailGestor(String nome) {
+        return "backoffice_" + nome.trim().toLowerCase() + "@issmf.ipp.pt";
+    }
+
 }

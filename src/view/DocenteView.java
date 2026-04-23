@@ -6,178 +6,167 @@ import model.bll.UnidadeCurricular;
 
 /**
  * Interface de utilizador (View) dedicada ao perfil de Docente.
- * Gere toda a interação relacionada com a gestão de pautas, lançamento de notas,
- * consulta de dados profissionais e estatísticas de lecionação.
+ * No padrão MVC, esta classe é responsável exclusivamente pela apresentação de dados
+ * e captura de inputs brutos. Gere a interação relacionada com a gestão de pautas,
+ * lançamento de classificações, consulta de dados profissionais e estatísticas.
  */
 public class DocenteView {
 
-    public DocenteView() {
+    /**
+     * Construtor por defeito da DocenteView.
+     */
+    public DocenteView() { }
 
-    }
 
-    // ---------- MENUS DE NAVEGAÇÃO ----------
+    // =========================================================
+    // 1. MENUS DE NAVEGAÇÃO
+    // =========================================================
 
     /**
      * Apresenta o menu principal da área docente.
-     * @return A opção inteira selecionada.
+     * @return A opção selecionada pelo utilizador.
      */
     public int mostrarMenuPrincipal() {
-        System.out.println("\n=== ÁREA DO DOCENTE ===");
+        System.out.println("\n========= ÁREA DO DOCENTE =========");
         System.out.println("1 - Ver Dados Pessoais e Profissionais");
         System.out.println("2 - Atualizar Dados de Perfil");
-        System.out.println("3 - Adicionar Avaliações");
-        System.out.println("4 - Consultar Estatísticas das UCs");
-        System.out.println("0 - Sair / Logout");
-        System.out.print("Opção: ");
-        return lerOpcaoInteira();
+        System.out.println("3 - Gestão de Avaliações e Pautas");
+        System.out.println("4 - Consultar Estatísticas de UCs");
+        System.out.println("0 - Sair (Logout)");
+        System.out.print("Escolha uma opção: ");
+        return utils.Consola.lerOpcaoMenu();
     }
 
     /**
-     * Menu para edição de dados demográficos do docente.
+     * Menu para edição de dados biográficos do docente.
      * @return A opção selecionada.
      */
     public int mostrarMenuAtualizarDados() {
         System.out.println("\n--- ATUALIZAR DADOS PESSOAIS ---");
-        System.out.println("1 - Alterar Nome");
+        System.out.println("1 - Alterar Nome Completo");
         System.out.println("2 - Alterar NIF");
         System.out.println("3 - Alterar Morada");
-        System.out.println("4 - Alterar Password");
+        System.out.println("4 - Alterar Palavra-passe");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
-        return lerOpcaoInteira();
-    }
-
-    /**
-     * Apresenta o submenu dedicado à gestão de avaliações.
-     */
-    public int mostrarMenuAvaliacoes() {
-        System.out.println("\n--- MENU AVALIAÇÕES ---");
-        System.out.println("1 - Lançar Nota Individual");
-        System.out.println("2 - Lançar Notas em Lote");
-        System.out.println("3 - Listar Avaliações da UC");
-        System.out.println("4 - Definir N.º de Momentos de Avaliação");
-        System.out.println("0 - Recuar");
-        System.out.print("Opção: ");
-
         return utils.Consola.lerOpcaoMenu();
     }
 
-    // ---------- INPUTS DE DADOS ----------
+    /**
+     * Apresenta o submenu dedicado à gestão de classificações.
+     */
+    public int mostrarMenuAvaliacoes() {
+        System.out.println("\n--- GESTÃO DE AVALIAÇÕES ---");
+        System.out.println("1 - Lançar Nota Individual");
+        System.out.println("2 - Lançar Notas em Lote (Turma Completa)");
+        System.out.println("3 - Visualizar Pauta da Disciplina");
+        System.out.println("4 - Definir Limite de Momentos de Avaliação");
+        System.out.println("0 - Recuar");
+        System.out.print("Opção: ");
+        return utils.Consola.lerOpcaoMenu();
+    }
+
+
+    // =========================================================
+    // 2. INPUTS DE DADOS (FORMULÁRIOS)
+    // =========================================================
 
     public String pedirNovoNome() {
-        return utils.Consola.lerString("Introduza o novo Nome e Sobrenome: ");
+        return utils.Consola.lerString("Novo Nome Completo: ");
     }
 
     public String pedirNovoNif() {
-        return utils.Consola.lerString("Introduza o novo NIF: ");
+        return utils.Consola.lerString("Novo NIF: ");
     }
 
     public String pedirNovaMorada() {
-        return utils.Consola.lerString("Introduza a nova Morada: ");
+        return utils.Consola.lerString("Nova Morada: ");
     }
 
     public String pedirPassAtual() {
-        return utils.Consola.lerString("Password Atual: ");
+        return utils.Consola.lerString("Palavra-passe Atual: ");
     }
 
     public String pedirNovaPass() {
-        return utils.Consola.lerString("Nova Password: ");
+        return utils.Consola.lerString("Nova Palavra-passe: ");
     }
 
     public String pedirConfirmacaoPass() {
-        return utils.Consola.lerString("Confirme Nova Password: ");
+        return utils.Consola.lerString("Confirme a Nova Palavra-passe: ");
     }
 
     /**
-     * Lista as UCs atribuídas ao docente para seleção.
+     * Solicita a seleção de uma UC da lista atribuída ao docente.
      */
     public int pedirUC(UnidadeCurricular[] ucs, int total) {
-        System.out.println("\n--- AS MINHAS UNIDADES CURRICULARES ---");
+        System.out.println("\n--- SELECIONAR UNIDADE CURRICULAR ---");
         for (int i = 0; i < total; i++) {
-            System.out.println((i + 1) + " - " + ucs[i].getNome() + " [" + ucs[i].getSigla() + "]");
+            System.out.printf("%d - [%s] %s\n", (i + 1), ucs[i].getSigla(), ucs[i].getNome());
         }
-        System.out.print("Escolha o número da UC: ");
-        return lerOpcaoInteira() - 1;
+        return utils.Consola.lerInt("Escolha o número da UC: ") - 1;
     }
 
     /**
-     * Lista os alunos inscritos numa UC para seleção individual.
+     * Solicita a seleção de um aluno da lista de inscritos.
      */
     public int pedirAluno(Estudante[] alunos, String nomeUC) {
-        System.out.println("\n--- ALUNOS INSCRITOS EM " + nomeUC + " ---");
+        System.out.println("\n--- LISTA DE ALUNOS: " + nomeUC + " ---");
         for (int i = 0; i < alunos.length; i++) {
-            System.out.println((i + 1) + " - " + alunos[i].getNome() + " (" + alunos[i].getNumeroMecanografico() + ")");
+            System.out.printf("%d - (%d) %s\n", (i + 1), alunos[i].getNumeroMecanografico(), alunos[i].getNome());
         }
-        System.out.print("Escolha o número do Aluno: ");
-        return lerOpcaoInteira() - 1;
+        return utils.Consola.lerInt("Escolha o número do Aluno: ") - 1;
     }
 
     /**
-     * Pede a nota para um aluno específico, indicando qual a avaliação (N1, N2 ou N3).
+     * Pede o valor da nota para um lançamento individual.
      */
     public String pedirNotaIndividual(String nome, int numAvaliacao, int maxAvaliacoes) {
-        return utils.Consola.lerString("Introduza a Nota (" + numAvaliacao + "/" + maxAvaliacoes + ") para " + nome + " [0.0 - 20.0] ou '/' para cancelar: ");
+        return utils.Consola.lerString(String.format("Nota [%d/%d] para %s (0-20) ou '/' p/ cancelar: ", numAvaliacao, maxAvaliacoes, nome));
     }
 
     /**
-     * Pede o numero de avaliações para a UC.
+     * Pede a definição do teto máximo de avaliações da UC.
      */
     public int pedirNovoNumAvaliacoes() {
-        return utils.Consola.lerInt("Introduza o novo número de avaliações (1 a 3): ");
+        return utils.Consola.lerInt("Defina o número de avaliações para esta UC (1 a 3): ");
     }
 
     /**
-     * Input específico para a pauta rápida (lote).
+     * Captura o input durante o lançamento sequencial (lote).
      */
     public String inputNotaLote(int atual, int total, String nome, int numAvaliacao, int maxAvaliacoes) {
-        return utils.Consola.lerString("[" + atual + "/" + total + "] Nota para " + nome + " (" + numAvaliacao + "/" + maxAvaliacoes + ") ou '/' para cancelar: ");
+        return utils.Consola.lerString(String.format("[%d/%d] %s (N%d/%d) ou '/' p/ cancelar: ", atual, total, nome, numAvaliacao, maxAvaliacoes));
     }
 
-    /**
-     * Método auxiliar para garantir a leitura segura de inteiros.
-     */
-    private int lerOpcaoInteira() {
-        return utils.Consola.lerOpcaoMenu();
-    }
 
-    // ---------- EXIBIÇÃO E SELEÇÃO DE DADOS ----------
+    // =========================================================
+    // 3. EXIBIÇÃO DE DADOS E RELATÓRIOS
+    // =========================================================
 
     /**
-     * Imprime a ficha biográfica do docente.
+     * Imprime a ficha detalhada do docente.
      */
     public void mostrarFichaDocente(Docente d) {
-        System.out.println("\n--- FICHA DE DOCENTE ---");
+        System.out.println("\n--------- FICHA PROFISSIONAL ---------");
         System.out.println("Sigla Institucional : " + d.getSigla());
         System.out.println("Nome Completo       : " + d.getNome());
         System.out.println("Email Institucional : " + d.getEmail());
+        System.out.println("Email Pessoal       : " + d.getEmailPessoal());
         System.out.println("NIF                 : " + d.getNif());
         System.out.println("Morada de Residência: " + d.getMorada());
         System.out.println("Data de Nascimento  : " + d.getDataNascimento());
-        System.out.println("------------------------");
+        System.out.println("--------------------------------------");
     }
-
-    // ---------- MÉTODOS PARA LANÇAMENTO EM LOTE ----------
-
-    public void cabecalhoLote(String uc) {
-        System.out.println("\n--- LANÇAMENTO DE PAUTA EM LOTE: " + uc + " ---");
-        System.out.println("(Pressione ENTER sem digitar nada para saltar um aluno)");
-    }
-
-    public void resumoLote(int totalLancadas) {
-        System.out.println(">> Processamento concluído: " + totalLancadas + " notas registadas no sistema.");
-    }
-
-    // ---------- MÉTODOS PARA AS ESTATISTICAS ----------
 
     /**
-     * Imprime as estatísticas de forma visual para o docente.
+     * Imprime um relatório visual das estatísticas de desempenho de uma turma.
      */
     public void mostrarEstatisticas(String siglaUC, double[] stats) {
         int inscritos = (int) stats[0];
         int avaliados = (int) stats[1];
 
         if (avaliados == 0) {
-            System.out.println(">> Ainda não existem avaliações lançadas para os " + inscritos + " alunos inscritos nesta UC.");
+            System.out.println("\n>> Informação: Não existem notas lançadas para os " + inscritos + " inscritos em " + siglaUC + ".");
             return;
         }
 
@@ -201,46 +190,46 @@ public class DocenteView {
         System.out.println("======================================================");
     }
 
-    // Adiciona uma opção ao Menu Principal (se ainda não existir)
-    public void mostrarEstatisticasFormatadas(String estatisticas) { System.out.println("\n" + estatisticas); }
+    public void mostrarCabecalhoPauta(String nomeUc) {
+        System.out.println("\n========== PAUTA DE AVALIAÇÕES: " + nomeUc + " ==========");
+    }
 
-    public void mostrarCabecalhoPauta(String nomeUc) { System.out.println("\n=== PAUTA DE AVALIAÇÕES: " + nomeUc + " ==="); }
+    public void mostrarAlunoNaPauta(int numMec, String nome, int anoFrequencia, String notasStr) {
+        System.out.printf("Num: %-8d | %-20s | %dº Ano | Notas: [%s]\n", numMec, nome, anoFrequencia, notasStr);
+    }
 
-    // Usado pela funcionalidade de Listar Avaliações
-    public void mostrarAlunoNaPauta(int numMec, String nome, int anoFrequencia, String notasStr) { System.out.println("Num: " + numMec + " | Nome: " + nome + " | Ano: " + anoFrequencia + "º | Notas: " + notasStr); }
 
-    // ---------- FEEDBACK E MENSAGENS DE PAUTA ----------
+    // =========================================================
+    // 4. FEEDBACK E MENSAGENS AO UTILIZADOR
+    // =========================================================
 
-    public void msgSaida() { System.out.println(">> A terminar sessão de Docente..."); }
+    public void cabecalhoLote(String uc) {
+        System.out.println("\n--- LANÇAMENTO EM LOTE: " + uc + " ---");
+        System.out.println("(Pressione ENTER sem valor para saltar aluno)");
+    }
 
-    public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inválida."); }
+    public void resumoLote(int totalLancadas) {
+        System.out.println(">> Processamento concluído: " + totalLancadas + " notas registadas.");
+    }
 
-    public void msgSucesso() { System.out.println(">> Operação concluída com êxito."); }
+    public void mostrarCancelamento(String menuDestino) {
+        System.out.println("\n>> Operação cancelada. A regressar ao menu " + menuDestino + "...");
+    }
 
-    public void msgErroFormato() { System.out.println(">> Erro: O formato do dado introduzido é inválido."); }
-
-    public void msgErroNotaInvalida() { System.out.println(">> Erro: A classificação deve situar-se entre 0.0 e 20.0."); }
-
-    public void msgErroLimiteNotas() { System.out.println(">> Erro: O estudante já atingiu o limite máximo de 3 avaliações nesta UC."); }
-
-    public void msgErroPassIncorreta() { System.out.println(">> Erro: A password atual não coincide com os nossos registos."); }
-
-    public void msgErroPassNaoCoincidem() { System.out.println(">> Erro: A nova password e a confirmação não são idênticas."); }
-
-    public void msgAvisoSemUCs() { System.out.println(">> AVISO: Atualmente não possui Unidades Curriculares atribuídas."); }
-
-    public void msgAvisoTurmaVazia() { System.out.println(">> AVISO: Não existem alunos inscritos nesta turma."); }
-
-    public void msgErroAlunoInativo() { System.out.println(">> Erro: O estudante está inativo. Não é possível lançar avaliações."); }
-
-    public void msgErroNumAvaliacoes() { System.out.println(">> Erro: O número de momentos de avaliação deve situar-se entre 1 e 3."); }
-
-    public void msgErroLimiteNotas(int maxAvaliacoes) { System.out.println(">> Erro: O estudante já atingiu o limite de " + maxAvaliacoes + " avaliações definido para esta UC.");}
-
-    // ---------- FEEDBACK DE PAUTAS E LISTAGENS ----------
-
-    public void msgPautaGeradaSucesso(String caminhoTxt) { System.out.println(">> Ficheiro de Pauta gerado em: " + caminhoTxt); }
-    public void msgErroPauta() { System.out.println(">> Erro: Ocorreu um problema ao gerar o ficheiro TXT da pauta."); }
-    public void msgAvisoSemAlunosInscritos() { System.out.println(">> Aviso: Não existem alunos inscritos nesta Unidade Curricular no ano letivo atual."); }
-    public void msgNotificacaoEnviada() { System.out.println(">> Notificação enviada por e-mail para o estudante."); }
+    public void msgSaida() { System.out.println(">> Sessão terminada. Até breve!"); }
+    public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inexistente."); }
+    public void msgSucesso() { System.out.println(">> Operação concluída com sucesso."); }
+    public void msgErroFormato() { System.out.println(">> Erro: Formato de dados inválido."); }
+    public void msgErroNotaInvalida() { System.out.println(">> Erro: A nota deve estar entre 0.0 e 20.0."); }
+    public void msgErroPassIncorreta() { System.out.println(">> Erro: A palavra-passe atual está incorreta."); }
+    public void msgErroPassNaoCoincidem() { System.out.println(">> Erro: As novas palavras-passe não coincidem."); }
+    public void msgAvisoSemUCs() { System.out.println(">> Aviso: Não tem unidades curriculares atribuídas."); }
+    public void msgAvisoTurmaVazia() { System.out.println(">> Aviso: Esta turma não tem alunos inscritos."); }
+    public void msgErroAlunoInativo() { System.out.println(">> Erro: Aluno inativo. Lançamento bloqueado."); }
+    public void msgErroNumAvaliacoes() { System.out.println(">> Erro: O limite deve ser entre 1 e 3."); }
+    public void msgErroLimiteNotas(int max) { System.out.println(">> Erro: Limite de " + max + " notas atingido para este aluno.");}
+    public void msgPautaGeradaSucesso(String path) { System.out.println(">> Pauta exportada com sucesso para: " + path); }
+    public void msgErroPauta() { System.out.println(">> Erro ao gerar o ficheiro físico da pauta."); }
+    public void msgAvisoSemAlunosInscritos() { System.out.println(">> Aviso: Sem alunos inscritos no presente ano letivo."); }
+    public void msgNotificacaoEnviada() { System.out.println(">> Estudante notificado por e-mail automaticamente."); }
 }

@@ -4,15 +4,16 @@ import model.bll.*;
 
 /**
  * Repositório central de dados em memória (In-Memory Database).
- * Concentra todas as instâncias vivas da aplicação (Utilizadores, Cursos, UCs, etc.)
- * e fornece os métodos essenciais de pesquisa, validação de unicidade e transição de estado global.
+ * Atua como a camada de persistência volátil da aplicação. Concentra todas as coleções
+ * de instâncias (Utilizadores, Cursos, UCs, etc.) e fornece os métodos fundamentais de
+ * pesquisa, validação de unicidade e algoritmos de transição de estado global.
  */
 public class RepositorioDados {
 
-    // ---------- ATRIBUTOS ----------
+    // ---------- ATRIBUTOS DE ESTADO GLOBAL ----------
     private int anoAtual;
 
-    // Coleções (Arrays de tamanho fixo para controlo de memória estática)
+    // Coleções (Arrays de tamanho fixo para simular restrições de memória estática)
     private Estudante[] estudantes;
     private int totalEstudantes;
 
@@ -31,15 +32,15 @@ public class RepositorioDados {
     private UnidadeCurricular[] ucs;
     private int totalUcs;
 
+
     // ---------- CONSTRUTOR ----------
 
     /**
      * Construtor da classe RepositorioDados.
-     * Inicializa a estrutura da base de dados e define o ano letivo de arranque.
-     * Os tamanhos dos arrays representam os limites máximos suportados pelo sistema.
+     * Inicializa as estruturas de dados preparendas para os limites operacionais do sistema.
      */
     public RepositorioDados() {
-        this.anoAtual = 2026;
+        this.anoAtual = ImportadorCSV.importarAno("bd/ano.csv");
 
         this.estudantes = new Estudante[1000];
         this.totalEstudantes = 0;
@@ -60,237 +61,170 @@ public class RepositorioDados {
         this.totalUcs = 0;
     }
 
-    // ---------- GETTERS ----------
+
+    // ---------- GETTERS DE COLEÇÃO ----------
 
     public int getAnoAtual() { return anoAtual; }
-
     public Estudante[] getEstudantes() { return estudantes; }
     public int getTotalEstudantes() { return totalEstudantes; }
-
     public Gestor[] getGestores() { return gestores; }
     public int getTotalGestores() { return totalGestores; }
-
     public Docente[] getDocentes() { return docentes; }
     public int getTotalDocentes() { return totalDocentes; }
-
     public Departamento[] getDepartamentos() { return departamentos; }
     public int getTotalDepartamentos() { return totalDepartamentos; }
-
     public Curso[] getCursos() { return cursos; }
     public int getTotalCursos() { return totalCursos; }
-
     public UnidadeCurricular[] getUcs() { return ucs; }
     public int getTotalUcs() { return totalUcs; }
 
-    // ---------- MÉTODOS DE ADIÇÃO (CRUD BASE) ----------
 
+    // =========================================================
+    // 1. MÉTODOS DE ESCRITA (CRUD BASE)
+    // =========================================================
+    /**
+     * Adiciona um estudante ao repositório, verificando previamente se já existe
+     * outro com o mesmo número mecanográfico ou o mesmo email.
+     *
+     * @param estudante O estudante a ser adicionado.
+     * @return {@code true} se o estudante foi adicionado com sucesso;
+     *         {@code false} se já existir um estudante duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarEstudante(Estudante estudante) {
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null &&
+                    (estudantes[i].getNumeroMecanografico() == estudante.getNumeroMecanografico() ||
+                            estudantes[i].getEmail().equals(estudante.getEmail()))) {
+                return false;
+            }
+        }
         if (totalEstudantes < estudantes.length) {
-            estudantes[totalEstudantes] = estudante;
-            totalEstudantes++;
+            estudantes[totalEstudantes++] = estudante;
             return true;
         }
         return false;
     }
-
+    /**
+     * Adiciona um gestor ao repositório, verificando previamente se já existe
+     * outro com o mesmo email.
+     *
+     * @param gestor O gestor a ser adicionado.
+     * @return {@code true} se o gestor foi adicionado com sucesso;
+     *         {@code false} se já existir um gestor duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarGestor(Gestor gestor) {
-        if (totalGestores < gestores.length) {
-            gestores[totalGestores] = gestor;
-            totalGestores++;
-            return true;
-        }
-        return false;
-    }
-
-    public boolean adicionarDocente(Docente docente) {
-        if (totalDocentes < docentes.length) {
-            docentes[totalDocentes] = docente;
-            totalDocentes++;
-            return true;
-        }
-        return false;
-    }
-
-    public boolean adicionarDepartamento(Departamento dep) {
-        if (totalDepartamentos < departamentos.length) {
-            departamentos[totalDepartamentos] = dep;
-            totalDepartamentos++;
-            return true;
-        }
-        return false;
-    }
-
-    public boolean adicionarCurso(Curso curso) {
-        if (totalCursos < cursos.length) {
-            cursos[totalCursos] = curso;
-            totalCursos++;
-            return true;
-        }
-        return false;
-    }
-
-    public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
-        if (totalUcs < ucs.length) {
-            ucs[totalUcs] = uc;
-            totalUcs++;
-            return true;
-        }
-        return false;
-    }
-
-    // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
-
-    /**
-     * Incrementa o ano civil do sistema e despacha o comando de fim de ciclo
-     * para toda a árvore de estudantes em memória.
-     */
-    public void avancarAno() {
-        this.anoAtual++;
-
-        // Itera pelo corpo estudantil, ativando a rotina de encerramento, arquivo e matrículas
-        for (int i = 0; i < totalEstudantes; i++) {
-            Estudante est = estudantes[i];
-            if (est != null && est.isAtivo()) {
-                est.processarFimDeAno(this.anoAtual);
-            }
-        }
-
-    }
-
-    /**
-     * Verifica as credenciais submetidas no Login.
-     * Itera sequencialmente pelos diferentes perfis até encontrar correspondência.
-     *
-     * @param email    Email introduzido pelo utilizador.
-     * @param password Password introduzida (já em formato hash).
-     * @return O objeto polimórfico Utilizador (que fará o downcast mais tarde) ou null se as credenciais falharem.
-     */
-    public Utilizador autenticar(String email, String password) {
-        // Pesquisa em Gestores
         for (int i = 0; i < totalGestores; i++) {
-            if (gestores[i].getEmail().equals(email) && gestores[i].getPassword().equals(password)) {
-                return gestores[i];
+            if (gestores[i] != null && gestores[i].getEmail().equals(gestor.getEmail())) {
+                return false;
             }
         }
-        // Pesquisa em Docentes
-        for (int i = 0; i < totalDocentes; i++) {
-            if (docentes[i].getEmail().equals(email) && docentes[i].getPassword().equals(password)) {
-                return docentes[i];
-            }
+        if (totalGestores < gestores.length) {
+            gestores[totalGestores++] = gestor;
+            return true;
         }
-        // Pesquisa em Estudantes
-        for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i].getEmail().equals(email) && estudantes[i].getPassword().equals(password)) {
-                return estudantes[i];
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Gera dinamicamente um Número Mecanográfico para um novo aluno.
-     * Formato: Prefixo do Ano (YYYY) + Sufixo Sequencial de Inscrições nesse ano (XXXX).
-     * Exemplo prático: O primeiro matriculado de 2026 recebe 20260001.
-     *
-     * @param anoInscricao O ano em que a matrícula ocorre.
-     * @return O inteiro correspondente à matrícula mecanográfica.
-     */
-    public int gerarNumeroMecanografico(int anoInscricao) {
-        int contadorAno = 0;
-
-        // Contabiliza quantos alunos já foram inseridos neste exato ano civil
-        for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i] != null && estudantes[i].getAnoPrimeiraInscricao() == anoInscricao) {
-                contadorAno++;
-            }
-        }
-
-        int numeroSequencial = contadorAno + 1; // Incremento para a nova vaga
-
-        // Multiplicação por 10000 para reservar 4 casas decimais para o sequencial
-        return (anoInscricao * 10000) + numeroSequencial;
-    }
-
-    /**
-     * Extrai uma listagem exata dos estudantes matriculados numa dada Unidade Curricular.
-     *
-     * @param siglaUC A sigla a pesquisar.
-     * @return Um vetor ajustado (sem posições null) com os alunos inscritos.
-     */
-    public Estudante[] obterEstudantesPorUC(String siglaUC) {
-        int contador = 0;
-
-        // 1ª Passagem: Sondagem do tamanho necessário para o vetor resultante
-        for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i] != null && estudantes[i].estaInscrito(siglaUC)) contador++;
-        }
-
-        // 2ª Passagem: Alocação exata e extração dos objetos
-        Estudante[] inscritos = new Estudante[contador];
-        int index = 0;
-        for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i] != null && estudantes[i].estaInscrito(siglaUC)) {
-                inscritos[index++] = estudantes[i];
-            }
-        }
-        return inscritos;
-    }
-
-    // ---------- MÉTODOS DE VERIFICAÇÃO E INTEGRIDADE (UNICIDADE) ----------
-
-    public boolean existeNif(String nif) {
-        for (int i = 0; i < totalGestores; i++) { if (gestores[i] != null && gestores[i].getNif().equals(nif)) return true; }
-        for (int i = 0; i < totalDocentes; i++) { if (docentes[i] != null && docentes[i].getNif().equals(nif)) return true; }
-        for (int i = 0; i < totalEstudantes; i++) { if (estudantes[i] != null && estudantes[i].getNif().equals(nif)) return true; }
         return false;
     }
-
-    public boolean existeSiglaDepartamento(String sigla) {
+    /**
+     * Adiciona um docente ao repositório, verificando previamente se já existe
+     * outro com a mesma sigla ou o mesmo email.
+     *
+     * @param docente O docente a ser adicionado.
+     * @return {@code true} se o docente foi adicionado com sucesso;
+     *         {@code false} se já existir um docente duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
+    public boolean adicionarDocente(Docente docente) {
+        // Verifica duplicados por sigla ou email
+        for (int i = 0; i < totalDocentes; i++) {
+            if (docentes[i] != null &&
+                    (docentes[i].getSigla().equals(docente.getSigla()) ||
+                            docentes[i].getEmail().equals(docente.getEmail()))) {
+                return false;
+            }
+        }
+        if (totalDocentes < docentes.length) {
+            docentes[totalDocentes++] = docente;
+            return true;
+        }
+        return false;
+    }
+    /**
+     * Adiciona um departamento ao repositório, verificando previamente se já existe
+     * outro com a mesma sigla.
+     *
+     * @param dep O departamento a ser adicionado.
+     * @return {@code true} se o departamento foi adicionado com sucesso;
+     *         {@code false} se já existir um departamento duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
+    public boolean adicionarDepartamento(Departamento dep) {
         for (int i = 0; i < totalDepartamentos; i++) {
-            if (departamentos[i] != null && departamentos[i].getSigla().equalsIgnoreCase(sigla)) return true;
+            if (departamentos[i] != null && departamentos[i].getSigla().equals(dep.getSigla())) {
+                return false;
+            }
+        }
+        if (totalDepartamentos < departamentos.length) {
+            departamentos[totalDepartamentos++] = dep;
+            return true;
         }
         return false;
     }
-
-    public boolean existeSiglaCurso(String sigla) {
+    /**
+     * Adiciona um curso ao repositório, verificando previamente se já existe
+     * outro com a mesma sigla.
+     *
+     * @param curso O curso a ser adicionado.
+     * @return {@code true} se o curso foi adicionado com sucesso;
+     *         {@code false} se já existir um curso duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
+    public boolean adicionarCurso(Curso curso) {
         for (int i = 0; i < totalCursos; i++) {
-            if (cursos[i] != null && cursos[i].getSigla().equalsIgnoreCase(sigla)) return true;
+            if (cursos[i] != null && cursos[i].getSigla().equals(curso.getSigla())) {
+                return false;
+            }
+        }
+        if (totalCursos < cursos.length) {
+            cursos[totalCursos++] = curso;
+            return true;
         }
         return false;
     }
-
-    public boolean existeSiglaUC(String sigla) {
+    /**
+     * Adiciona uma unidade curricular ao repositório, verificando previamente se já existe
+     * outra com a mesma sigla.
+     *
+     * @param uc A unidade curricular a ser adicionada.
+     * @return {@code true} se a UC foi adicionada com sucesso;
+     *         {@code false} se já existir uma UC duplicada ou se o limite
+     *         da capacidade foi atingido.
+     */
+    public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
         for (int i = 0; i < totalUcs; i++) {
-            if (ucs[i] != null && ucs[i].getSigla().equalsIgnoreCase(sigla)) return true;
+            if (ucs[i] != null && ucs[i].getSigla().equals(uc.getSigla())) {
+                return false;
+            }
+        }
+        if (totalUcs < ucs.length) {
+            ucs[totalUcs++] = uc;
+            return true;
         }
         return false;
     }
-
-    public boolean existeSiglaDocente(String sigla) {
-        for (int i = 0; i < totalDocentes; i++) {
-            if (docentes[i] != null && docentes[i].getSigla().equalsIgnoreCase(sigla)) return true;
-        }
-        return false;
-    }
-
-    // ---------- MANIPULAÇÃO COMPLEXA DA ÁRVORE ----------
 
     /**
-     * Remove fisicamente um estudante do repositório através de uma compactação do vetor.
-     * Utilizado para desativar alunos quando o "Numerus Clausus" mínimo do curso não é atingido.
-     *
-     * @param numMec O número mecanográfico do aluno.
-     * @return true se a remoção for sucedida; false se o aluno não for encontrado.
+     * Remove fisicamente um estudante do repositório através de uma compactação do vetor (Shift-Left).
+     * @param numMec O número mecanográfico do aluno a remover.
+     * @return true se a remoção for sucedida; false se o aluno não existir.
      */
     public boolean removerEstudante(int numMec) {
         for (int i = 0; i < totalEstudantes; i++) {
             if (estudantes[i].getNumeroMecanografico() == numMec) {
-                // Procedimento de Shift-Left: Desloca a cauda do array uma posição à esquerda
                 for (int j = i; j < totalEstudantes - 1; j++) {
                     estudantes[j] = estudantes[j + 1];
                 }
-                // Anula a última posição para permitir a libertação de memória (Garbage Collection)
                 estudantes[totalEstudantes - 1] = null;
                 totalEstudantes--;
                 return true;
@@ -299,43 +233,245 @@ public class RepositorioDados {
         return false;
     }
 
+
+    // =========================================================
+    // 2. MÉTODOS DE AUTENTICAÇÃO E LOGARITMOS DE ID
+    // =========================================================
+
     /**
-     * Remove um Gestor do sistema através do seu email.
-     * @param email O email do gestor a ser removido.
-     * @return true se removido com sucesso, false caso contrário.
+     * Valida as credenciais de acesso contra todas as coleções de utilizadores.
+     * @return O objeto Utilizador autenticado (Polimorfismo) ou null.
      */
-    public boolean removerGestor(String email) {
+    public Utilizador autenticar(String email, String password) {
         for (int i = 0; i < totalGestores; i++) {
-            if (gestores[i] != null && gestores[i].getEmail().equalsIgnoreCase(email)) {
-                // Desloca o resto do array uma posição à esquerda para não deixar buracos (null)
-                for (int j = i; j < totalGestores - 1; j++) {
-                    gestores[j] = gestores[j + 1];
-                }
-                gestores[totalGestores - 1] = null;
-                totalGestores--;
-                return true;
-            }
+            if (gestores[i].getEmail().equals(email) && gestores[i].getPassword().equals(password)) return gestores[i];
         }
+        for (int i = 0; i < totalDocentes; i++) {
+            if (docentes[i].getEmail().equals(email) && docentes[i].getPassword().equals(password)) return docentes[i];
+        }
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i].getEmail().equals(email) && estudantes[i].getPassword().equals(password)) return estudantes[i];
+        }
+        return null;
+    }
+
+    /**
+     * Algoritmo de geração de ID: Prefixo do Ano (YYYY) + Sufixo Sequencial (XXXX).
+     */
+    public int gerarNumeroMecanografico(int anoInscricao) {
+        int contadorAno = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].getAnoPrimeiraInscricao() == anoInscricao) contadorAno++;
+        }
+        return (anoInscricao * 10000) + (contadorAno + 1);
+    }
+
+    /**
+     * Gera uma sigla única para um docente (Letra Inicial + 2 Caracteres Aleatórios).
+     */
+    public String gerarSiglaDocente(String nome) {
+        char prefixo = nome.trim().toUpperCase().charAt(0);
+        String abc = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        while (true) {
+            String sigla = "" + prefixo + abc.charAt((int)(Math.random() * 26)) + abc.charAt((int)(Math.random() * 26));
+            if (!existeSiglaDocente(sigla)) return sigla;
+        }
+    }
+
+
+    // =========================================================
+    // 3. QUERIES DE PESQUISA E FILTRAGEM (DATA QUERIES)
+    // =========================================================
+
+    /**
+     * Filtra e devolve os cursos que estão aptos a receber novas matrículas.
+     */
+    public Curso[] obterCursosDisponiveisParaMatricula() {
+
+        if (cursos == null || totalCursos == 0) {
+            return new Curso[0];
+        }
+
+        Curso[] ativos = new Curso[totalCursos];
+        int cont = 0;
+        for (int i = 0; i < totalCursos; i++) {
+            if (cursos[i] != null && cursos[i].isAtivo() && cursos[i].temEstruturaValida()) ativos[cont++] = cursos[i];
+        }
+        Curso[] resultado = new Curso[cont];
+        System.arraycopy(ativos, 0, resultado, 0, cont);
+        return resultado;
+    }
+
+    /**
+     * Devolve todos os estudantes inscritos numa UC específica.
+     */
+    public Estudante[] obterEstudantesPorUC(String siglaUC) {
+        int cont = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].estaInscrito(siglaUC)) cont++;
+        }
+        Estudante[] resultado = new Estudante[cont];
+        int idx = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].estaInscrito(siglaUC)) resultado[idx++] = estudantes[i];
+        }
+        return resultado;
+    }
+
+    public Curso obterCursoPorSigla(String sigla) {
+        for (int i = 0; i < totalCursos; i++) {
+            if (cursos[i].getSigla().equalsIgnoreCase(sigla)) return cursos[i];
+        }
+        return null;
+    }
+
+    public UnidadeCurricular obterUCPorSigla(String sigla) {
+        for (int i = 0; i < totalUcs; i++) {
+            if (ucs[i].getSigla().equalsIgnoreCase(sigla)) return ucs[i];
+        }
+        return null;
+    }
+
+    public Estudante obterEstudantePorNumMec(int numMec) {
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i].getNumeroMecanografico() == numMec) return estudantes[i];
+        }
+        return null;
+    }
+
+    public Docente obterDocentePorSigla(String sigla) {
+        for (int i = 0; i < totalDocentes; i++) {
+            if (docentes[i].getSigla().equalsIgnoreCase(sigla)) return docentes[i];
+        }
+        return null;
+    }
+
+
+    // =========================================================
+    // 4. MÉTODOS DE INTEGRIDADE E TRANSIÇÃO GLOBAL
+    // =========================================================
+
+    public boolean existeNif(String nif) {
+        for (int i = 0; i < totalGestores; i++) { if (gestores[i].getNif().equals(nif)) return true; }
+        for (int i = 0; i < totalDocentes; i++) { if (docentes[i].getNif().equals(nif)) return true; }
+        for (int i = 0; i < totalEstudantes; i++) { if (estudantes[i].getNif().equals(nif)) return true; }
+        return false;
+    }
+
+    public boolean existeSiglaDepartamento(String sigla) {
+        for (int i = 0; i < totalDepartamentos; i++) { if (departamentos[i].getSigla().equalsIgnoreCase(sigla)) return true; }
+        return false;
+    }
+
+    public boolean existeSiglaCurso(String sigla) {
+        for (int i = 0; i < totalCursos; i++) { if (cursos[i].getSigla().equalsIgnoreCase(sigla)) return true; }
+        return false;
+    }
+
+    public boolean existeSiglaUC(String sigla) {
+        for (int i = 0; i < totalUcs; i++) { if (ucs[i].getSigla().equalsIgnoreCase(sigla)) return true; }
+        return false;
+    }
+
+    public boolean existeSiglaDocente(String sigla) {
+        for (int i = 0; i < totalDocentes; i++) { if (docentes[i].getSigla().equalsIgnoreCase(sigla)) return true; }
         return false;
     }
 
     /**
-     * Efetua uma busca transversal nas coleções para devolver um utilizador genérico pelo seu email.
+     * Incrementa o ano letivo institucional e despoleta o processamento de fim de ciclo
+     * em todos os estudantes ativos (transição de ano, arquivo e novas dívidas).
+     */
+    public void avancarAno() {
+        this.anoAtual++;
+        // processa alunos, etc.
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null && estudantes[i].isAtivo()) {
+                estudantes[i].processarFimDeAno(this.anoAtual);
+            }
+        }
+        ExportadorCSV.exportarAno("bd", this.anoAtual);
+    }
+    /**
+     * Define o ano letivo corrente do sistema.
+     * Normalmente utilizado durante o arranque da aplicação para restaurar o
+     * ano persistido em ficheiro.
+     *
+     * @param anoAtual O novo ano letivo (ex: 2026).
+     */
+    public void setAnoAtual(int anoAtual) {
+        this.anoAtual = anoAtual;
+    }
+
+    public int contarInscritosPrimeiroAno(String siglaCurso, int ano) {
+        int conta = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante e = estudantes[i];
+            if (e != null && e.getCurso() != null && e.getCurso().getSigla().equalsIgnoreCase(siglaCurso) && e.getAnoPrimeiraInscricao() == ano) conta++;
+        }
+        return conta;
+    }
+
+    public void anularMatriculasPrimeiroAno(String siglaCurso, int ano) {
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante e = estudantes[i];
+            if (e != null && e.getCurso() != null && e.getCurso().getSigla().equalsIgnoreCase(siglaCurso) && e.getAnoPrimeiraInscricao() == ano) {
+                removerEstudante(e.getNumeroMecanografico());
+                i--;
+            }
+        }
+    }
+
+    /**
+     * Efetua uma busca transversal em todas as coleções para devolver um utilizador
+     * genérico com base no seu endereço de email.
      * Essencial para o processo de recuperação de palavra-passe.
      *
      * @param email O endereço de login procurado.
-     * @return A instância de Utilizador ou null.
+     * @return A instância de Utilizador encontrada ou null caso não exista.
      */
     public Utilizador procurarUtilizadorPorEmail(String email) {
+        // Pesquisa na coleção de Gestores
         for (int i = 0; i < totalGestores; i++) {
-            if (gestores[i] != null && gestores[i].getEmail().equalsIgnoreCase(email)) return gestores[i];
+            if (gestores[i] != null && gestores[i].getEmail().equalsIgnoreCase(email)) {
+                return gestores[i];
+            }
         }
+        // Pesquisa na coleção de Docentes
         for (int i = 0; i < totalDocentes; i++) {
-            if (docentes[i] != null && docentes[i].getEmail().equalsIgnoreCase(email)) return docentes[i];
+            if (docentes[i] != null && docentes[i].getEmail().equalsIgnoreCase(email)) {
+                return docentes[i];
+            }
         }
+        // Pesquisa na coleção de Estudantes
         for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i] != null && estudantes[i].getEmail().equalsIgnoreCase(email)) return estudantes[i];
+            if (estudantes[i] != null && estudantes[i].getEmail().equalsIgnoreCase(email)) {
+                return estudantes[i];
+            }
         }
-        return null;
+        return null; // Utilizador não localizado
+    }
+
+    /**
+     * Reinicializa todas as coleções do repositório, removendo todos os dados
+     * em memória e libertando espaço para uma nova carga de dados.
+     * <p>
+     * Os arrays são recriados com as mesmas capacidades máximas definidas no
+     * construtor. O ano letivo atual NÃO é alterado por este método.
+     * </p>
+     */
+    public void limpar() {
+        this.estudantes = new Estudante[1000];
+        this.totalEstudantes = 0;
+        this.gestores = new Gestor[10];
+        this.totalGestores = 0;
+        this.docentes = new Docente[100];
+        this.totalDocentes = 0;
+        this.departamentos = new Departamento[20];
+        this.totalDepartamentos = 0;
+        this.cursos = new Curso[50];
+        this.totalCursos = 0;
+        this.ucs = new UnidadeCurricular[150];
+        this.totalUcs = 0;
     }
 }

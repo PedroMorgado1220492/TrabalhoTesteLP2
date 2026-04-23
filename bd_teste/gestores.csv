@@ -1,0 +1,4 @@
+TIPO;EMAIL;NOME;MORADA;ATIVO
+GESTOR;backoffice@issmf.ipp.pt;Administrador;Campus Central;true
+GESTOR;backoffice_ovar@issmf.ipp.pt;Ovar;Ovar;true
+GESTOR;backoffice_brandão@issmf.ipp.pt;Brandão;Paços de Brandão;false
