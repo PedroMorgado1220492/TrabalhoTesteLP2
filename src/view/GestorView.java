@@ -49,7 +49,7 @@ public class GestorView {
     public int mostrarMenuDepartamentos() {
         System.out.println("\n--- MÓDULO: DEPARTAMENTOS ---");
         System.out.println("1 - Adicionar Departamento");
-        System.out.println("2 - Alterar Nome de Departamento");
+        System.out.println("2 - Alterar Departamento");
         System.out.println("3 - Listar Todos os Departamentos");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
@@ -58,8 +58,8 @@ public class GestorView {
 
     public int mostrarMenuCursos() {
         System.out.println("\n--- MÓDULO: CURSOS ---");
-        System.out.println("1 - Registar Novo Curso");
-        System.out.println("2 - Alterar Nome do Curso");
+        System.out.println("1 - Adicionar Curso");
+        System.out.println("2 - Alterar Curso");
         System.out.println("3 - Listar Cursos por Departamento");
         System.out.println("4 - Alternar Estado (Ativo/Inativo)");
         System.out.println("5 - Consultar Percurso Académico do Curso");
@@ -70,12 +70,12 @@ public class GestorView {
 
     public int mostrarMenuUCs() {
         System.out.println("\n--- MÓDULO: UNIDADES CURRICULARES ---");
-        System.out.println("1 - Criar Nova UC");
-        System.out.println("2 - Partilhar UC Existente com outro Curso");
-        System.out.println("3 - Alterar Detalhes da UC");
-        System.out.println("4 - Listar Todas as UCs");
+        System.out.println("1 - Adicionar Unidade Curricular");
+        System.out.println("2 - Associar UC Existente a outro Curso");
+        System.out.println("3 - Alterar Unidade Curricular");
+        System.out.println("4 - Listar Todas as Unidades Curriculares");
         System.out.println("5 - Alternar Estado (Ativo/Inativo)");
-        System.out.println("6 - Remover UC de um Plano de Estudos");
+        System.out.println("6 - Remover Unidade Curricular de Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -83,10 +83,10 @@ public class GestorView {
 
     public int mostrarMenuEstudantes() {
         System.out.println("\n--- MÓDULO: ESTUDANTES ---");
-        System.out.println("1 - Registar Novo Estudante");
-        System.out.println("2 - Atualizar Ficha de Estudante");
-        System.out.println("3 - Listar Corpo Estudantil");
-        System.out.println("4 - Alternar Estado de Matrícula");
+        System.out.println("1 - Adicionar Estudante");
+        System.out.println("2 - Atualizar Ficha do Estudante");
+        System.out.println("3 - Listar Todos os Estudantes");
+        System.out.println("4 - Alternar Estado (Ativo/Inativo)");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -94,10 +94,10 @@ public class GestorView {
 
     public int mostrarMenuDocentes() {
         System.out.println("\n--- MÓDULO: DOCENTES ---");
-        System.out.println("1 - Registar Novo Docente");
-        System.out.println("2 - Atualizar Ficha de Docente");
-        System.out.println("3 - Listar Corpo Docente");
-        System.out.println("4 - Alternar Estado de Colaboração");
+        System.out.println("1 - Adicionar Docente");
+        System.out.println("2 - Atualizar Ficha do Docente");
+        System.out.println("3 - Listar Docentes");
+        System.out.println("4 - Alternar Estado (Ativo/Inativo)");
         System.out.println("5 - Visualizar Ficha Profissional");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
@@ -109,7 +109,7 @@ public class GestorView {
         System.out.println("1 - Listar Alunos por Curso");
         System.out.println("2 - Listar Alunos por Unidade Curricular");
         System.out.println("3 - Listar Unidades Curriculares por Curso");
-        System.out.println("4 - Consultar Estatísticas Globais da Faculdade");
+        System.out.println("4 - Consultar Estatísticas");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -117,9 +117,9 @@ public class GestorView {
 
     public int mostrarMenuGestores() {
         System.out.println("\n--- MÓDULO: EQUIPA ADMINISTRATIVA ---");
-        System.out.println("1 - Adicionar Novo Gestor");
-        System.out.println("2 - Desativar Acesso de Gestor");
-        System.out.println("3 - Listar Administradores");
+        System.out.println("1 - Adicionar Gestor");
+        System.out.println("2 - Alterar Gestor para Inativo");
+        System.out.println("3 - Listar Todos os Gestores");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -161,9 +161,10 @@ public class GestorView {
 
     public String pedirNovoNome(String atual) { return utils.Consola.lerString("Novo Nome [Enter p/ manter]: "); }
     public String pedirNovoAnoCurricular(int atual) { return utils.Consola.lerString("Novo Ano [Enter p/ manter]: "); }
-    public String pedirNovaMorada(String atual) { return utils.Consola.lerString("Nova Morada [Enter p/ manter]: "); }
-    public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal [Enter p/ manter]: "); }
-    public double pedirNovoPreco() { return utils.Consola.lerDouble("Novo valor de propina anual (€): "); }
+    public String pedirNovaMorada(String atual) { return utils.Consola.lerString("Nova Morada (Atual: " + atual + ") [Enter p/ manter]: "); }
+    public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter p/ manter]: "); }
+    public double pedirNovoPreco(double atual) { return utils.Consola.lerDouble("Novo valor de propina anual (Atual: " + atual + "€): ");
+    }
     public String pedirNovoDocenteUC(String atual) { return utils.Consola.lerString("Sigla do Novo Docente [Enter p/ manter]: "); }
     public String pedirNovoNumAvaliacoes(int atual) { return utils.Consola.lerString("Novo nº de Avaliações [Enter p/ manter]: ");}
 
@@ -228,7 +229,7 @@ public class GestorView {
         System.out.println("Email Inst.   : " + d.getEmail());
         System.out.println("Email Pessoal : " + d.getEmailPessoal());
         System.out.println("NIF           : " + d.getNif());
-        System.out.println("Estado        : " + (d.isAtivo() ? "COLABORADOR ATIVO" : "INATIVO/SUSPENSO"));
+        System.out.println("Estado        : " + (d.isAtivo() ? "COLABORADOR ATIVO" : "INATIVO"));
         System.out.println("Carga Letiva  : " + d.getTotalUcsLecionadas() + " Unidades Curriculares");
         System.out.println("------------------------------------");
     }
@@ -266,6 +267,7 @@ public class GestorView {
                     if (c != null && c.getDepartamento().getSigla().equals(dep.getSigla())) {
                         temCursos = true;
                         String estado = c.isAtivo() ? "[ATIVO]" : "[INATIVO]";
+                        System.out.println("  > " + estado + " " + c.getSigla() + " - " + c.getNome());
                     }
                 }
                 if (!temCursos) System.out.println("  (Sem cursos associados)");
@@ -349,9 +351,23 @@ public class GestorView {
 
     public void mostrarListaGestores(Gestor[] gests, int total) {
         System.out.println("\n========== EQUIPA DE BACKOFFICE ==========");
-        if (total == 0) System.out.println(">> Sem registos.");
-        else for (int i = 0; i < total; i++) {
-            if (gests[i] != null) System.out.printf("- [%s] %-20s | Login: %s\n", (gests[i].isAtivo() ? "A" : "I"), gests[i].getNome(), gests[i].getEmail());
+        if (total == 0) {
+            System.out.println(">> Sem registos.");
+        } else {
+            // Cabeçalho opcional para ajudar a leitura
+            System.out.printf("%-25s | %-35s | %s\n", "NOME", "LOGIN", "MORADA");
+            System.out.println("---------------------------------------------------------------------------------------");
+
+            for (int i = 0; i < total; i++) {
+                if (gests[i] != null) {
+                    System.out.printf("- [%s] %-20s | %-35s | %s\n",
+                            (gests[i].isAtivo() ? "A" : "I"),
+                            gests[i].getNome(),
+                            gests[i].getEmail(),
+                            gests[i].getMorada()
+                    );
+                }
+            }
         }
     }
 
@@ -395,6 +411,21 @@ public class GestorView {
         }
     }
 
+    /**
+     * Mensagem de sucesso específica para o registo de estudante quando o quórum é atingido.
+     */
+    public void mostrarSucessoRegistoEstudante(String nome) {
+        System.out.println("\n[SUCESSO] Estudante " + nome + " registado e matriculado nas UCs com sucesso!");
+    }
+
+    /**
+     * Aviso de que o aluno foi criado, mas as disciplinas estão em espera.
+     */
+    public void mostrarAvisoCursoAguardandoQuorum(String siglaCurso) {
+        System.out.println("\nAluno registado no sistema.");
+        System.out.println("O curso " + siglaCurso + " ainda tem menos de 5 inscritos no 1º ano.");
+        System.out.println("As matrículas nas UCs serão ativadas automaticamente assim que o quórum for atingido.");
+    }
 
     // =========================================================
     // 5. MENSAGENS DE FEEDBACK E ESTADO
@@ -402,12 +433,11 @@ public class GestorView {
 
     public void mostrarMensagemSaida() { System.out.println(">> A terminar sessão administrativa..."); }
     public void mostrarOpcaoInvalida() { System.out.println(">> Erro: Opção inexistente no menu."); }
-    public void mostrarAvisoSemAlteracao() { System.out.println(">> Info: Nenhuma alteração foi guardada."); }
-    public void mostrarSucessoAtualizacao() { System.out.println(">> Sucesso: Alterações propagadas com êxito."); }
+    public void mostrarAvisoSemAlteracao() { System.out.println(">> Nenhuma alteração foi guardada."); }
+    public void mostrarSucessoAtualizacao() { System.out.println(">> Alterações realizadas com êxito."); }
     public void mostrarInfoEdicao(String nome) { System.out.println(">> Modo Edição: " + nome); }
 
     public void mostrarErroSiglaJaExiste(String s) { System.out.println(">> Erro: A sigla '" + s + "' já está em uso."); }
-    public void mostrarErroNifJaExiste(String n) { System.out.println(">> Erro: O NIF '" + n + "' já pertence a outro utilizador."); }
     public void mostrarErroLimiteDepartamentos() { System.out.println(">> Erro: Capacidade máxima de departamentos esgotada."); }
     public void mostrarErroLimiteCursos() { System.out.println(">> Erro: Capacidade máxima de cursos esgotada."); }
     public void mostrarErroLimiteUCs() { System.out.println(">> Erro: Capacidade máxima de UCs esgotada."); }
@@ -442,10 +472,16 @@ public class GestorView {
 
     public void mostrarErroNomeInvalido() { System.out.println(">> Erro: Introduza nome e apelido (apenas letras)."); }
     public void mostrarErroNomeInvalidoMantido() { System.out.println(">> Erro: Nome inválido. Original mantido."); }
-    public void mostrarErroNifInvalido() { System.out.println(">> Erro: O NIF deve conter exactamente 9 algarismos."); }
+    public void mostrarErroNifDuplicado() {
+        System.out.println("\n>> Erro: O NIF introduzido já pertence a um utilizador no sistema.");
+        System.out.println(">> Não são permitidos registos duplicados.");
+    }
+
+    public void mostrarErroNifFormato() { System.out.println("\n>> Erro: Formato de NIF inválido. Introduza exatamente 9 dígitos."); }
     public void mostrarErroDataInvalida() { System.out.println(">> Erro: Formato inválido. Use DD-MM-AAAA."); }
     public void mostrarErroNumMecNumerico() { System.out.println(">> Erro: O número mecanográfico é estritamente numérico."); }
     public void mostrarSiglaGerada(String s) { System.out.println(">> Atribuição: Sigla institucional gerada: " + s); }
+    public void mostrarErroEmailInvalido() { System.out.println(">> Erro: O email pessoal introduzido é inválido. Deve conter '@' e '.'.");}
 
     public void mostrarSucessoAvancoAno(int a) { System.out.println(">> Ciclo Concluído. Sistema actualizado para o ano " + a + "."); }
     public void mostrarCancelamentoAvancoAno(int a) { System.out.println(">> Operação Abortada. Sistema mantido em " + a + "."); }
@@ -493,5 +529,23 @@ public class GestorView {
     public void mostrarUcsAgregadasDocente(UnidadeCurricular[] ucs, int total) {
         System.out.println(">> Regências activas detectadas:");
         for (int i = 0; i < total; i++) if (ucs[i] != null) System.out.println("   - " + ucs[i].getNome());
+    }
+
+    /**
+     * Notifica que o aluno foi inserido mas a turma ainda não abriu.
+     */
+    public void mostrarAvisoEstudantePendente(int atuais) {
+        System.out.println("\nEstudante registado com sucesso.");
+        System.out.printf(">> Estado do Curso: %d/5 inscritos (Aguardando Quórum).\n", atuais);
+        System.out.println(">> O acesso ao sistema e as matrículas estão suspensas até atingir 5 alunos.");
+    }
+
+    /**
+     * Notifica que a inserção deste aluno ativou toda a turma.
+     */
+    public void mostrarSucessoQuorumAtingido(String siglaCurso) {
+        System.out.println("\nNumero de 5 alunos atingido!");
+        System.out.println(">> A turma do curso " + siglaCurso + " está ATIVADA.");
+        System.out.println(">> Todos os estudantes estão matriculados nas UCs iniciais.");
     }
 }

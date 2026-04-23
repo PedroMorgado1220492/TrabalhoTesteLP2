@@ -1,5 +1,0 @@
-PAUTA DE AVALIAÇÃO - Linguagens Prog 1
-=================================================
-20240001 - Joao Silva | Notas: [ 15.0 ] -> Média Atual: 15.0
-20250001 - Pedro Costa | Notas: [ 16.0 ] -> Média Atual: 16.0
-20260001 - Ana Martins | Notas: [ 14.0 ] -> Média Atual: 14.0

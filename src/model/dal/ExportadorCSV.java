@@ -200,7 +200,7 @@ public class ExportadorCSV {
                         Propina p = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
                         if (p != null) {
                             pw.print(";" + p.getValorPago() + ";" + p.getTotalPagamentos());
-                            if (p.getHistoricoPagamentos() != null) {
+                            if (p.getHistoricoPagamentos() != null && p.getTotalPagamentos() > 0) {
                                 for (int j = 0; j < p.getTotalPagamentos(); j++) {
                                     pw.print(";" + p.getHistoricoPagamentos()[j]);
                                 }
@@ -250,5 +250,23 @@ public class ExportadorCSV {
                 }
             }
         } catch (IOException e) { }
+    }
+
+    /**
+     * Persiste o ano letivo corrente num ficheiro CSV (ano.csv).
+     * O ficheiro é guardado na diretoria especificada com um cabeçalho "ANO"
+     * e uma única linha com o valor do ano.
+     *
+     * @param pastaBD  Diretoria onde o ficheiro será guardado (ex: "bd").
+     * @param anoAtual O ano letivo a ser persistido.
+     */
+    public static void exportarAno(String pastaBD, int anoAtual) {
+        if (!pastaBD.endsWith("/")) pastaBD += "/";
+        try (PrintWriter pw = new PrintWriter(new FileWriter(pastaBD + "ano.csv"))) {
+            pw.println("ANO");
+            pw.println(anoAtual);
+        } catch (IOException e) {
+            System.err.println("Erro ao guardar ano: " + e.getMessage());
+        }
     }
 }

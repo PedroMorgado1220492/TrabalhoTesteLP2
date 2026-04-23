@@ -91,6 +91,7 @@ public class EstudanteController {
         }
 
         view.mostrarCabecalhoPercurso();
+        view.mostrarAnoFrequencia(estudanteLogado.getAnoFrequencia());
 
         // Itera sobre os 3 anos estruturais da Licenciatura
         for (int ano = 1; ano <= 3; ano++) {
@@ -105,8 +106,12 @@ public class EstudanteController {
                     double nota = estudanteLogado.obterNotaUc(uc.getSigla());
 
                     // A View formata a string consoante o estado e a nota devolvidos pelo Model
-                    String statusStr = view.formatarStatusUC(estado, nota);
-                    view.mostrarLinhaUC(uc.getSigla(), uc.getNome(), ano, statusStr);
+                    if (estado == 2 && nota == 0.0) {
+                        view.mostrarLinhaUC(uc.getSigla(), uc.getNome(), ano, "Inscrito -> Sem Avaliações");
+                    } else {
+                        String statusStr = view.formatarStatusUC(estado, nota);
+                        view.mostrarLinhaUC(uc.getSigla(), uc.getNome(), ano, statusStr);
+                    }
                 }
             }
         }
@@ -135,6 +140,7 @@ public class EstudanteController {
                     case 2: atualizarNif(); break;
                     case 3: atualizarMorada(); break;
                     case 4: atualizarPassword(); break;
+                    case 5: atualizarEmailPessoal(); break;
                     case 0: sub = false; break;
                     default: view.msgErroOpcao();
                 }
@@ -201,7 +207,27 @@ public class EstudanteController {
         }
     }
 
+    /**
+     * Coordena o fluxo de atualização do Email Pessoal.
+     * Como não requer validação, aceita qualquer string não vazia.
+     */
+    private void atualizarEmailPessoal() {
+        // 1. Pedir o novo email através da View
+        String novoEmail = view.pedirNovoEmailPessoal(estudanteLogado.getEmailPessoal());
 
+        // 2. Verificar se o utilizador escreveu algo (não carregou apenas em Enter)
+        if (!novoEmail.trim().isEmpty()) {
+            estudanteLogado.setEmailPessoal(novoEmail);
+
+            // 3. Gravar imediatamente no CSV para persistir a alteração
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+
+            view.msgSucesso();
+        } else {
+            // Se estiver vazio, assumimos que o utilizador desistiu da alteração
+            view.mostrarCancelamento("de Atualização");
+        }
+    }
     // =========================================================
     // 4. GESTÃO FINANCEIRA (PROPINAS)
     // =========================================================

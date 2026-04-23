@@ -45,24 +45,67 @@ public class Curso {
 
     // ---------- GETTERS ----------
 
-    public String getSigla() { return sigla; }
-    public String getNome() { return nome; }
-    public Departamento getDepartamento() { return departamento; }
-    public Docente getDocenteResponsavel() { return docenteResponsavel; }
-    public int getDuracaoAnos() { return duracaoAnos; }
-    public UnidadeCurricular[] getUnidadesCurriculares() { return unidadesCurriculares; }
-    public int getTotalUCs() { return totalUCs; }
-    public boolean isAtivo() { return ativo; }
-    public double getValorPropinaAnual() { return valorPropinaAnual; }
+    public String getSigla() {
+        return sigla;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public Departamento getDepartamento() {
+        return departamento;
+    }
+
+    public Docente getDocenteResponsavel() {
+        return docenteResponsavel;
+    }
+
+    public int getDuracaoAnos() {
+        return duracaoAnos;
+    }
+
+    public UnidadeCurricular[] getUnidadesCurriculares() {
+        return unidadesCurriculares;
+    }
+
+    public int getTotalUCs() {
+        return totalUCs;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public double getValorPropinaAnual() {
+        return valorPropinaAnual;
+    }
 
     // ---------- SETTERS ----------
 
-    public void setSigla(String sigla) { this.sigla = sigla; }
-    public void setNome(String nome) { this.nome = nome; }
-    public void setDepartamento(Departamento departamento) { this.departamento = departamento; }
-    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
-    public void setValorPropinaAnual(double valorPropinaAnual) { this.valorPropinaAnual = valorPropinaAnual; }
+    public void setSigla(String sigla) {
+        this.sigla = sigla;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public void setDepartamento(Departamento departamento) {
+        this.departamento = departamento;
+    }
+
+    public void setDocenteResponsavel(Docente docenteResponsavel) {
+        this.docenteResponsavel = docenteResponsavel;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    public void setValorPropinaAnual(double valorPropinaAnual) {
+        this.valorPropinaAnual = valorPropinaAnual;
+    }
 
 
     // =========================================================
@@ -70,11 +113,21 @@ public class Curso {
     // =========================================================
 
     /**
-     * Associa uma nova Unidade Curricular à estrutura matriz do Curso.
-     * * @param uc A Unidade Curricular a ser adicionada.
-     * @return true se adicionada com sucesso; false se o limite global (15 UCs) já tiver sido atingido.
+     * Adiciona uma unidade curricular ao plano de estudos do curso,
+     * evitando a inserção de duplicados (mesma sigla).
+     *
+     * @param uc A unidade curricular a ser adicionada.
+     * @return {@code true} se a UC foi adicionada com sucesso;
+     *         {@code false} se a UC já existe no curso ou se o limite
+     *         máximo de UCs (15) foi atingido.
      */
     public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
+        // Verifica se a UC já existe no curso (evita duplicados)
+        for (int i = 0; i < totalUCs; i++) {
+            if (unidadesCurriculares[i] != null && unidadesCurriculares[i].getSigla().equals(uc.getSigla())) {
+                return false; // Já existe, não adiciona novamente
+            }
+        }
         if (totalUCs < unidadesCurriculares.length) {
             unidadesCurriculares[totalUCs] = uc;
             totalUCs++;
@@ -83,9 +136,11 @@ public class Curso {
         return false;
     }
 
+
     /**
      * Remove uma Unidade Curricular do plano de estudos deste curso, reorganizando o array.
      * * @param siglaUC A sigla da Unidade Curricular a ser removida.
+     *
      * @return true se a remoção for efetuada com sucesso; false caso a UC não seja encontrada.
      */
     public boolean removerUnidadeCurricular(String siglaUC) {
@@ -106,6 +161,7 @@ public class Curso {
     /**
      * Verifica se o curso já possui uma determinada Unidade Curricular integrada na sua matriz.
      * * @param siglaUC A sigla da UC a verificar.
+     *
      * @return true se a UC já fizer parte do curso, false caso contrário.
      */
     public boolean temUnidadeCurricular(String siglaUC) {
@@ -126,6 +182,7 @@ public class Curso {
      * Valida o limite de carga letiva por ano.
      * Regra de Negócio: Um curso não pode ter mais do que 5 Unidades Curriculares por ano curricular.
      * * @param anoCurricular O ano alvo a ser verificado (1, 2 ou 3).
+     *
      * @return true se o ano ainda suportar mais disciplinas; false se já atingiu o limite de 5.
      */
     public boolean podeAdicionarUcNoAno(int anoCurricular) {
@@ -163,6 +220,7 @@ public class Curso {
      * Regra de Negócio: Um curso não pode sofrer alterações profundas se já tiver UCs na matriz
      * ou estudantes a frequentá-lo, de forma a não corromper o histórico do sistema.
      * * @param todosEstudantes Lista global de estudantes do sistema a ser analisada.
+     *
      * @param totalEstudantes O total de estudantes atualmente registados.
      * @return true se a edição estiver bloqueada, false se for seguro alterar.
      */
@@ -185,6 +243,7 @@ public class Curso {
      * Regra de Negócio: Um curso não pode ser desativado ou suspenso se ainda tiver
      * estudantes no estado "Ativo" a frequentá-lo (para não prejudicar percursos em andamento).
      * * @param todosEstudantes Lista global de estudantes do sistema a ser analisada.
+     *
      * @param totalEstudantes O total de estudantes atualmente registados.
      * @return true se a desativação for segura, false se o model a recusar.
      */

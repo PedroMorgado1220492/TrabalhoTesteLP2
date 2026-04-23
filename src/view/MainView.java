@@ -204,6 +204,25 @@ public class MainView {
         System.out.println("**************************************************");
     }
 
+
+    /**
+     * Mensagem exibida quando o aluno se regista, mas o curso ainda não tem 5 pessoas.
+     */
+    public void msgAvisoAguardandoQuorum(int atuais) {
+        System.out.println("\nCandidatura registada com sucesso!");
+        System.out.println(">> O curso ainda não atingiu o numero mínimo de 5 alunos.");
+        System.out.printf(">> Estado atual: %d/5 inscritos.\n", atuais);
+    }
+
+    /**
+     * Mensagem exibida quando o 5º aluno se inscreve e a turma abre para todos.
+     */
+    public void msgSucessoRegistoComAtivacao() {
+        System.out.println("\nInscrição confirmada e numero de alunos atingido!");
+        System.out.println(">> A turma está aberta.");
+        System.out.println(">> Todos os alunos deste curso estão matriculados.");
+    }
+
     /**
      * Solicita a confirmação para a transição global de ano letivo.
      * @param proximoAno O ano para o qual o sistema irá avançar.
@@ -224,7 +243,14 @@ public class MainView {
     public void msgSessaoEncerrada() { System.out.println(">> Sessão terminada com segurança. Dados salvos."); }
     public void msgSemCursosParaRegisto() { System.out.println(">> Aviso: Não existem cursos com vagas ou ativos de momento."); }
     public void msgErroNome() { System.out.println(">> Erro: Formato de nome inválido (Use Nome e Apelido)."); }
-    public void msgErroNif() { System.out.println(">> Erro: NIF inválido (Requer 9 dígitos)."); }
+    public void mostrarErroNifDuplicado() {
+        System.out.println("\n>>Erro: O NIF introduzido já pertence a um utilizador no sistema.");
+        System.out.println(">> Erro: Não são permitidos registos duplicados.");
+    }
+    public void msgErroEmailPessoal() { System.out.println(">> Erro: Email pessoal inválido. Deve conter '@' e '.'.");}
+    public void mostrarErroNifFormato() {
+        System.out.println("\n>>Erro: Formato de NIF inválido. Introduza exatamente 9 dígitos.");
+    }
     public void msgErroData() { System.out.println(">> Erro: Use o formato DD-MM-AAAA."); }
     public void msgErroNumeroInvalido() { System.out.println(">> Erro: Seleção fora do intervalo permitido."); }
     public void msgErroLimiteEstudantes() { System.out.println(">> Erro: Capacidade máxima do sistema atingida."); }
@@ -236,20 +262,18 @@ public class MainView {
 
     // --- Processos Globais (Ano Letivo) ---
 
-    public void msgSucessoAvancoAno(int ano) { System.out.println(">> SUCESSO: Ano letivo " + ano + " iniciado."); }
-    public void msgCancelamentoAvancoAno(int ano) { System.out.println(">> INFO: Transição cancelada. Mantemos o ano " + ano + "."); }
+    public void msgSucessoAvancoAno(int ano) { System.out.println(">> Ano letivo " + ano + " iniciado."); }
+    public void msgCancelamentoAvancoAno(int ano) { System.out.println(">> Transição cancelada. Mantemos o ano " + ano + "."); }
     public void mostrarAvisoValidacaoCursos() { System.out.println("\n>> A auditar viabilidade de cursos (Mín. 5 alunos)..."); }
     public void mostrarFimValidacao() { System.out.println(">> Auditoria estrutural concluída."); }
-    public void mostrarCursoAprovado(String sigla, int n) { System.out.println("   [OK] " + sigla + ": " + n + " inscritos."); }
-    public void mostrarCursoCancelado(String sigla, int n) { System.out.println("   [CANCELADO] " + sigla + ": Quota insuficiente (" + n + ")."); }
-    public void mostrarCursoCanceladoFaltaUCs(String sigla) { System.out.println("   [ERRO] " + sigla + ": Sem estrutura curricular mínima."); }
+    public void mostrarCursoAprovado(String sigla, int n) { System.out.println("   Valido " + sigla + ": " + n + " inscritos."); }
+    public void mostrarCursoCancelado(String sigla, int n) { System.out.println("   Curso cancelado " + sigla + ": Quota insuficiente (" + n + ")."); }
+    public void mostrarCursoCanceladoFaltaUCs(String sigla) { System.out.println("   Erro: " + sigla + ": Sem estrutura curricular mínima."); }
     public void mostrarCancelamento() { System.out.println("\n>> Operação cancelada pelo utilizador."); }
 
     // --- Recuperação ---
 
     public void msgSucessoRecuperacao() { System.out.println(">> Sucesso: Verifique a nova senha no seu email pessoal."); }
     public void msgErroDadosIncorretosOuFalhaEmail() { System.out.println(">> Erro: Dados não conferem ou falha no servidor de email."); }
-    public void msgSucessoEnvioEmail(String email) { System.out.println(">> Notificação enviada para: " + email); }
-    public void msgErroEnvioEmail() { System.out.println(">> Aviso: Falha no disparo do email automático."); }
-    public void msgErroArquivoNaoEncontrado(String c) { System.err.println(">> ERRO CRÍTICO: Ficheiro " + c + " não localizado."); }
+    public void msgErroArquivoNaoEncontrado(String c) { System.err.println(">> Erro: Ficheiro " + c + " não localizado."); }
 }

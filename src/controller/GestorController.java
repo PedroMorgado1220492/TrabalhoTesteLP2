@@ -311,7 +311,8 @@ public class GestorController {
         int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos());
         if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
             Curso cursoEscolhido = repositorio.getCursos()[escolha - 1];
-            double novoPreco = view.pedirNovoPreco();
+
+            double novoPreco = view.pedirNovoPreco(cursoEscolhido.getValorPropinaAnual());
 
             if (novoPreco > 0) {
                 cursoEscolhido.setValorPropinaAnual(novoPreco);
@@ -610,7 +611,6 @@ public class GestorController {
     }
 
     private void adicionarEstudante() {
-        // Delega a filtragem dos cursos elegíveis ao Repositório
         Curso[] cursosAtivos = repositorio.obterCursosDisponiveisParaMatricula();
 
         if (cursosAtivos.length == 0) {
@@ -622,7 +622,7 @@ public class GestorController {
         String nif = pedirNifValido();
         String morada = view.pedirMorada();
         String dataNascimento = pedirDataNascimentoValida();
-        String emailPessoal = view.pedirEmailPessoal();
+        String emailPessoal = validarEmailPessoalNoGestor();
 
         int escolhaCurso = view.pedirEscolhaCurso(cursosAtivos, cursosAtivos.length);
         if (escolhaCurso < 0 || escolhaCurso >= cursosAtivos.length) {
@@ -631,7 +631,6 @@ public class GestorController {
         }
 
         Curso cursoSelecionado = cursosAtivos[escolhaCurso];
-
         view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoSelecionado.getSigla());
 
         if (view.confirmarDados()) {
@@ -647,8 +646,17 @@ public class GestorController {
             );
 
             if (repositorio.adicionarEstudante(novoEstudante)) {
-                // Delega ao estudante a responsabilidade de se matricular nas próprias disciplinas
-                novoEstudante.matricularNasUcsIniciais();
+
+                int totalNoCurso = repositorio.contarInscritosPrimeiroAno(cursoSelecionado.getSigla(), anoInscricao);
+
+                if (totalNoCurso >= 5) {
+                    ativarEstudantesPendentes(cursoSelecionado);
+                    // Notifica a View que o quórum foi atingido
+                    view.mostrarSucessoQuorumAtingido(cursoSelecionado.getSigla());
+                } else {
+                    // Notifica a View que o aluno está em espera
+                    view.mostrarAvisoEstudantePendente(totalNoCurso);
+                }
 
                 boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
                 view.mostrarStatusEmail(emailEnviado, novoEstudante.getEmailPessoal());
@@ -660,6 +668,16 @@ public class GestorController {
             }
         } else {
             view.mostrarAvisoSemAlteracao();
+        }
+    }
+
+    private void ativarEstudantesPendentes(Curso curso) {
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            Estudante e = repositorio.getEstudantes()[i];
+            if (e != null && e.getCurso().getSigla().equals(curso.getSigla()) && !e.isAtivo()) {
+                e.setAtivo(true);
+                e.matricularNasUcsIniciais();
+            }
         }
     }
 
@@ -1016,11 +1034,19 @@ public class GestorController {
      * @return String contendo um NIF em formato PT com 9 dígitos.
      */
     private String pedirNifValido() {
+        String nif;
         while (true) {
-            String nif = view.pedirNif();
-            if (!Validador.isNifValido(nif)) view.mostrarErroNifInvalido();
-            else if (repositorio.existeNif(nif)) view.mostrarErroNifJaExiste(nif);
-            else return nif;
+            nif = view.pedirNif();
+
+            if (nif.length() != 9) {
+                view.mostrarErroNifFormato();
+            }
+            else if (repositorio.existeNif(nif)) {
+                view.mostrarErroNifDuplicado();
+            }
+            else {
+                return nif;
+            }
         }
     }
 
@@ -1047,6 +1073,19 @@ public class GestorController {
                 return nome.trim();
             }
             view.mostrarErroNomeGestor();
+        }
+    }
+
+    /**
+     * Valida o email pessoal introduzido pelo gestor, recorrendo ao Validador.
+     */
+    private String validarEmailPessoalNoGestor() {
+        while (true) {
+            String email = view.pedirEmailPessoal();
+            if (Validador.isEmailPessoalValido(email)) {
+                return email;
+            }
+            view.mostrarErroEmailInvalido();
         }
     }
 }

@@ -1,5 +1,0 @@
-PAUTA DE AVALIAÇÃO - Linguagens Prog 2
-=================================================
-20240001 - Joao Silva | Notas: [ 14.0 14.0 ] -> Média Atual: 14.0
-20250001 - Pedro Costa | Notas: [ 16.2 15.0 ] -> Média Atual: 15.6
-20260001 - Ana Martins | Notas: [ 6.2 18.0 ] -> Média Atual: 12.1

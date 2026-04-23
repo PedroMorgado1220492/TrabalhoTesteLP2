@@ -6,6 +6,7 @@ import model.dal.ImportadorCSV;
 import utils.*;
 import view.MainView;
 import model.dal.RepositorioDados;
+import utils.CancelamentoException;
 
 /**
  * Controlador principal da aplicação (Entry Point do Sistema).
@@ -154,11 +155,12 @@ public class MainController {
             return;
         }
 
+        // --- RECOLHA DE DADOS ---
         String nome = validarNome();
         String nif = validarNif();
         String morada = view.pedirMorada();
         String dataNascimento = validarDataNascimento();
-        String emailPessoal = view.pedirEmailPessoal();
+        String emailPessoal = validarEmailPessoal();
 
         int indexCurso = view.pedirEscolhaCurso(cursosAtivos, cursosAtivos.length);
 
@@ -170,6 +172,7 @@ public class MainController {
         Curso cursoEscolhido = cursosAtivos[indexCurso];
         view.mostrarRevisaoEstudante(nome, nif, morada, dataNascimento, emailPessoal, cursoEscolhido.getNome());
 
+        // --- PROCESSAMENTO DA MATRÍCULA ---
         if (view.confirmarDados()) {
             int anoAtual = repositorio.getAnoAtual();
             int numMec = repositorio.gerarNumeroMecanografico(anoAtual);
@@ -178,22 +181,29 @@ public class MainController {
             String passRaw = utils.GeradorPassword.generatePassword();
             String passEnc = utils.Seguranca.encriptar(passRaw);
 
+            // 1. Criar o Estudante (O construtor já o define como ATIVO = FALSE)
             Estudante novo = new Estudante(numMec, email, passEnc, nome, nif, morada, dataNascimento, cursoEscolhido, anoAtual, emailPessoal);
 
             if (repositorio.adicionarEstudante(novo)) {
-                // Delegação de responsabilidade ao Estudante (Matricular nas próprias UCs)
-                novo.matricularNasUcsIniciais();
 
-                boolean emailEnviado = utils.ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
+                // 2. Verificar quantos alunos existem no curso (incluindo este novo)
+                int totalInscritos = repositorio.contarInscritosPrimeiroAno(cursoEscolhido.getSigla(), anoAtual);
 
-                if (emailEnviado) {
-                    view.msgSucessoEnvioEmail(novo.getEmailPessoal());
+                if (totalInscritos >= 5) {
+                    ativarAlunosDoCurso(cursoEscolhido);
+                    view.msgSucessoRegistoComAtivacao();
                 } else {
-                    view.msgErroEnvioEmail();
+                    // Passa o total atual para a view mostrar (ex: 3/5)
+                    view.msgAvisoAguardandoQuorum(totalInscritos);
                 }
 
+                // 3. Notificação e Persistência
+                utils.ServicoEmail.enviarEmailBoasVindas(novo, passRaw);
                 view.mostrarCredenciaisGeradas(anoAtual, numMec, email, passRaw);
+
+                // Grava o estado (Ativo ou Inativo) no CSV
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+
             } else {
                 view.msgErroLimiteEstudantes();
             }
@@ -202,6 +212,24 @@ public class MainController {
         }
     }
 
+
+
+    /**
+     * Método auxiliar para ativar todos os estudantes pendentes de um curso
+     * quando o quórum de 5 é finalmente atingido.
+     */
+    private void ativarAlunosDoCurso(Curso curso) {
+        for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
+            Estudante e = repositorio.getEstudantes()[i];
+
+            // Se pertence ao curso e ainda está inativo
+            if (e != null && e.getCurso().getSigla().equals(curso.getSigla()) && !e.isAtivo()) {
+                e.setAtivo(true);
+                e.matricularNasUcsIniciais();
+                // Opcional: Enviar email extra a avisar que a turma abriu
+            }
+        }
+    }
 
     // =========================================================
     // 3. TRANSIÇÃO DE ANO LETIVO E VALIDAÇÕES MACRO
@@ -232,8 +260,6 @@ public class MainController {
             view.msgCancelamentoAvancoAno(repositorio.getAnoAtual());
         }
 
-        // Limpa a memória após processo global
-        this.repositorio = new RepositorioDados();
     }
 
     /**
@@ -342,6 +368,8 @@ public class MainController {
      * Invoca os importadores de CSV para reconstruir toda a matriz de objetos em memória RAM.
      */
     private void carregarBaseDeDadosCompleta() {
+        repositorio.limpar();
+
         ImportadorCSV.importarGestores("bd/gestores.csv", repositorio);
         ImportadorCSV.importarDepartamentos("bd/departamentos.csv", repositorio);
         ImportadorCSV.importarCursos("bd/cursos.csv", repositorio);
@@ -368,10 +396,17 @@ public class MainController {
     }
 
     private String validarNif() {
+        String nif;
         while (true) {
-            String nif = view.pedirNif();
-            if (Validador.isNifValido(nif)) return nif;
-            view.msgErroNif();
+            nif = view.pedirNif();
+
+            if (nif.length() != 9) {
+                view.mostrarErroNifFormato();
+            } else if (repositorio.existeNif(nif)) {
+                view.mostrarErroNifDuplicado();
+            } else {
+                return nif;
+            }
         }
     }
 
@@ -382,4 +417,15 @@ public class MainController {
             view.msgErroData();
         }
     }
+
+    private String validarEmailPessoal() {
+        while (true) {
+            String email = view.pedirEmailPessoal();
+            if (Validador.isEmailPessoalValido(email)) {
+                return email;
+            }
+            view.msgErroEmailPessoal();
+        }
+    }
+
 }

@@ -57,7 +57,7 @@ public class Estudante extends Utilizador {
         this.numeroMecanografico = numeroMecanografico;
         this.curso = curso;
         this.anoPrimeiraInscricao = anoPrimeiraInscricao;
-        this.ativo = true;
+        this.ativo = false;
         this.anoCurricular = 1;
         this.anoFrequencia = 1;
         this.percursoAcademico = new PercursoAcademico(this);
@@ -148,17 +148,14 @@ public class Estudante extends Utilizador {
         if (percursoAcademico == null || percursoAcademico.getTotalUcsInscrito() == 0) {
             return false;
         }
-
         int positivas = 0;
         int totalInscritas = percursoAcademico.getTotalUcsInscrito();
-
         for (int i = 0; i < totalInscritas; i++) {
             UnidadeCurricular uc = percursoAcademico.getUcsInscrito()[i];
             if (uc != null && teveAprovacao(uc.getSigla())) {
                 positivas++;
             }
         }
-
         double aproveitamento = (double) positivas / totalInscritas;
         return aproveitamento >= 0.60;
     }
@@ -426,7 +423,9 @@ public class Estudante extends Utilizador {
      */
     public boolean temDividas() {
         for (int i = 0; i < totalPropinas; i++) {
-            if (!propinas[i].isPagaTotalmente()) return true;
+            if (propinas[i] != null && !propinas[i].isPagaTotalmente()) {
+                return true;
+            }
         }
         return false;
     }

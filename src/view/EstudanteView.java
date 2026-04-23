@@ -46,6 +46,7 @@ public class EstudanteView {
         System.out.println("2 - Alterar NIF");
         System.out.println("3 - Alterar Morada");
         System.out.println("4 - Alterar Palavra-passe");
+        System.out.println("5 - Alterar Email Pessoal");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -100,6 +101,7 @@ public class EstudanteView {
         return utils.Consola.lerDouble("Montante a liquidar (€): ");
     }
 
+    public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter p/ manter]: "); }
     /**
      * Solicita confirmação explícita para a desativação da conta.
      * @return true se o utilizador confirmar com 'S'.
@@ -224,5 +226,10 @@ public class EstudanteView {
      */
     public void msgErroValorMinimo(double valorMinimo) {
         System.out.printf("\nErro: Montante insuficiente. O pagamento mínimo aceite é de %.2f€.\n", valorMinimo);
+    }
+
+    public void mostrarAnoFrequencia(int ano) {
+        System.out.println(">> Ano de Frequência Atual: " + ano + "º Ano");
+        System.out.println("=================================================");
     }
 }

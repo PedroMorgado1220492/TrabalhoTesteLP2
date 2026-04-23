@@ -137,6 +137,6 @@ public class Docente extends Utilizador {
      * @return true se o docente não tiver turmas atribuídas (seguro desativar), false se a regra impedir.
      */
     public boolean podeSerDesativado() {
-        return this.totalUcsLecionadas == 0;
+        return this.totalUcsLecionadas == 0 && this.totalUcsResponsavel == 0;
     }
 }

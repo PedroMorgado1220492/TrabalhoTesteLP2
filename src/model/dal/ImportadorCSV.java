@@ -246,20 +246,31 @@ public class ImportadorCSV {
     public static void importarAvaliacoes(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha;
-            br.readLine();
+            br.readLine(); // cabeçalho
             while ((linha = br.readLine()) != null) {
                 String[] dados = linha.split(";");
+                if (dados.length < 4) continue;
+
                 Estudante est = procurarEstudante(Integer.parseInt(dados[1]), repositorio);
                 UnidadeCurricular uc = procurarUC(dados[2], repositorio);
+                if (est == null || uc == null) continue;
 
-                if (est != null && uc != null) {
-                    if (dados[0].equalsIgnoreCase("NOTA")) {
-                        for (int i = 3; i <= 5; i++) {
+                if (dados[0].equalsIgnoreCase("NOTA")) {
+                    for (int i = 3; i <= 5 && i < dados.length; i++) {
+                        double v = Double.parseDouble(dados[i]);
+                        if (v >= 0) est.adicionarNota(uc, v, repositorio.getAnoAtual());
+                    }
+                }
+                else if (dados[0].equalsIgnoreCase("HISTORICO")) {
+                    int ano = Integer.parseInt(dados[3]);
+                    // Se a avaliação for do ano atual, tratar como NOTA (avaliação corrente)
+                    if (ano == repositorio.getAnoAtual()) {
+                        for (int i = 4; i <= 6 && i < dados.length; i++) {
                             double v = Double.parseDouble(dados[i]);
-                            if (v >= 0) est.adicionarNota(uc, v, repositorio.getAnoAtual());
+                            if (v >= 0) est.adicionarNota(uc, v, ano);
                         }
                     } else {
-                        Avaliacao hist = new Avaliacao(est, uc, Integer.parseInt(dados[3]));
+                        Avaliacao hist = new Avaliacao(est, uc, ano);
                         for (int i = 4; i <= 6 && i < dados.length; i++) {
                             double v = Double.parseDouble(dados[i]);
                             if (v >= 0) hist.adicionarResultado(v);
@@ -268,7 +279,29 @@ public class ImportadorCSV {
                     }
                 }
             }
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Erro ao importar avaliações: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lê o ano letivo corrente a partir do ficheiro CSV "ano.csv".
+     * Se o ficheiro não existir ou ocorrer um erro de leitura, retorna o valor
+     * padrão 2026.
+     *
+     * @param caminho Caminho completo do ficheiro ano.csv (ex: "bd/ano.csv").
+     * @return O ano letivo armazenado no ficheiro, ou 2026 se o ficheiro
+     *         não estiver disponível.
+     */
+    public static int importarAno(String caminho) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
+            br.readLine(); // cabeçalho
+            String linha = br.readLine();
+            if (linha != null) {
+                return Integer.parseInt(linha.trim());
+            }
         } catch (IOException | NumberFormatException e) { }
+        return 2026; // valor padrão se ficheiro não existir
     }
 
 

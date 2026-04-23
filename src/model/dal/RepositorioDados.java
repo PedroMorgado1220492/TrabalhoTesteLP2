@@ -40,7 +40,7 @@ public class RepositorioDados {
      * Inicializa as estruturas de dados preparendas para os limites operacionais do sistema.
      */
     public RepositorioDados() {
-        this.anoAtual = 2026;
+        this.anoAtual = ImportadorCSV.importarAno("bd/ano.csv");
 
         this.estudantes = new Estudante[1000];
         this.totalEstudantes = 0;
@@ -82,48 +82,131 @@ public class RepositorioDados {
     // =========================================================
     // 1. MÉTODOS DE ESCRITA (CRUD BASE)
     // =========================================================
-
+    /**
+     * Adiciona um estudante ao repositório, verificando previamente se já existe
+     * outro com o mesmo número mecanográfico ou o mesmo email.
+     *
+     * @param estudante O estudante a ser adicionado.
+     * @return {@code true} se o estudante foi adicionado com sucesso;
+     *         {@code false} se já existir um estudante duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarEstudante(Estudante estudante) {
+        for (int i = 0; i < totalEstudantes; i++) {
+            if (estudantes[i] != null &&
+                    (estudantes[i].getNumeroMecanografico() == estudante.getNumeroMecanografico() ||
+                            estudantes[i].getEmail().equals(estudante.getEmail()))) {
+                return false;
+            }
+        }
         if (totalEstudantes < estudantes.length) {
             estudantes[totalEstudantes++] = estudante;
             return true;
         }
         return false;
     }
-
+    /**
+     * Adiciona um gestor ao repositório, verificando previamente se já existe
+     * outro com o mesmo email.
+     *
+     * @param gestor O gestor a ser adicionado.
+     * @return {@code true} se o gestor foi adicionado com sucesso;
+     *         {@code false} se já existir um gestor duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarGestor(Gestor gestor) {
+        for (int i = 0; i < totalGestores; i++) {
+            if (gestores[i] != null && gestores[i].getEmail().equals(gestor.getEmail())) {
+                return false;
+            }
+        }
         if (totalGestores < gestores.length) {
             gestores[totalGestores++] = gestor;
             return true;
         }
         return false;
     }
-
+    /**
+     * Adiciona um docente ao repositório, verificando previamente se já existe
+     * outro com a mesma sigla ou o mesmo email.
+     *
+     * @param docente O docente a ser adicionado.
+     * @return {@code true} se o docente foi adicionado com sucesso;
+     *         {@code false} se já existir um docente duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarDocente(Docente docente) {
+        // Verifica duplicados por sigla ou email
+        for (int i = 0; i < totalDocentes; i++) {
+            if (docentes[i] != null &&
+                    (docentes[i].getSigla().equals(docente.getSigla()) ||
+                            docentes[i].getEmail().equals(docente.getEmail()))) {
+                return false;
+            }
+        }
         if (totalDocentes < docentes.length) {
             docentes[totalDocentes++] = docente;
             return true;
         }
         return false;
     }
-
+    /**
+     * Adiciona um departamento ao repositório, verificando previamente se já existe
+     * outro com a mesma sigla.
+     *
+     * @param dep O departamento a ser adicionado.
+     * @return {@code true} se o departamento foi adicionado com sucesso;
+     *         {@code false} se já existir um departamento duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarDepartamento(Departamento dep) {
+        for (int i = 0; i < totalDepartamentos; i++) {
+            if (departamentos[i] != null && departamentos[i].getSigla().equals(dep.getSigla())) {
+                return false;
+            }
+        }
         if (totalDepartamentos < departamentos.length) {
             departamentos[totalDepartamentos++] = dep;
             return true;
         }
         return false;
     }
-
+    /**
+     * Adiciona um curso ao repositório, verificando previamente se já existe
+     * outro com a mesma sigla.
+     *
+     * @param curso O curso a ser adicionado.
+     * @return {@code true} se o curso foi adicionado com sucesso;
+     *         {@code false} se já existir um curso duplicado ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarCurso(Curso curso) {
+        for (int i = 0; i < totalCursos; i++) {
+            if (cursos[i] != null && cursos[i].getSigla().equals(curso.getSigla())) {
+                return false;
+            }
+        }
         if (totalCursos < cursos.length) {
             cursos[totalCursos++] = curso;
             return true;
         }
         return false;
     }
-
+    /**
+     * Adiciona uma unidade curricular ao repositório, verificando previamente se já existe
+     * outra com a mesma sigla.
+     *
+     * @param uc A unidade curricular a ser adicionada.
+     * @return {@code true} se a UC foi adicionada com sucesso;
+     *         {@code false} se já existir uma UC duplicada ou se o limite
+     *         da capacidade foi atingido.
+     */
     public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
+        for (int i = 0; i < totalUcs; i++) {
+            if (ucs[i] != null && ucs[i].getSigla().equals(uc.getSigla())) {
+                return false;
+            }
+        }
         if (totalUcs < ucs.length) {
             ucs[totalUcs++] = uc;
             return true;
@@ -204,6 +287,11 @@ public class RepositorioDados {
      * Filtra e devolve os cursos que estão aptos a receber novas matrículas.
      */
     public Curso[] obterCursosDisponiveisParaMatricula() {
+
+        if (cursos == null || totalCursos == 0) {
+            return new Curso[0];
+        }
+
         Curso[] ativos = new Curso[totalCursos];
         int cont = 0;
         for (int i = 0; i < totalCursos; i++) {
@@ -296,11 +384,23 @@ public class RepositorioDados {
      */
     public void avancarAno() {
         this.anoAtual++;
+        // processa alunos, etc.
         for (int i = 0; i < totalEstudantes; i++) {
             if (estudantes[i] != null && estudantes[i].isAtivo()) {
                 estudantes[i].processarFimDeAno(this.anoAtual);
             }
         }
+        ExportadorCSV.exportarAno("bd", this.anoAtual);
+    }
+    /**
+     * Define o ano letivo corrente do sistema.
+     * Normalmente utilizado durante o arranque da aplicação para restaurar o
+     * ano persistido em ficheiro.
+     *
+     * @param anoAtual O novo ano letivo (ex: 2026).
+     */
+    public void setAnoAtual(int anoAtual) {
+        this.anoAtual = anoAtual;
     }
 
     public int contarInscritosPrimeiroAno(String siglaCurso, int ano) {
@@ -350,5 +450,28 @@ public class RepositorioDados {
             }
         }
         return null; // Utilizador não localizado
+    }
+
+    /**
+     * Reinicializa todas as coleções do repositório, removendo todos os dados
+     * em memória e libertando espaço para uma nova carga de dados.
+     * <p>
+     * Os arrays são recriados com as mesmas capacidades máximas definidas no
+     * construtor. O ano letivo atual NÃO é alterado por este método.
+     * </p>
+     */
+    public void limpar() {
+        this.estudantes = new Estudante[1000];
+        this.totalEstudantes = 0;
+        this.gestores = new Gestor[10];
+        this.totalGestores = 0;
+        this.docentes = new Docente[100];
+        this.totalDocentes = 0;
+        this.departamentos = new Departamento[20];
+        this.totalDepartamentos = 0;
+        this.cursos = new Curso[50];
+        this.totalCursos = 0;
+        this.ucs = new UnidadeCurricular[150];
+        this.totalUcs = 0;
     }
 }

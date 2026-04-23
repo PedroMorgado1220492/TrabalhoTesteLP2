@@ -72,31 +72,28 @@ public class Validador {
             return false;
         }
 
-        /* * 1. Validação de Formato Base (Regex)
-         * Garante que tem a estrutura DD-MM-AAAA
-         */
-        if (!data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-[0-9]{4}$")) {
+        // Regex ajustada para aceitar anos de 1900 a 2026
+        if (!data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(19|20)[0-9]{2}$")) {
             return false;
         }
 
-        /*
-         * 2. Validação Lógica de Calendário e Futuro
-         */
         try {
-            // Define o formato esperado
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            // Tenta converter a String para um objeto de Data (falha se for ex: 31 de Fevereiro)
             LocalDate dataNascimento = LocalDate.parse(data, formatter);
 
-            // Verifica se a data introduzida é depois da data de hoje (futuro)
+            // Verifica se a data é posterior a hoje
             if (dataNascimento.isAfter(LocalDate.now())) {
                 return false;
             }
 
+            // Verificar idade mínima (18 anos)
+            LocalDate dataLimite = LocalDate.now().minusYears(18);
+            if (dataNascimento.isAfter(dataLimite)) {
+                return false;
+            }
+
             return true;
-
         } catch (DateTimeParseException e) {
-
             return false;
         }
     }
@@ -126,5 +123,19 @@ public class Validador {
         }
         // A expressão regular ^[a-zA-ZÀ-ÿ]+$ garante que tem apenas letras e nenhum espaço
         return nome.trim().matches("^[a-zA-ZÀ-ÿ]+$");
+    }
+
+    /**
+     * Valida um email pessoal (não institucional).
+     * Critérios: não nulo, não vazio, contém '@' e '.'.
+     * @param email O email a validar.
+     * @return true se for um formato válido, false caso contrário.
+     */
+    public static boolean isEmailPessoalValido(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        // Verifica se contém '@' e '.' e não tem espaços
+        return email.contains("@") && email.contains(".") && !email.contains(" ");
     }
 }
