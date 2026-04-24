@@ -258,4 +258,36 @@ public class Propina {
         }
         return pagamentos;
     }
+
+
+    /**
+     * Verifica se o estudante tem dívidas até um determinado ano limite (inclusive).
+     * @param estudante O estudante.
+     * @param anoLimite Último ano a considerar.
+     * @return true se existir dívida (valor > 0.01), false caso contrário.
+     */
+    public static boolean temDividasAteAno(Estudante estudante, int anoLimite) {
+        double totalDevido = 0.0;
+        for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoLimite; ano++) {
+            totalDevido += Curso.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
+        }
+        double totalPago = 0.0;
+        for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoLimite; ano++) {
+            totalPago += getTotalPago(estudante.getNumeroMecanografico(), ano);
+        }
+        return (totalDevido - totalPago) > 0.01;
+    }
+
+    /**
+     * Adiciona uma multa ao estudante, registando um valor negativo como pagamento.
+     * @param numMec Número mecanográfico.
+     * @param anoLetivo Ano a que a multa se aplica (geralmente o ano atual).
+     * @param valorMulta Valor positivo da multa (será convertido para negativo).
+     * @param data Data da aplicação da multa.
+     */
+    public static void adicionarMulta(int numMec, int anoLetivo, double valorMulta, String data) {
+        if (valorMulta <= 0) return;
+        // Registar um pagamento negativo para aumentar a dívida
+        registarPagamento(numMec, anoLetivo, -valorMulta, data + " [MULTA]");
+    }
 }

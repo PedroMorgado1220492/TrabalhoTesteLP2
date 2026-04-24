@@ -99,7 +99,6 @@ public class MainController {
         Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
 
         if (userLogado != null) {
-            // Delegação do controlo de estado às classes filhas
             if (userLogado instanceof Estudante && !((Estudante) userLogado).isAtivo() ||
                     userLogado instanceof Docente && !((Docente) userLogado).isAtivo() ||
                     userLogado instanceof Gestor && !((Gestor) userLogado).isAtivo()) {
@@ -107,6 +106,18 @@ public class MainController {
                 view.msgErroInativo();
                 return;
             }
+
+            String identificador = "";
+            if (userLogado instanceof Estudante) {
+                identificador = String.valueOf(((Estudante) userLogado).getNumeroMecanografico());
+            } else if (userLogado instanceof Docente) {
+                identificador = ((Docente) userLogado).getSigla();
+            } else if (userLogado instanceof Gestor) {
+                identificador = ((Gestor) userLogado).getMorada();
+            }
+
+            view.msgBemVindoUsuario(userLogado.getNome(), identificador, tipoUtilizador);
+
             abrirMenuPorRole(tipoUtilizador, userLogado);
         }
 
@@ -118,13 +129,13 @@ public class MainController {
      */
     private void abrirMenuPorRole(String tipo, Utilizador user) {
         if (tipo.equals("GESTOR")) {
-            view.msgBemVindoRole("Gestor");
+
             new GestorController((Gestor) user, repositorio).iniciarMenuGestor();
         } else if (tipo.equals("DOCENTE")) {
-            view.msgBemVindoRole("Docente");
+
             new DocenteController((Docente) user, repositorio).iniciarMenu();
         } else if (tipo.equals("ESTUDANTE")) {
-            view.msgBemVindoRole("Estudante");
+
             new EstudanteController((Estudante) user, repositorio).iniciarMenu();
         }
     }

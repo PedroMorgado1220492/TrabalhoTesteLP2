@@ -4,8 +4,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+
 
 /**
  * Classe utilitária responsável pela formatação e geração de pautas de avaliação.
@@ -25,10 +26,9 @@ public class Pauta {
             diretorio.mkdirs();
         }
 
-        String dataAtual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-
+        String dataHoraAtual = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy_HH-mm"));
         String nomeUcFormatado = uc.getNome().replace(" ", "_");
-        String caminhoTxt = "pautas/pauta_" + nomeUcFormatado + "_" + dataAtual + ".txt";
+        String caminhoTxt = "pautas/pauta_" + nomeUcFormatado + "_" + dataHoraAtual + ".txt";
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminhoTxt))) {
             pw.println("PAUTA DE AVALIAÇÃO - " + uc.getNome());
@@ -36,13 +36,9 @@ public class Pauta {
 
             boolean temAlunosAvaliados = false;
 
-            for (int i = 0; i < alunos.length; i++) {
-                Estudante e = alunos[i];
-
+            for (Estudante e : alunos) {
                 if (e != null && e.isAtivo()) {
                     Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
-
-                    // Só imprime na pauta oficial os alunos que já têm pelo menos uma nota lançada
                     if (av != null && av.getTotalAvaliacoesLancadas() > 0) {
                         pw.println(e.getNumeroMecanografico() + " - " + e.getNome() + " | Notas: " + formatarNotasAluno(av));
                         temAlunosAvaliados = true;

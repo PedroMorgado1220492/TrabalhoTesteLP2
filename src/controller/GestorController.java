@@ -65,11 +65,10 @@ public class GestorController {
                     case 3: gerirUCs(); break;
                     case 4: gerirEstudantes(); break;
                     case 5: gerirDocentes(); break;
-                    case 6: avancarAnoLetivo(); break;
+                    case 6: gerirGestores(); break;
                     case 7: gerirRelatorios(); break;
                     case 8: listarAlunosComDividas(); break;
                     case 9: alterarPrecoCurso(); break;
-                    case 10: gerirGestores(); break;
                     case 0:
                         view.mostrarMensagemSaida();
                         aExecutar = false;
@@ -725,17 +724,18 @@ public class GestorController {
             int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
             Estudante est = repositorio.obterEstudantePorNumMec(numMec);
             if (est != null) {
-                // Se for ativar (está inativo) e ainda tem dívidas, avisa
-                if (!est.isAtivo() && Propina.temDividas(est, repositorio.getAnoAtual())) {
-                    view.mostrarAvisoDividasPendentes();
-                    if (!view.confirmarDados()) {
-                        return;
+                // Se for ativar (está inativo)
+                if (!est.isAtivo()) {
+                    int anoAtual = repositorio.getAnoAtual();
+                    // Verificar dívidas de anos anteriores
+                    if (Propina.temDividasAteAno(est, anoAtual - 1)) {
+                        double multa = 100.0;
+                        String data = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                        Propina.adicionarMulta(numMec, anoAtual, multa, data);
+                        view.mostrarMultaAplicada(multa);
                     }
                 }
                 est.setAtivo(!est.isAtivo());
-                if (est.isAtivo()) {
-                    est.reconstruirPercurso();
-                }
                 view.msgSucessoEstadoAlterado("Estudante", est.isAtivo());
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
@@ -865,22 +865,6 @@ public class GestorController {
     // =========================================================
     // 6. OPERAÇÕES DE SISTEMA, ESTATÍSTICAS E RELATÓRIOS
     // =========================================================
-
-    /**
-     * Gere a transição da instituição para o próximo ano letivo, processando históricos e novas inscrições.
-     */
-    private void avancarAnoLetivo() {
-        view.mostrarAvisoTransicaoAno();
-        int proximoAno = repositorio.getAnoAtual() + 1;
-
-        if (view.pedirConfirmacaoAvancoAno(proximoAno)) {
-            repositorio.avancarAno();
-            view.mostrarSucessoAvancoAno(repositorio.getAnoAtual());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-        } else {
-            view.mostrarCancelamentoAvancoAno(repositorio.getAnoAtual());
-        }
-    }
 
     /**
      * Gere o sub-menu de consulta de relatórios gerenciais e estatísticas globais.
@@ -1123,25 +1107,26 @@ public class GestorController {
                 return;
             }
             if (!est.isAtivo()) {
-                view.mostrarAviso("Estudante está inativo. Ative-o primeiro usando a opção 4.");
+                view.mostrarErroEstudanteInativo();
                 return;
             }
             int anoAtual = repositorio.getAnoAtual();
-            if (Propina.temDividas(est, anoAtual)) {
-                view.mostrarAviso("Estudante tem dívidas pendentes. Não é possível reinscrever.");
+            // Verificar dívida apenas dos anos anteriores (até anoAtual - 1)
+            if (Propina.temDividasAteAno(est, anoAtual - 1)) {
+                view.mostrarErroEstudanteComDividas();
                 return;
             }
 
-            // Aplicar a lógica de progressão com base na regra de 60%
+            // Aplicar progressão com base na regra de 60%
             if (est.temAproveitamentoParaProgredir() && est.getAnoFrequencia() < 3) {
                 est.setAnoFrequencia(est.getAnoFrequencia() + 1);
                 est.setAnoCurricular(est.getAnoFrequencia());
-                view.mostrarAviso("Estudante progrediu para o " + est.getAnoFrequencia() + "º ano.");
+                view.mostrarInfoProgrediu(est.getAnoFrequencia());
             } else {
-                view.mostrarAviso("Estudante não tem aproveitamento para progredir. Mantém o " + est.getAnoFrequencia() + "º ano.");
+                view.mostrarInfoNaoProgrediu(est.getAnoFrequencia());
             }
 
-            // Reconstruir o percurso (inscreve UCs do ano atual não concluídas)
+            // Reconstruir o percurso
             est.reconstruirPercurso();
             view.msgSucessoReinscricao(est.getNome(), est.getAnoFrequencia());
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);

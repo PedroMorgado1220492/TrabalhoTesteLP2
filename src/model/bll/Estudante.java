@@ -419,6 +419,30 @@ public class Estudante extends Utilizador {
         return ucsAprovadas == this.curso.getTotalUCs();
     }
 
+    /**
+     * Tenta reinscrever o estudante (avançar ano se possível) e reconstrói o percurso.
+     * @param anoAtual Ano letivo corrente.
+     * @return true se a reinscrição foi bem‑sucedida, false se o estudante estiver inativo ou com dívidas.
+     */
+    public boolean reinscrever(int anoAtual) {
+        if (!isAtivo()) {
+            return false;
+        }
+        if (Propina.temDividas(this, anoAtual)) {
+            return false;
+        }
+
+        // Aplicar progressão com base na regra de 60%
+        if (temAproveitamentoParaProgredir() && anoFrequencia < 3) {
+            anoFrequencia++;
+            anoCurricular = anoFrequencia;
+        }
+
+        // Reconstruir o percurso (inscreve UCs não concluídas)
+        reconstruirPercurso();
+        return true;
+    }
+
     // ---------- OVERRIDES ----------
 
     @Override
