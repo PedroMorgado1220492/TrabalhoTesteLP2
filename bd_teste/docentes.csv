@@ -1,7 +1,8 @@
 TIPO;SIGLA;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;EMAIL_PESSOAL;ATIVO
-DOCENTE;PPA;ppa@issmf.ipp.pt;Professor Abel;142536748;Faro;01-06-1989;1220492@isep.ipp.pt;true
-DOCENTE;PLL;pll@issmf.ipp.pt;Professora Ana;142536747;Lisboa;05-06-1985;1220492@isep.ipp.pt;true
-DOCENTE;PYE;pye@issmf.ipp.pt;Professor Rui;142536746;Viseu;04-04-1974;1220492@isep.ipp.pt;false
-DOCENTE;PHE;phe@issmf.ipp.pt;Professor Carlos;142536745;Maceda;04-11-1994;1220492@isep.ipp.pt;true
-DOCENTE;PHH;phh@issmf.ipp.pt;Professor Luis;142536744;Gondomar;04-12-1987;1220492@isep.ipp.pt;true
-DOCENTE;PTV;ptv@issmf.ipp.pt;Professor Guedes;142536743;Espinho;04-02-1990;1220492@isep.ipp.pt;true
+DOCENTE;PTL;ptl@issmf.ipp.pt;Professor Abel;142536748;Faro;19-05-1985;1220492@isep.ipp.p;true
+DOCENTE;PTI;pti@issmf.ipp.pt;Professora Ana;142536747;Lisboa;27-02-1984;1220492@isep.ipp.p;true
+DOCENTE;PVM;pvm@issmf.ipp.pt;Professor Rui;142536746;Viseu;11-10-1962;1220492@isep.ipp.p;false
+DOCENTE;PIG;pig@issmf.ipp.pt;Professor Carlos;142536745;Maceda;07-03-1985;1220492@isep.ipp.p;true
+DOCENTE;PYS;pys@issmf.ipp.pt;Professor Luis;142536744;Gondomar;15-09-1991;1220492@isep.ipp.p;true
+DOCENTE;PJR;pjr@issmf.ipp.pt;Professor Guedes;142536743;Espinho;21-11-1983;1220492@isep.ipp.p;true
+DOCENTE;PZW;pzw@issmf.ipp.pt;Professor Renato;142536742;Matosinhos;21-11-1988;1220492@isep.ipp.pt;true

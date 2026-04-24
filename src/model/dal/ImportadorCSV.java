@@ -204,42 +204,40 @@ public class ImportadorCSV {
     /**
      * Importa Estudantes, reconstruindo o seu Percurso Académico e o histórico financeiro (Propinas).
      */
+    /**
+     * Importa Estudantes, reconstruindo o seu Percurso Académico e o histórico financeiro (Propinas).
+     */
+    /**
+     * Importa Estudantes, reconstruindo o seu Percurso Académico e o histórico financeiro (Propinas).
+     */
     public static void importarEstudantes(String caminho, RepositorioDados repositorio) {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             String linha;
-            br.readLine();
+            br.readLine(); // cabeçalho
             while ((linha = br.readLine()) != null) {
                 String[] dados = linha.split(";");
+                if (dados.length < 12) continue;
                 String pass = procurarPasswordNoLogins("bd/logins.csv", dados[2]);
-                Curso curso = (dados.length > 8) ? procurarCurso(dados[8], repositorio) : null;
-
-                Estudante est = new Estudante(Integer.parseInt(dados[1]), dados[2], pass, dados[3],
-                        dados[4], dados[5], dados[6], curso, Integer.parseInt(dados[7]),
-                        (dados.length > 9 ? dados[9] : ""));
-
-                if (dados.length > 10) est.setAtivo(Boolean.parseBoolean(dados[10]));
-
-                // Reconstrução financeira (Propina e Prestações)
-                if (dados.length > 11) {
-                    double preco = Double.parseDouble(dados[11]);
-                    est.setValorPropinaBase(preco);
-                    Propina p = est.getPropinaDoAno(est.getAnoPrimeiraInscricao());
-                    if (p != null) {
-                        p.setValorTotal(preco);
-                        if (dados.length > 13) {
-                            int numPags = Integer.parseInt(dados[13]);
-                            for (int i = 0; i < numPags; i++) {
-                                if (14 + i < dados.length) p.registarPagamento(Double.parseDouble(dados[14 + i]));
-                            }
-                        }
-                    }
-                }
+                Curso curso = procurarCurso(dados[8], repositorio);
+                Estudante est = new Estudante(
+                        Integer.parseInt(dados[1]), dados[2], pass, dados[3],
+                        dados[4], dados[5], dados[6], curso, Integer.parseInt(dados[7]), dados[9]
+                );
+                est.setAtivo(Boolean.parseBoolean(dados[10]));
+                est.setAnoFrequencia(Integer.parseInt(dados[11]));
+                est.setAnoCurricular(est.getAnoFrequencia());
                 repositorio.adicionarEstudante(est);
-                if (est.isAtivo()) est.matricularNasUcsIniciais();
+                if (est.isAtivo()) est.reconstruirPercurso();
             }
-        } catch (IOException | NumberFormatException e) { }
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Erro ao importar estudantes: " + e.getMessage());
+        }
     }
 
+    /**
+     * Importa e distribui as classificações pelos boletins dos estudantes.
+     * Versão com debug para identificar falhas no carregamento.
+     */
     /**
      * Importa e distribui as classificações pelos boletins dos estudantes.
      */
@@ -248,42 +246,40 @@ public class ImportadorCSV {
             String linha;
             br.readLine(); // cabeçalho
             while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
                 String[] dados = linha.split(";");
                 if (dados.length < 4) continue;
 
-                Estudante est = procurarEstudante(Integer.parseInt(dados[1]), repositorio);
-                UnidadeCurricular uc = procurarUC(dados[2], repositorio);
-                if (est == null || uc == null) continue;
+                int numMec = Integer.parseInt(dados[1]);
+                String siglaUC = dados[2];
+                String tipo = dados[0];
 
-                if (dados[0].equalsIgnoreCase("NOTA")) {
+                Estudante est = procurarEstudante(numMec, repositorio);
+                if (est == null) continue;
+
+                UnidadeCurricular uc = procurarUC(siglaUC, repositorio);
+                if (uc == null) continue;
+
+                if (tipo.equalsIgnoreCase("NOTA")) {
                     for (int i = 3; i <= 5 && i < dados.length; i++) {
                         double v = Double.parseDouble(dados[i]);
                         if (v >= 0) est.adicionarNota(uc, v, repositorio.getAnoAtual());
                     }
-                }
-                else if (dados[0].equalsIgnoreCase("HISTORICO")) {
+                } else if (tipo.equalsIgnoreCase("HISTORICO")) {
+                    if (dados.length < 5) continue;
                     int ano = Integer.parseInt(dados[3]);
-                    // Se a avaliação for do ano atual, tratar como NOTA (avaliação corrente)
-                    if (ano == repositorio.getAnoAtual()) {
-                        for (int i = 4; i <= 6 && i < dados.length; i++) {
-                            double v = Double.parseDouble(dados[i]);
-                            if (v >= 0) est.adicionarNota(uc, v, ano);
-                        }
-                    } else {
-                        Avaliacao hist = new Avaliacao(est, uc, ano);
-                        for (int i = 4; i <= 6 && i < dados.length; i++) {
-                            double v = Double.parseDouble(dados[i]);
-                            if (v >= 0) hist.adicionarResultado(v);
-                        }
-                        est.adicionarAoHistorico(hist);
+                    Avaliacao hist = new Avaliacao(est, uc, ano);
+                    for (int i = 4; i <= 6 && i < dados.length; i++) {
+                        double v = Double.parseDouble(dados[i]);
+                        if (v >= 0) hist.adicionarResultado(v);
                     }
+                    est.adicionarAoHistorico(hist);
                 }
             }
         } catch (IOException | NumberFormatException e) {
             System.err.println("Erro ao importar avaliações: " + e.getMessage());
         }
     }
-
     /**
      * Lê o ano letivo corrente a partir do ficheiro CSV "ano.csv".
      * Se o ficheiro não existir ou ocorrer um erro de leitura, retorna o valor

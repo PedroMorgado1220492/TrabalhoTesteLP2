@@ -183,36 +183,19 @@ public class ExportadorCSV {
      */
     private static void exportarEstudantes(String caminho, RepositorioDados repo) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminho))) {
-            pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;EMAIL_PESSOAL;ATIVO;VALOR_PROPINA_BASE;VALOR_PAGO;TOTAL_PRESTACOES;HISTORICO_PAGAMENTOS...");
-
+            pw.println("TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;EMAIL_PESSOAL;ATIVO;ANO_FREQUENCIA");
             for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-                try {
-                    Estudante e = repo.getEstudantes()[i];
-                    if (e != null) {
-                        String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
-
-                        pw.print("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" +
-                                e.getNome() + ";" + e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
-                                e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" +
-                                e.isAtivo() + ";" + e.getValorPropinaBase());
-
-                        // Persistência financeira associada ao registo do aluno
-                        Propina p = e.getPropinaDoAno(e.getAnoPrimeiraInscricao());
-                        if (p != null) {
-                            pw.print(";" + p.getValorPago() + ";" + p.getTotalPagamentos());
-                            if (p.getHistoricoPagamentos() != null && p.getTotalPagamentos() > 0) {
-                                for (int j = 0; j < p.getTotalPagamentos(); j++) {
-                                    pw.print(";" + p.getHistoricoPagamentos()[j]);
-                                }
-                            }
-                        } else {
-                            pw.print(";0.0;0");
-                        }
-                        pw.println();
-                    }
-                } catch (Exception ex) { /* Salta aluno corrompido para proteger o ficheiro */ }
+                Estudante e = repo.getEstudantes()[i];
+                if (e == null) continue;
+                String siglaCurso = (e.getCurso() != null) ? e.getCurso().getSigla() : "";
+                pw.println("ESTUDANTE;" + e.getNumeroMecanografico() + ";" + e.getEmail() + ";" + e.getNome() + ";" +
+                        e.getNif() + ";" + e.getMorada() + ";" + e.getDataNascimento() + ";" +
+                        e.getAnoPrimeiraInscricao() + ";" + siglaCurso + ";" + e.getEmailPessoal() + ";" +
+                        e.isAtivo() + ";" + e.getAnoFrequencia());
             }
-        } catch (IOException e) { }
+        } catch (IOException e) {
+            System.err.println("Erro ao exportar estudantes: " + e.getMessage());
+        }
     }
 
     /**

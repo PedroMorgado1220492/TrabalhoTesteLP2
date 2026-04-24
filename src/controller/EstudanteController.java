@@ -237,39 +237,70 @@ public class EstudanteController {
      * Trata da interação com a View, processa o pagamento e emite o respetivo recibo (PDF e Email).
      */
     private void gerirPropinas() {
-        Propina propina = estudanteLogado.getPropinaDoAno(repositorio.getAnoAtual());
+        int anoAtual = repositorio.getAnoAtual();
+        int numMec = estudanteLogado.getNumeroMecanografico();
 
-        if (propina == null) {
-            view.msgErroSemPropina();
-            return;
-        }
+        // Mostrar histórico de pagamentos
+        Propina.Pagamento[] pagamentos = Propina.getPagamentos(numMec);
+        view.mostrarHistoricoPagamentos(pagamentos);
 
-        view.mostrarDetalhesPropina(propina.getValorTotal(), propina.getValorPago(),
-                propina.getValorEmDivida(), propina.getHistoricoPagamentos(),
-                propina.getTotalPagamentos(), propina.isPagaTotalmente());
+        double valorAnualAtual = Curso.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
+        double pagoAnoAtual = Propina.getTotalPago(numMec, anoAtual);
+        double dividaAnoAtual = valorAnualAtual - pagoAnoAtual;
+        double dividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
 
-        // Se a propina já estiver liquidada, não prossegue para o pagamento
-        if (propina.isPagaTotalmente()) return;
+        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, pagoAnoAtual, dividaAnoAtual, dividaTotal);
 
-        double valor = calcularValorPagamento(propina);
+        if (dividaTotal <= 0.01) return;
+
+        double valor = calcularValorPagamento(dividaTotal, valorAnualAtual);
         if (valor <= 0) return;
 
-        // Efetua o registo do pagamento no Modelo
-        if (propina.registarPagamento(valor)) {
-            view.msgSucesso();
+        String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        Propina.registarPagamento(numMec, anoAtual, valor, dataAtual);
 
-            // Despoleta a geração do recibo em ficheiro texto/PDF
-            String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, propina.getValorTotal(), propina.getValorEmDivida());
+        // Recalcular valores após pagamento
+        double novaDividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        double novoPagoAno = pagoAnoAtual + valor;
+        double novaDividaAno = valorAnualAtual - novoPagoAno;
 
-            // Dispara o envio do recibo por email
-            if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null) {
-                utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(), estudanteLogado.getNome(), caminhoRecibo);
-            }
-
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-        } else {
-            view.msgErroDados();
+        // Calcular total devido (soma de todos os anos) para o recibo
+        double totalDevido = 0.0;
+        for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
+            totalDevido += Curso.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
         }
+        double totalPago = totalDevido - novaDividaTotal;
+
+        // Gerar recibo
+        String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, totalDevido, novaDividaTotal);
+        if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
+            boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
+                    estudanteLogado.getNome(),
+                    caminhoRecibo);
+            if (emailEnviado) {
+                view.msgNotificacaoEnviada();
+            } else {
+                view.msgFalhaEnvioEmail();
+            }
+        } else {
+            view.msgReciboNaoEnviado();
+        }
+
+        view.msgSucesso();
+
+        // Reconstruir percurso se a dívida foi totalmente saldada
+        if (novaDividaTotal <= 0.01) {
+            if (!estudanteLogado.isAtivo()) {
+                estudanteLogado.setAtivo(true);
+                estudanteLogado.reconstruirPercurso();
+                view.msgContaReativada();
+            } else {
+                estudanteLogado.reconstruirPercurso();
+                view.msgPercursoAtualizado();
+            }
+        }
+
+        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
     }
 
     /**
@@ -277,31 +308,40 @@ public class EstudanteController {
      * * @param propina A propina alvo de pagamento.
      * @return O valor final aprovado para pagamento, ou 0.0 em caso de cancelamento/erro.
      */
-    private double calcularValorPagamento(Propina propina) {
-        // Regra de negócio (valor mínimo de prestação) delegada ao model Propina
-        double valorMinimoPrestacao = propina.calcularValorMinimoPrestacao();
+    private double calcularValorPagamento(double dividaTotal, double valorAnualAtual) {
+        // Prestação mínima = 10% do valor anual original (e não da dívida)
+        double prestacaoBase = valorAnualAtual * 0.10;
+        double valorMinimoPrestacao = Math.min(prestacaoBase, dividaTotal);
 
-        int op = view.mostrarOpcoesPagamento(propina.getValorEmDivida(), valorMinimoPrestacao);
+        int op = view.mostrarOpcoesPagamento(dividaTotal, valorMinimoPrestacao);
+        double valorEscolhido = 0.0;
 
-        double valorEscolhido = switch (op) {
-            case 1 -> propina.getValorEmDivida(); // Pagamento Integral
-            case 2 -> Math.min(valorMinimoPrestacao, propina.getValorEmDivida()); // Prestação Mínima
-            case 3 -> view.pedirValorLivre(); // Outro Valor
-            default -> 0.0;
-        };
+        switch (op) {
+            case 1: // Pagamento Integral
+                valorEscolhido = dividaTotal;
+                break;
+            case 2: // Prestação Mínima
+                valorEscolhido = valorMinimoPrestacao;
+                break;
+            case 3: // Valor Personalizado
+                valorEscolhido = view.pedirValorLivre();
+                break;
+            default: // Cancelar
+                return 0.0;
+        }
 
+        // Validações finais
         if (valorEscolhido <= 0) {
             return 0.0;
         }
-
-        double limiteMinimoAceitavel = Math.min(valorMinimoPrestacao, propina.getValorEmDivida());
-
-        // Validação: O valor introduzido não pode ser inferior ao limite mínimo estipulado
-        if (valorEscolhido < limiteMinimoAceitavel) {
-            view.msgErroValorMinimo(limiteMinimoAceitavel);
+        if (valorEscolhido > dividaTotal) {
+            view.msgErroValorSuperiorDivida();   // mensagem adicional (ver abaixo)
             return 0.0;
         }
-
+        if (valorEscolhido < valorMinimoPrestacao) {
+            view.msgErroValorMinimo(valorMinimoPrestacao);
+            return 0.0;
+        }
         return valorEscolhido;
     }
 

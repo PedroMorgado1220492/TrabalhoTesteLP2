@@ -1,6 +1,8 @@
 package view;
 
 import model.bll.Estudante;
+import model.bll.Propina;
+import java.util.List;
 
 /**
  * Interface de utilizador (View) dedicada ao perfil de Estudante.
@@ -14,7 +16,6 @@ public class EstudanteView {
      * Construtor por defeito da EstudanteView.
      */
     public EstudanteView() { }
-
 
     // =========================================================
     // 1. MENUS DE NAVEGAÇÃO
@@ -68,7 +69,6 @@ public class EstudanteView {
         return utils.Consola.lerOpcaoMenu();
     }
 
-
     // =========================================================
     // 2. INPUTS DE DADOS (FORMULÁRIOS)
     // =========================================================
@@ -101,7 +101,10 @@ public class EstudanteView {
         return utils.Consola.lerDouble("Montante a liquidar (€): ");
     }
 
-    public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter p/ manter]: "); }
+    public String pedirNovoEmailPessoal(String atual) {
+        return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter p/ manter]: ");
+    }
+
     /**
      * Solicita confirmação explícita para a desativação da conta.
      * @return true se o utilizador confirmar com 'S'.
@@ -111,7 +114,6 @@ public class EstudanteView {
         String input = utils.Consola.lerString("Deseja mesmo desativar a sua conta? (S/N): ");
         return input.equalsIgnoreCase("S");
     }
-
 
     // =========================================================
     // 3. EXIBIÇÃO DE DADOS ACADÉMICOS E RELATÓRIOS
@@ -177,15 +179,25 @@ public class EstudanteView {
         System.out.println("-----------------------------------------------------");
     }
 
+    public void mostrarAnoFrequencia(int ano) {
+        System.out.println(">> Ano de Frequência Atual: " + ano + "º Ano");
+        System.out.println("=================================================");
+    }
+
+    // =========================================================
+    // 4. EXIBIÇÃO FINANCEIRA (EXTRATO E HISTÓRICO)
+    // =========================================================
+
     /**
-     * Exibe o estado financeiro atual do aluno face à instituição.
+     * Exibe o estado financeiro atual do aluno (versão antiga – manter para compatibilidade).
+     * @deprecated Usar mostrarExtratoPropinas() para informação mais detalhada.
      */
+    @Deprecated
     public void mostrarDetalhesPropina(double total, double pago, double divida, double[] historico, int nPagamentos, boolean estaPaga) {
         System.out.println("\n----------- EXTRATO FINANCEIRO -----------");
         System.out.printf("Valor Total Anual : %.2f€\n", total);
         System.out.printf("Montante Liquidado: %.2f€\n", pago);
         System.out.printf("Montante em Dívida: %.2f€\n", divida);
-
         if (estaPaga) {
             System.out.println(">> ESTADO: REGULARIZADO. Obrigado.");
         } else {
@@ -194,42 +206,111 @@ public class EstudanteView {
         System.out.println("------------------------------------------");
     }
 
-
-    // =========================================================
-    // 4. FEEDBACK E MENSAGENS DE SISTEMA
-    // =========================================================
-
-    public void msgSaida() { System.out.println(">> Sessão terminada. Até à próxima!"); }
-
-    public void msgSucesso() { System.out.println(">> Sucesso: Alteração registada no sistema."); }
-
-    public void msgErroOpcao() { System.out.println(">> Erro: Opção inválida."); }
-
-    public void msgErroDados() { System.out.println(">> Erro: Formato de dados incorreto ou inválido."); }
-
-    public void msgErroPassIncorreta() { System.out.println(">> Erro: A palavra-passe atual não coincide."); }
-
-    public void msgErroPassNaoCoincidem() { System.out.println(">> Erro: A confirmação da palavra-passe falhou."); }
-
-    public void msgErroSemCurso() { System.out.println(">> Erro: Não possui curso associado (Processo pendente)."); }
-
-    public void msgErroSemPropina() { System.out.println(">> Erro: Não existe plano financeiro para o ano corrente."); }
-
-    public void msgContaDesativada() { System.out.println(">> Conta desativada com sucesso. A encerrar aplicação..."); }
-
-    public void mostrarCancelamento(String menuDestino) {
-        System.out.println("\n>> Ação cancelada. A regressar ao menu " + menuDestino + "...");
+    /**
+     * Exibe o extrato financeiro detalhado (por ano corrente e total acumulado).
+     */
+    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double pagoAnual, double dividaAnual, double dividaTotal) {
+        System.out.println("\n----------- EXTRATO FINANCEIRO -----------");
+        System.out.printf("Valor Total do Ano %d : %.2f€\n", anoAtual, valorAnual);
+        System.out.printf("Montante Liquidado no ano: %.2f€\n", pagoAnual);
+        System.out.printf("Dívida do ano: %.2f€\n", dividaAnual);
+        System.out.printf("Dívida Total (anos anteriores incluídos): %.2f€\n", dividaTotal);
+        if (dividaTotal <= 0.01) {
+            System.out.println(">> ESTADO: REGULARIZADO. Obrigado.");
+        } else {
+            System.out.println(">> ESTADO: PAGAMENTO PENDENTE.");
+        }
+        System.out.println("------------------------------------------");
     }
 
     /**
-     * Mensagem de validação financeira específica.
+     * Exibe o histórico de pagamentos (lista de Propina.Pagamento).
      */
+    public void mostrarHistoricoPagamentos(Propina.Pagamento[] pagamentos) {
+        if (pagamentos == null || pagamentos.length == 0) {
+            System.out.println("\n--- Histórico de Pagamentos ---");
+            System.out.println(">> Nenhum pagamento registado.");
+            return;
+        }
+        System.out.println("\n--- HISTÓRICO DE PAGAMENTOS ---");
+        System.out.printf("%-10s %-12s %-15s\n", "Ano Letivo", "Valor (€)", "Data");
+        System.out.println("----------------------------------------");
+        for (Propina.Pagamento p : pagamentos) {
+            System.out.printf("%-10d %-12.2f %-15s\n", p.getAnoLetivo(), p.getValor(), p.getData());
+        }
+        System.out.println("----------------------------------------");
+    }
+
+    // =========================================================
+    // 5. MENSAGENS DE FEEDBACK E SISTEMA
+    // =========================================================
+
+    // --- Mensagens de sucesso ---
+    public void msgSucesso() {
+        System.out.println(">> Sucesso: Alteração registada no sistema.");
+    }
+
+    public void msgContaReativada() {
+        System.out.println(">> Conta reativada com sucesso! Agora pode progredir no próximo ano letivo.");
+    }
+
+    public void msgPercursoAtualizado() {
+        System.out.println(">> Percurso académico atualizado com base nas disciplinas já concluídas.");
+    }
+
+    public void msgNotificacaoEnviada() {
+        System.out.println(">> Recibo enviado para o seu email pessoal.");
+    }
+
+    // --- Mensagens de erro ---
+    public void msgErroOpcao() {
+        System.out.println(">> Erro: Opção inválida.");
+    }
+
+    public void msgErroDados() {
+        System.out.println(">> Erro: Formato de dados incorreto ou inválido.");
+    }
+
+    public void msgErroPassIncorreta() {
+        System.out.println(">> Erro: A palavra-passe atual não coincide.");
+    }
+
+    public void msgErroPassNaoCoincidem() {
+        System.out.println(">> Erro: A confirmação da palavra-passe falhou.");
+    }
+
+    public void msgErroSemCurso() {
+        System.out.println(">> Erro: Não possui curso associado (Processo pendente).");
+    }
+
+    public void msgErroValorSuperiorDivida() {
+        System.out.println(">> Erro: O valor do pagamento não pode ser superior ao montante em dívida.");
+    }
+
     public void msgErroValorMinimo(double valorMinimo) {
         System.out.printf("\nErro: Montante insuficiente. O pagamento mínimo aceite é de %.2f€.\n", valorMinimo);
     }
 
-    public void mostrarAnoFrequencia(int ano) {
-        System.out.println(">> Ano de Frequência Atual: " + ano + "º Ano");
-        System.out.println("=================================================");
+    // --- Mensagens de aviso / cancelamento ---
+    public void mostrarCancelamento(String menuDestino) {
+        System.out.println("\n>> Ação cancelada. A regressar ao menu " + menuDestino + "...");
+    }
+
+    // --- Mensagens de saída / encerramento ---
+    public void msgSaida() {
+        System.out.println(">> Sessão terminada. Até à próxima!");
+    }
+
+    public void msgContaDesativada() {
+        System.out.println(">> Conta desativada com sucesso. A encerrar aplicação...");
+    }
+
+    // --- Mensagens de email ---
+    public void msgFalhaEnvioEmail() {
+        System.out.println(">> Falha no envio do recibo por email. Contacte o suporte.");
+    }
+
+    public void msgReciboNaoEnviado() {
+        System.out.println(">> Recibo gerado mas não foi possível enviar por email (endereço inválido).");
     }
 }

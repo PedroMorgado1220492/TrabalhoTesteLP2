@@ -1,1 +1,6 @@
 TIPO;SIGLA;NOME;DEPARTAMENTO;ATIVO
+CURSO;LEC;Licenciatura em Engenharia Civil;DEN;true
+CURSO;LEM;Licenciatura de Engenharia Mecanica;DEN;true
+CURSO;LEE;Licenciatura de Engenharia Eletrotecnica;DEN;false
+CURSO;LFQ;Licenciatura em Fisica e Quimica;DCI;false
+CURSO;LEN;Licenciatura em Engenharia Nuclear;DEN;false

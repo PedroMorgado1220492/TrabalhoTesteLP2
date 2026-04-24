@@ -60,7 +60,7 @@ public class DocenteView {
         System.out.println("1 - Lançar Nota Individual");
         System.out.println("2 - Lançar Notas em Lote (Turma Completa)");
         System.out.println("3 - Visualizar Pauta da Disciplina");
-        System.out.println("4 - Definir Limite de Momentos de Avaliação");
+        System.out.println("4 - Definir Momentos de Avaliação");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();

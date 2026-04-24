@@ -1,0 +1,13 @@
+=====================================================
+                 RECIBO DE PAGAMENTO                 
+=====================================================
+O aluno Daniela Filipa Pires,
+numero mecanografico 20260004,
+morada Viseu,
+na data 24/04/2026,
+pagou 1100,00 euros de um total de 1100,00 euros,
+do curso de Licenciatura em Engenharia Civil.
+
+Situação Financeira: REGULARIZADA (0.00 euros em falta).
+=====================================================
+Recibo Nº 00000004

@@ -1,0 +1,13 @@
+=====================================================
+                 RECIBO DE PAGAMENTO                 
+=====================================================
+O aluno Eduardo Jorge Mendes,
+numero mecanografico 20260005,
+morada Braga,
+na data 24/04/2026,
+pagou 2100,00 euros de um total de 2500,00 euros,
+do curso de Licenciatura em Engenharia Civil.
+
+Situação Financeira: REGULARIZADA (0.00 euros em falta).
+=====================================================
+Recibo Nº 00000010

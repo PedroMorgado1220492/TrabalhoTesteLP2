@@ -200,7 +200,7 @@ public class MainView {
         System.out.println("   MATRÍCULA EFETUADA COM SUCESSO! (" + ano + ")");
         System.out.println("   Número Mecanográfico : " + numMec);
         System.out.println("   Email Institucional  : " + email);
-        System.out.println("   Password Provisória  : " + pass);
+        //System.out.println("   Password Provisória  : " + pass);
         System.out.println("**************************************************");
     }
 
@@ -251,7 +251,9 @@ public class MainView {
     public void mostrarErroNifFormato() {
         System.out.println("\n>>Erro: Formato de NIF inválido. Introduza exatamente 9 dígitos.");
     }
+
     public void msgErroData() { System.out.println(">> Erro: Use o formato DD-MM-AAAA."); }
+    public void msgErroIdadeMinima() { System.out.println(">> Erro: O estudante deve ter pelo menos 16 anos."); }
     public void msgErroNumeroInvalido() { System.out.println(">> Erro: Seleção fora do intervalo permitido."); }
     public void msgErroLimiteEstudantes() { System.out.println(">> Erro: Capacidade máxima do sistema atingida."); }
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção de menu inválida."); }
@@ -274,6 +276,6 @@ public class MainView {
     // --- Recuperação ---
 
     public void msgSucessoRecuperacao() { System.out.println(">> Sucesso: Verifique a nova senha no seu email pessoal."); }
-    public void msgErroDadosIncorretosOuFalhaEmail() { System.out.println(">> Erro: Dados não conferem ou falha no servidor de email."); }
+    public void msgErroDadosIncorretosOuFalhaEmail() { System.out.println(">> Erro: Utilizador e NIF não coorrespondem."); }
     public void msgErroArquivoNaoEncontrado(String c) { System.err.println(">> Erro: Ficheiro " + c + " não localizado."); }
 }

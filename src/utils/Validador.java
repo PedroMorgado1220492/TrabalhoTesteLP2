@@ -2,6 +2,7 @@ package utils;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.Period;
 
 /**
  * Classe utilitária responsável pela validação de dados de entrada (Input Validation).
@@ -68,11 +69,9 @@ public class Validador {
      * @return true se a data for válida, real e no passado; false caso contrário.
      */
     public static boolean isDataNascimentoValida(String data) {
-        if (data == null) {
-            return false;
-        }
+        if (data == null) return false;
 
-        // Regex ajustada para aceitar anos de 1900 a 2026
+        // Apenas formato e data não futura
         if (!data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(19|20)[0-9]{2}$")) {
             return false;
         }
@@ -80,24 +79,15 @@ public class Validador {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             LocalDate dataNascimento = LocalDate.parse(data, formatter);
-
-            // Verifica se a data é posterior a hoje
+            // Não pode ser futura
             if (dataNascimento.isAfter(LocalDate.now())) {
                 return false;
             }
-
-            // Verificar idade mínima (18 anos)
-            LocalDate dataLimite = LocalDate.now().minusYears(18);
-            if (dataNascimento.isAfter(dataLimite)) {
-                return false;
-            }
-
             return true;
         } catch (DateTimeParseException e) {
             return false;
         }
     }
-
     /**
      * Valida se um e-mail pertence ao domínio institucional.
      * @param email O e-mail a validar.
@@ -137,5 +127,22 @@ public class Validador {
         }
         // Verifica se contém '@' e '.' e não tem espaços
         return email.contains("@") && email.contains(".") && !email.contains(" ");
+    }
+
+    /**
+     * Verifica se a data de nascimento corresponde a uma idade >= 16 anos.
+     * @param data Data no formato dd-MM-yyyy.
+     * @return true se a idade for >= 16, false caso contrário ou data inválida.
+     */
+    public static boolean temIdadeMinima(String data) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            LocalDate nascimento = LocalDate.parse(data, formatter);
+            LocalDate hoje = LocalDate.now();
+            int idade = Period.between(nascimento, hoje).getYears();
+            return idade >= 16;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
     }
 }

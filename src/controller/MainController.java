@@ -283,7 +283,7 @@ public class MainController {
                 }
 
                 // Verifica a regra financeira (mínimo de alunos) delegada ao Repositório
-                int inscritos = repositorio.contarInscritosPrimeiroAno(curso.getSigla(), anoAlvo);
+                int inscritos = repositorio.contarAlunosNoPrimeiroAno(curso.getSigla());
 
                 if (inscritos > 0 && inscritos < 5) {
                     view.mostrarCursoCancelado(curso.getSigla(), inscritos);
@@ -359,7 +359,7 @@ public class MainController {
      * e apaga a instância em memória por questões de segurança.
      */
     private void encerrarSessaoESalvar() {
-        ExportadorCSV.exportarDados("bd", repositorio);
+        //ExportadorCSV.exportarDados("bd", repositorio);
         this.repositorio = new RepositorioDados(); // Reset à memória
         view.msgSessaoEncerrada();
     }
@@ -369,14 +369,13 @@ public class MainController {
      */
     private void carregarBaseDeDadosCompleta() {
         repositorio.limpar();
-
         ImportadorCSV.importarGestores("bd/gestores.csv", repositorio);
         ImportadorCSV.importarDepartamentos("bd/departamentos.csv", repositorio);
         ImportadorCSV.importarCursos("bd/cursos.csv", repositorio);
         ImportadorCSV.importarDocentes("bd/docentes.csv", repositorio);
         ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
         ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
-        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
+        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio); // <-- apenas uma vez!
     }
 
     private String validarDominioEmail() {
@@ -413,8 +412,13 @@ public class MainController {
     private String validarDataNascimento() {
         while (true) {
             String data = view.pedirDataNascimento();
-            if (Validador.isDataNascimentoValida(data)) return data;
-            view.msgErroData();
+            if (!Validador.isDataNascimentoValida(data)) {
+                view.msgErroData();
+            } else if (!Validador.temIdadeMinima(data)) {
+                view.msgErroIdadeMinima();
+            } else {
+                return data;
+            }
         }
     }
 
