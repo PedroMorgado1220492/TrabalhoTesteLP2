@@ -37,7 +37,7 @@ public class MainView {
      * @param ano Ano atual (ex: 2026)
      */
     public void mostrarAnoLetivo(int ano) {
-        System.out.println("\n>> CICLO CORRENTE: " + ano + " / " + (ano + 1));
+        System.out.println("\n>> CICLO CORRENTE: " + ano);
     }
 
     /**

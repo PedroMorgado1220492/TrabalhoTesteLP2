@@ -1,13 +1,5 @@
 package model.bll;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Representa um Curso (ou plano de estudos) lecionado na instituição.
@@ -44,7 +36,7 @@ public class Curso {
      * @param departamento O departamento institucional ao qual o curso está alocado.
      */
     public Curso(String sigla, String nome, Departamento departamento) {
-        this.sigla = sigla;
+        this.sigla = sigla.toUpperCase();
         this.nome = nome;
         this.departamento = departamento;
         this.unidadesCurriculares = new UnidadeCurricular[15]; // Limite estrutural de 15 UCs por curso (5 por ano)
@@ -53,7 +45,7 @@ public class Curso {
     }
 
     // ---------- GETTERS ----------
-    public String getSigla() { return sigla; }
+    public String getSigla() { return sigla.toUpperCase(); }
     public String getNome() { return nome; }
     public Departamento getDepartamento() { return departamento; }
     public Docente getDocenteResponsavel() { return docenteResponsavel; }
@@ -162,56 +154,4 @@ public class Curso {
         return true;
     }
 
-
-    // =========================================================
-    // GESTÃO DE PREÇOS ANUAIS (CSV)
-    // =========================================================
-    private static final String PRECOS_FILE = "bd/cursos_precos.csv";
-
-    private static void garantirFicheiroPrecos() {
-        File f = new File(PRECOS_FILE);
-        if (!f.exists()) {
-            try (PrintWriter pw = new PrintWriter(new FileWriter(f))) {
-                pw.println("ANO_CURSO;SIGLA_CURSO;PRECO");
-            } catch (IOException e) { }
-        }
-    }
-
-    public static double obterPrecoCurso(String siglaCurso, int ano) {
-        garantirFicheiroPrecos();
-        try (BufferedReader br = new BufferedReader(new FileReader(PRECOS_FILE))) {
-            br.readLine(); // cabeçalho
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] p = linha.split(";");
-                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
-                    return Double.parseDouble(p[2]);
-                }
-            }
-        } catch (IOException | NumberFormatException e) { }
-        return 1000.0; // valor padrão (fallback)
-    }
-
-    public static void atualizarPrecoCurso(String siglaCurso, int ano, double novoPreco) {
-        garantirFicheiroPrecos();
-        List<String> linhas = new ArrayList<>();
-        boolean atualizado = false;
-        try (BufferedReader br = new BufferedReader(new FileReader(PRECOS_FILE))) {
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] p = linha.split(";");
-                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
-                    linha = ano + ";" + siglaCurso + ";" + novoPreco;
-                    atualizado = true;
-                }
-                linhas.add(linha);
-            }
-        } catch (IOException e) { }
-        if (!atualizado) {
-            linhas.add(ano + ";" + siglaCurso + ";" + novoPreco);
-        }
-        try (PrintWriter pw = new PrintWriter(new FileWriter(PRECOS_FILE))) {
-            for (String l : linhas) pw.println(l);
-        } catch (IOException e) { }
-    }
 }

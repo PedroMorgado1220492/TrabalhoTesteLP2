@@ -24,7 +24,7 @@ public class Departamento {
      * @param nome  O nome por extenso do departamento (ex: Departamento de Informática).
      */
     public Departamento(String sigla, String nome) {
-        this.sigla = sigla;
+        this.sigla = sigla.toUpperCase();
         this.nome = nome;
         this.cursos = new Curso[10]; // Limite estrutural fixado em 10 cursos por departamento
         this.totalCursos = 0;
@@ -44,7 +44,7 @@ public class Departamento {
 
     // ---------- SETTERS ----------
 
-    public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setSigla(String sigla) { this.sigla = sigla.toUpperCase(); }
 
     public void setNome(String nome) { this.nome = nome; }
 

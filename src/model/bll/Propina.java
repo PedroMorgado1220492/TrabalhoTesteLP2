@@ -177,7 +177,7 @@ public class Propina {
     public static double calcularDividaTotal(Estudante estudante, int anoAtual) {
         double totalDevido = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
-            totalDevido += Curso.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
+            totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
         }
         double totalPago = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
@@ -266,18 +266,24 @@ public class Propina {
      * @param anoLimite Último ano a considerar.
      * @return true se existir dívida (valor > 0.01), false caso contrário.
      */
-    public static boolean temDividasAteAno(Estudante estudante, int anoLimite) {
+    public static double getDividaAteAno(Estudante estudante, int anoLimite, int anoCorrente) {
         double totalDevido = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoLimite; ano++) {
-            totalDevido += Curso.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
+            totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
         }
-        double totalPago = 0.0;
-        for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoLimite; ano++) {
-            totalPago += getTotalPago(estudante.getNumeroMecanografico(), ano);
+
+        double totalPagoGeral = 0.0;
+        for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoCorrente; ano++) {
+            totalPagoGeral += getTotalPago(estudante.getNumeroMecanografico(), ano);
         }
-        return (totalDevido - totalPago) > 0.01;
+
+        double divida = totalDevido - totalPagoGeral;
+        return divida > 0 ? divida : 0.0;
     }
 
+    public static boolean temDividasAteAno(Estudante estudante, int anoLimite, int anoCorrente) {
+        return getDividaAteAno(estudante, anoLimite, anoCorrente) > 0.01;
+    }
     /**
      * Adiciona uma multa ao estudante, registando um valor negativo como pagamento.
      * @param numMec Número mecanográfico.

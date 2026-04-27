@@ -383,6 +383,8 @@ public class RepositorioDados {
      * em todos os estudantes ativos (transição de ano, arquivo e novas dívidas).
      */
     public void avancarAno() {
+
+        removerAlunosInativosSemAvaliacoes(); // Remover alunos inativos sem qualquer avaliação
         int anoAntigo = this.anoAtual;   // guarda o ano que termina
         this.anoAtual++;                 // passa para o novo ano
 
@@ -496,5 +498,31 @@ public class RepositorioDados {
         this.totalCursos = 0;
         this.ucs = new UnidadeCurricular[150];
         this.totalUcs = 0;
+    }
+
+    /**
+     * Remove da base de dados os estudantes inativos que nunca tiveram qualquer avaliação.
+     *
+     * Um estudante é considerado sem avaliações se não possuir registos no buffer anual
+     * e também não possuir histórico de avaliações
+     *
+     * Este método é invocado durante o avanço do ano letivo, antes de processar as transições,
+     * com o objetivo de limpar a base de dados de alunos sem qualquer actividade académica
+     * registada, mantendo apenas aqueles que têm algum percurso (aprovados, reprovados ou
+     * avaliações parciais).</p>
+     *
+     */
+
+    private void removerAlunosInativosSemAvaliacoes() {
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante e = estudantes[i];
+            if (e != null && !e.isAtivo()) {
+                boolean temAvaliacoes = e.getTotalAvaliacoes() > 0 || e.getTotalHistorico() > 0;
+                if (!temAvaliacoes) {
+                    removerEstudante(e.getNumeroMecanografico());
+                    i--; // ajustar índice
+                }
+            }
+        }
     }
 }

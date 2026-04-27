@@ -386,7 +386,7 @@ public class MainController {
         ImportadorCSV.importarDocentes("bd/docentes.csv", repositorio);
         ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
         ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
-        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio); // <-- apenas uma vez!
+        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
     }
 
     private String validarDominioEmail() {

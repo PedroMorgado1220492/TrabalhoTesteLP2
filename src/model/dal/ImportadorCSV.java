@@ -339,4 +339,76 @@ public class ImportadorCSV {
         }
         return null;
     }
+
+    // =========================================================
+    // 6. CARREGAMENTO DE PREÇOS CURSOS
+    // =========================================================
+
+    // Dentro de ImportadorCSV
+    public static double obterPrecoCurso(String siglaCurso, int ano) {
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine(); // cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
+                    return Double.parseDouble(p[2]);
+                }
+            }
+        } catch (IOException | NumberFormatException e) { }
+        return 1000.0; // valor padrão
+    }
+
+    public static double[][] obterHistoricoPrecos(String siglaCurso) {
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine(); // cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                if (linha.contains(";" + siglaCurso + ";")) count++;
+            }
+        } catch (IOException e) { }
+
+        double[][] historico = new double[count][2];
+        int idx = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine();
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso)) {
+                    historico[idx][0] = Integer.parseInt(p[0]);
+                    historico[idx][1] = Double.parseDouble(p[2]);
+                    idx++;
+                }
+            }
+        } catch (IOException e) { }
+        // ordenar por ano
+        for (int i = 0; i < historico.length - 1; i++) {
+            for (int j = 0; j < historico.length - i - 1; j++) {
+                if (historico[j][0] > historico[j+1][0]) {
+                    double[] temp = historico[j];
+                    historico[j] = historico[j+1];
+                    historico[j+1] = temp;
+                }
+            }
+        }
+        return historico;
+    }
+
+    public static String[] lerTodasLinhasPrecos() {
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine(); // cabeçalho
+            while (br.readLine() != null) count++;
+        } catch (IOException e) { return new String[0]; }
+        String[] linhas = new String[count];
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine();
+            for (int i = 0; i < count; i++) {
+                linhas[i] = br.readLine();
+            }
+        } catch (IOException e) { return new String[0]; }
+        return linhas;
+    }
 }

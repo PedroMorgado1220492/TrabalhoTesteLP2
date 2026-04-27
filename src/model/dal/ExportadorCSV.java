@@ -244,12 +244,21 @@ public class ExportadorCSV {
      * @param anoAtual O ano letivo a ser persistido.
      */
     public static void exportarAno(String pastaBD, int anoAtual) {
-        if (!pastaBD.endsWith("/")) pastaBD += "/";
-        try (PrintWriter pw = new PrintWriter(new FileWriter(pastaBD + "ano.csv"))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("bd/ano.csv"))) {
             pw.println("ANO");
             pw.println(anoAtual);
         } catch (IOException e) {
             System.err.println("Erro ao guardar ano: " + e.getMessage());
         }
     }
+
+    public static void escreverFicheiroPrecos(String[] linhas) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("bd/cursos_precos.csv"))) {
+            pw.println("ANO_CURSO;SIGLA_CURSO;PRECO");
+            for (String linha : linhas) {
+                pw.println(linha);
+            }
+        } catch (IOException e) { }
+    }
+
 }

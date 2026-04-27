@@ -67,8 +67,6 @@ public class GestorController {
                     case 5: gerirDocentes(); break;
                     case 6: gerirGestores(); break;
                     case 7: gerirRelatorios(); break;
-                    case 8: listarAlunosComDividas(); break;
-                    case 9: alterarPrecoCurso(); break;
                     case 0:
                         view.mostrarMensagemSaida();
                         aExecutar = false;
@@ -181,6 +179,7 @@ public class GestorController {
                     case 3: view.mostrarListaCursos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos(), repositorio.getCursos(), repositorio.getTotalCursos()); break;
                     case 4: alternarEstadoCurso(); break;
                     case 5: verPercursoAcademicoCurso(); break;
+                    case 6: alterarPrecoCurso(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -213,7 +212,6 @@ public class GestorController {
         }
         Departamento dep = repositorio.getDepartamentos()[escolhaIndex];
 
-        // --- NOVO: pedir o preço anual inicial ---
         double precoInicial = view.pedirNovoPreco(1000.0); // valor sugerido 1000€
         if (precoInicial <= 0) {
             view.mostrarErroPrecoInvalido();
@@ -229,7 +227,11 @@ public class GestorController {
             if (repositorio.adicionarCurso(novoCurso)) {
                 // Guarda o preço no CSV para o ano atual
                 int anoAtual = repositorio.getAnoAtual();
-                Curso.atualizarPrecoCurso(siglaCurso, anoAtual, precoInicial);
+                String[] linhas = model.dal.ImportadorCSV.lerTodasLinhasPrecos();
+                String[] novasLinhas = new String[linhas.length + 1];
+                System.arraycopy(linhas, 0, novasLinhas, 0, linhas.length);
+                novasLinhas[novasLinhas.length - 1] = anoAtual + ";" + siglaCurso + ";" + precoInicial;
+                model.dal.ExportadorCSV.escreverFicheiroPrecos(novasLinhas);
                 view.mostrarSucessoRegistoCurso(nomeCurso);
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
@@ -303,36 +305,66 @@ public class GestorController {
     }
 
     private void verPercursoAcademicoCurso() {
-        String siglaCurso = view.pedirSiglaCursoBusca();
-        Curso curso = repositorio.obterCursoPorSigla(siglaCurso);
-
-        if (curso != null) {
-            view.mostrarPercursoAcademicoCurso(curso, repositorio.getEstudantes(), repositorio.getTotalEstudantes());
-        } else {
-            view.mostrarErroCursoNaoEncontrado();
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarAvisoSemCursos();
+            return;
         }
+        System.out.println("\n--- SELECIONAR CURSO ---");
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            Curso c = repositorio.getCursos()[i];
+            if (c != null) System.out.printf("%d - [%s] %s\n", (i+1), c.getSigla(), c.getNome());
+        }
+        int escolha = utils.Consola.lerInt("Indique o número: ") - 1;
+        if (escolha < 0 || escolha >= repositorio.getTotalCursos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+        Curso curso = repositorio.getCursos()[escolha];
+        view.mostrarPercursoAcademicoCurso(curso, repositorio.getEstudantes(), repositorio.getTotalEstudantes());
     }
 
     /**
      * Altera o valor anual da propina de um Curso.
      */
     private void alterarPrecoCurso() {
-        int anoAlvo = repositorio.getAnoAtual() + 1;
         int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getAnoAtual());
         if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
             Curso cursoEscolhido = repositorio.getCursos()[escolha - 1];
-            double precoAntigo = Curso.obterPrecoCurso(cursoEscolhido.getSigla(), anoAlvo);
+            // Mostrar histórico (leitura)
+            double[][] historico = model.dal.ImportadorCSV.obterHistoricoPrecos(cursoEscolhido.getSigla());
+            view.mostrarHistoricoPrecosCurso(cursoEscolhido.getSigla(), historico);
+
+            int anoAlvo = repositorio.getAnoAtual() + 1;
+            double precoAntigo = model.dal.ImportadorCSV.obterPrecoCurso(cursoEscolhido.getSigla(), anoAlvo);
             double novoPreco = view.pedirNovoPreco(precoAntigo);
             if (novoPreco > 0) {
-                Curso.atualizarPrecoCurso(cursoEscolhido.getSigla(), anoAlvo, novoPreco);
-                cursoEscolhido.setValorPropinaAnual(novoPreco); // atualiza o valor base para novos alunos
+                // Ler todas as linhas do ficheiro de preços (sem cabeçalho)
+                String[] linhas = model.dal.ImportadorCSV.lerTodasLinhasPrecos();
+                boolean atualizado = false;
+                for (int i = 0; i < linhas.length; i++) {
+                    String[] p = linhas[i].split(";");
+                    if (p.length >= 3 && p[1].equalsIgnoreCase(cursoEscolhido.getSigla()) && Integer.parseInt(p[0]) == anoAlvo) {
+                        linhas[i] = anoAlvo + ";" + cursoEscolhido.getSigla() + ";" + novoPreco;
+                        atualizado = true;
+                        break;
+                    }
+                }
+                if (!atualizado) {
+                    // Adicionar nova linha
+                    String[] novasLinhas = new String[linhas.length + 1];
+                    System.arraycopy(linhas, 0, novasLinhas, 0, linhas.length);
+                    novasLinhas[novasLinhas.length - 1] = anoAlvo + ";" + cursoEscolhido.getSigla() + ";" + novoPreco;
+                    linhas = novasLinhas;
+                }
+                // Escrever de volta
+                model.dal.ExportadorCSV.escreverFicheiroPrecos(linhas);
+                // Atualizar o valor base do curso (para uso futuro)
+                cursoEscolhido.setValorPropinaAnual(novoPreco);
                 view.mostrarSucessoAlteracaoPreco(cursoEscolhido.getSigla(), novoPreco);
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroPrecoInvalido();
             }
-        } else {
-            view.mostrarOpcaoInvalida();
         }
     }
 
@@ -611,7 +643,7 @@ public class GestorController {
                     case 2: alterarEstudante(); break;
                     case 3: view.mostrarListaEstudantes(repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
                     case 4: alternarEstadoEstudante(); break;
-                    case 5: reinscreverEstudante(); break;  // NOVA OPÇÃO
+                    case 5: listarAlunosComDividas(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -728,7 +760,7 @@ public class GestorController {
                 if (!est.isAtivo()) {
                     int anoAtual = repositorio.getAnoAtual();
                     // Verificar dívidas de anos anteriores
-                    if (Propina.temDividasAteAno(est, anoAtual - 1)) {
+                    if (Propina.temDividasAteAno(est, anoAtual - 1, anoAtual)) {
                         double multa = 100.0;
                         String data = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                         Propina.adicionarMulta(numMec, anoAtual, multa, data);
@@ -1098,41 +1130,4 @@ public class GestorController {
         }
     }
 
-    private void reinscreverEstudante() {
-        try {
-            int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
-            Estudante est = repositorio.obterEstudantePorNumMec(numMec);
-            if (est == null) {
-                view.mostrarErroEstudanteNaoEncontrado();
-                return;
-            }
-            if (!est.isAtivo()) {
-                view.mostrarErroEstudanteInativo();
-                return;
-            }
-            int anoAtual = repositorio.getAnoAtual();
-            // Verificar dívida apenas dos anos anteriores (até anoAtual - 1)
-            if (Propina.temDividasAteAno(est, anoAtual - 1)) {
-                view.mostrarErroEstudanteComDividas();
-                return;
-            }
-
-            // Aplicar progressão com base na regra de 60%
-            if (est.temAproveitamentoParaProgredir() && est.getAnoFrequencia() < 3) {
-                est.setAnoFrequencia(est.getAnoFrequencia() + 1);
-                est.setAnoCurricular(est.getAnoFrequencia());
-                view.mostrarInfoProgrediu(est.getAnoFrequencia());
-            } else {
-                view.mostrarInfoNaoProgrediu(est.getAnoFrequencia());
-            }
-
-            // Reconstruir o percurso
-            est.reconstruirPercurso();
-            view.msgSucessoReinscricao(est.getNome(), est.getAnoFrequencia());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-
-        } catch (NumberFormatException e) {
-            view.mostrarErroNumMecNumerico();
-        }
-    }
 }

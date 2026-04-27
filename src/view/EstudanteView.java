@@ -210,23 +210,6 @@ public class EstudanteView {
     // =========================================================
 
     /**
-     * Exibe o estado financeiro atual do aluno (versão antiga – manter para compatibilidade).
-     * @deprecated Usar {@link #mostrarExtratoPropinas} para informação mais detalhada.
-     */
-    public void mostrarDetalhesPropina(double total, double pago, double divida, double[] historico, int nPagamentos, boolean estaPaga) {
-        System.out.println("\n----------- EXTRATO FINANCEIRO -----------");
-        System.out.printf("Valor Total Anual : %.2f€\n", total);
-        System.out.printf("Montante Liquidado: %.2f€\n", pago);
-        System.out.printf("Montante em Dívida: %.2f€\n", divida);
-        if (estaPaga) {
-            System.out.println(">> ESTADO: REGULARIZADO. Obrigado.");
-        } else {
-            System.out.println(">> ESTADO: PAGAMENTO PENDENTE.");
-        }
-        System.out.println("------------------------------------------");
-    }
-
-    /**
      * Exibe o extrato financeiro detalhado (por ano corrente e total acumulado).
      * @param anoAtual Ano letivo corrente.
      * @param valorAnual Valor total da propina para o ano atual.
@@ -234,19 +217,21 @@ public class EstudanteView {
      * @param dividaAnual Dívida referente apenas ao ano corrente.
      * @param dividaTotal Dívida acumulada de todos os anos.
      */
-    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double pagoAnual, double dividaAnual, double dividaTotal) {
-        double dividaAnterior = dividaTotal - dividaAnual;
+    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double pagoAnual, double dividaAnual, double dividaTotal, double dividaAnterior) {
+        // Montante liquidado: se for negativo (multa), mostrar 0
+        double pagoExibicao = pagoAnual < 0 ? 0.0 : pagoAnual;
+        // Dívida do ano atual exibida = valor anual (sem incluir multa)
+        double dividaAnualExibicao = valorAnual;
+        // Dívida de anos anteriores = dívida total - dívida do ano atual
+        double dividaAnteriorExibicao = dividaTotal - dividaAnualExibicao;
+        if (dividaAnteriorExibicao < 0) dividaAnteriorExibicao = 0;
+
         System.out.println("\n----------- EXTRATO FINANCEIRO -----------");
         System.out.printf("Valor Total do Ano %d : %.2f€\n", anoAtual, valorAnual);
-        System.out.printf("Montante Liquidado Ano Atual: %.2f€\n", pagoAnual);
-        System.out.printf("Dívida do Ano Atual: %.2f€\n", dividaAnual);
-        System.out.printf("Dívida Anos Anteriores: %.2f€\n", dividaAnterior);
+        System.out.printf("Montante Liquidado Ano Atual: %.2f€\n", pagoExibicao);
+        System.out.printf("Dívida do Ano Atual: %.2f€\n", dividaAnualExibicao);
+        System.out.printf("Dívida Anos Anteriores: %.2f€\n", dividaAnteriorExibicao);
         System.out.printf("Dívida Total: %.2f€\n", dividaTotal);
-        if (dividaTotal <= 0.01) {
-            System.out.println(">> ESTADO: REGULARIZADO.");
-        } else {
-            System.out.println(">> ESTADO: PAGAMENTO PENDENTE.");
-        }
         System.out.println("------------------------------------------");
     }
 
@@ -280,13 +265,8 @@ public class EstudanteView {
     }
 
     /** Mensagem indicando que a conta foi reativada. */
-    public void msgContaReativada() {
-        System.out.println(">> Conta reativada com sucesso! Agora pode progredir no próximo ano letivo.");
-    }
-
-    /** Mensagem informando que o percurso foi atualizado. */
     public void msgPercursoAtualizado() {
-        System.out.println(">> Percurso académico atualizado com base nas disciplinas já concluídas.");
+        System.out.println(">> Conta reativada com sucesso! Agora pode progredir no próximo ano letivo.");
     }
 
     /** Mensagem informando que o recibo foi enviado por email. */
@@ -333,6 +313,22 @@ public class EstudanteView {
         System.out.printf("\nErro: Montante insuficiente. O pagamento mínimo aceite é de %.2f€.\n", valorMinimo);
     }
 
+    /**
+     * Mensagem informando que o estudante progrediu de ano após pagamento de dívidas.
+     * @param novoAno Ano para o qual progrediu.
+     */
+    public void msgEstudanteProgrediu(int novoAno) {
+        System.out.println(">> Estudante progrediu para o " + novoAno + "º ano.");
+    }
+
+    /**
+     * Mensagem de aviso quando o pagamento das dívidas de anos anteriores foi feito,
+     * mas não foi possível reinscrever o estudante (por exemplo, se ele ainda estiver inativo).
+     */
+    public void msgReinscricaoNaoPossivel() {
+        System.out.println(">> Dívidas de anos anteriores pagas, mas não foi possível reinscrever (verifique se o aluno está ativo).");
+    }
+
     // --- Mensagens de aviso / cancelamento ---
     /**
      * Aviso de cancelamento de operação.
@@ -363,4 +359,5 @@ public class EstudanteView {
     public void msgReciboNaoEnviado() {
         System.out.println(">> Recibo gerado mas não foi possível enviar por email (endereço inválido).");
     }
+
 }

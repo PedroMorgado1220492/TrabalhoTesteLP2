@@ -51,8 +51,8 @@ public class Recibo {
 
             // Formatar para duas casas decimais
             String valorPagoStr = String.format("%.2f", valorPago);
-            String valorTotalStr = String.format("%.2f", valorTotalCurso);
             String valorEmFaltaStr = String.format("%.2f", valorEmFalta);
+            String valorTotalStr = String.format("%.2f", valorEmFalta+valorPago);
             String nomeCurso = (e.getCurso() != null) ? e.getCurso().getNome() : "Desconhecido";
 
             pw.println("pagou " + valorPagoStr + " euros de um total de " + valorTotalStr + " euros,");

@@ -9,7 +9,7 @@ UC;COM1;Construções Mecanicas 1;1;PYS;LEM;true;1
 UC;COM2;Construções Mecanicas 2;3;PYS;LEM;true;1
 UC;PRO1;Programação 1;1;PJR;LEE;true;1
 UC;CIR;Circuitos;1;PJR;LEE;true;1
-UC;sde;Sistemas Digitais Eletricos;1;PJR;LEE;true;1
-UC;ele;Eletromagnetismo;1;PJR;LEE;true;1
-UC;pro2;Programação 2;2;PJR;LEE;true;1
+UC;SDE;Sistemas Digitais Eletricos;1;PJR;LEE;true;1
+UC;ELE;Eletromagnetismo;1;PJR;LEE;true;1
+UC;PRO2;Programação 2;2;PJR;LEE;true;1
 UC;REA1;Reatores 1;1;PVM;;false;3

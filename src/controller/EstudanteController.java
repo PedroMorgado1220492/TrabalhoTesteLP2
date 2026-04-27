@@ -244,18 +244,23 @@ public class EstudanteController {
         Propina.Pagamento[] pagamentos = Propina.getPagamentos(numMec);
         view.mostrarHistoricoPagamentos(pagamentos);
 
-        double valorAnualAtual = Curso.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
+        double valorAnualAtual = model.dal.ImportadorCSV.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
         double pagoAnoAtual = Propina.getTotalPago(numMec, anoAtual);
         double dividaAnoAtual = valorAnualAtual - pagoAnoAtual;
         double dividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        double dividaAnteriorReal = Propina.getDividaAteAno(estudanteLogado, anoAtual - 1, anoAtual);
 
-        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, pagoAnoAtual, dividaAnoAtual, dividaTotal);
+        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, pagoAnoAtual, dividaAnoAtual, dividaTotal, dividaAnteriorReal);
 
         if (dividaTotal <= 0.01) return;
 
         double valor = calcularValorPagamento(dividaTotal, valorAnualAtual);
         if (valor <= 0) return;
 
+        // Verificar se havia dívida de anos anteriores antes do pagamento
+        boolean tinhaDividasAnteriores = Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+
+        // Registar pagamento
         String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
         Propina.registarPagamento(numMec, anoAtual, valor, dataAtual);
 
@@ -263,11 +268,9 @@ public class EstudanteController {
         double novaDividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
         double novoPagoAno = pagoAnoAtual + valor;
         double novaDividaAno = valorAnualAtual - novoPagoAno;
-
-        // Calcular total devido (soma de todos os anos) para o recibo
         double totalDevido = 0.0;
         for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
-            totalDevido += Curso.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
+            totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
         }
         double totalPago = totalDevido - novaDividaTotal;
 
@@ -288,18 +291,20 @@ public class EstudanteController {
 
         view.msgSucesso();
 
-        // Reconstruir percurso se a dívida foi totalmente saldada
-        if (novaDividaTotal <= 0.01) {
-            if (!estudanteLogado.isAtivo()) {
-                estudanteLogado.setAtivo(true);
-                estudanteLogado.reconstruirPercurso();
-                view.msgContaReativada();
-            } else {
-                estudanteLogado.reconstruirPercurso();
+        // Verificar se a dívida de anos anteriores foi eliminada por este pagamento
+        boolean agoraTemDividasAnteriores = Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+
+        if (tinhaDividasAnteriores && !agoraTemDividasAnteriores) {
+            // Pagamento eliminou as dívidas de anos anteriores → permitir reinscrição (e progressão se tiver aproveitamento)
+            if (estudanteLogado.reinscrever(anoAtual)) {
                 view.msgPercursoAtualizado();
+                if (estudanteLogado.getAnoFrequencia() > 1) {
+                    view.msgEstudanteProgrediu(estudanteLogado.getAnoFrequencia());
+                }
+            } else {
+                view.msgReinscricaoNaoPossivel();
             }
         }
-
         model.dal.ExportadorCSV.exportarDados("bd", repositorio);
     }
 

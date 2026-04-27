@@ -35,7 +35,7 @@ public class UnidadeCurricular {
      * @param numAvaliacoes      O número inicial de momentos de avaliação (testes/trabalhos).
      */
     public UnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel, int numAvaliacoes) {
-        this.sigla = sigla;
+        this.sigla = sigla.toUpperCase();
         this.nome = nome;
         this.anoCurricular = anoCurricular;
         this.docenteResponsavel = docenteResponsavel;
@@ -57,7 +57,7 @@ public class UnidadeCurricular {
 
     // ---------- SETTERS SIMPLES ----------
 
-    public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setSigla(String sigla) { this.sigla = sigla.toUpperCase(); }
     public void setNome(String nome) { this.nome = nome; }
     public void setAnoCurricular(int anoCurricular) { this.anoCurricular = anoCurricular; }
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
