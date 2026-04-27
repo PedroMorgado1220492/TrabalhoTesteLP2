@@ -27,10 +27,7 @@ public class Estudante extends Utilizador {
     private int totalHistorico;
 
     // ---------- ATRIBUTOS FINANCEIROS ----------
-    private Propina[] propinas;
-    private int totalPropinas;
     private double valorPropinaBase;
-
 
     // ---------- CONSTRUTOR ----------
 
@@ -69,16 +66,11 @@ public class Estudante extends Utilizador {
         this.historicoAvaliacoes = new Avaliacao[150]; // Histórico com capacidade estendida
         this.totalHistorico = 0;
 
-        this.propinas = new Propina[10]; // Limite de 10 anos de propinas
-        this.totalPropinas = 0;
-
-        // Geração automática da infraestrutura financeira inicial
+        // Valor base da propina (apenas para referência, a dívida é calculada externamente)
         if (this.curso != null) {
             this.valorPropinaBase = curso.getValorPropinaAnual();
-            adicionarPropina(anoPrimeiraInscricao, this.valorPropinaBase);
         }
     }
-
 
     // ---------- GETTERS SIMPLES ----------
 
@@ -104,7 +96,6 @@ public class Estudante extends Utilizador {
     public void setValorPropinaBase(double valorPropinaBase) { this.valorPropinaBase = valorPropinaBase; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
-
     // =========================================================
     // LÓGICA DE NEGÓCIO: PROGRESSÃO E INSCRIÇÕES
     // =========================================================
@@ -119,7 +110,33 @@ public class Estudante extends Utilizador {
         for (int i = 0; i < this.curso.getTotalUCs(); i++) {
             UnidadeCurricular uc = this.curso.getUnidadesCurriculares()[i];
             if (uc != null && uc.getAnoCurricular() == this.anoFrequencia) {
-                this.percursoAcademico.inscreverEmUc(uc);
+                // Só inscreve se NÃO tiver a UC concluída no histórico
+                if (!jaConcluiuUC(uc.getSigla())) {
+                    this.percursoAcademico.inscreverEmUc(uc);
+                }
+            }
+        }
+    }
+
+    public void reconstruirPercurso() {
+        if (curso == null) return;
+        percursoAcademico.limparInscricoesAtivas();
+        // Inscreve nas UCs do ano de frequência que não estejam concluídas
+        for (int i = 0; i < curso.getTotalUCs(); i++) {
+            UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+            if (uc != null && uc.getAnoCurricular() == anoFrequencia) {
+                if (!jaConcluiuUC(uc.getSigla())) {
+                    percursoAcademico.inscreverEmUc(uc);
+                }
+            }
+        }
+        // Inscreve nas UCs de anos anteriores que foram reprovadas (repetições)
+        for (int i = 0; i < curso.getTotalUCs(); i++) {
+            UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+            if (uc != null && uc.getAnoCurricular() < anoFrequencia) {
+                if (!jaConcluiuUC(uc.getSigla()) && !estaInscrito(uc.getSigla())) {
+                    percursoAcademico.inscreverEmUc(uc);
+                }
             }
         }
     }
@@ -172,7 +189,6 @@ public class Estudante extends Utilizador {
         // 1. Identificação das Unidades Curriculares em atraso (Reprovações a arrastar para o próximo ano)
         UnidadeCurricular[] ucsParaRepetir = new UnidadeCurricular[15];
         int totalRepetir = 0;
-
         for (int j = 0; j < percursoAcademico.getTotalUcsInscrito(); j++) {
             UnidadeCurricular uc = percursoAcademico.getUcsInscrito()[j];
             if (uc != null && !teveAprovacao(uc.getSigla())) {
@@ -181,8 +197,8 @@ public class Estudante extends Utilizador {
         }
 
         // 2. Transição de Grau / Bloqueio Administrativo
-        // Regra Académica: Só avança se não tiver dívidas e se superar 60% das UCs
-        if (!temDividas() && temAproveitamentoParaProgredir()) {
+        // Regra Académica: Só avança se tiver aproveitamento (as dívidas são verificadas externamente)
+        if (temAproveitamentoParaProgredir()) {
             if (anoFrequencia < 3) {
                 anoFrequencia++;
             }
@@ -202,22 +218,16 @@ public class Estudante extends Utilizador {
         // 6. Auto-Matrícula Fase B: Integração nas novas cadeiras do nível correspondente
         for (int j = 0; j < curso.getTotalUCs(); j++) {
             UnidadeCurricular ucCurso = curso.getUnidadesCurriculares()[j];
-
             if (ucCurso != null && ucCurso.getAnoCurricular() == anoFrequencia) {
-                // Previne dupla inscrição e verifica se já não concluiu a disciplina noutro ano transato
                 if (!estaInscrito(ucCurso.getSigla()) && !jaConcluiuUC(ucCurso.getSigla())) {
                     percursoAcademico.inscreverEmUc(ucCurso);
                 }
             }
         }
 
-        // 7. Geração da nova infraestrutura financeira
-        // Só fatura se o aluno continuar a estudar (inscrito em > 0 disciplinas)
-        if (percursoAcademico.getTotalUcsInscrito() > 0) {
-            adicionarPropina(novoAnoLetivo, this.valorPropinaBase);
-        }
+        // Nota: A nova propina para o próximo ano letivo já não é gerada internamente;
+        // a dívida é calculada dinamicamente a partir dos preços dos cursos e dos pagamentos registados.
     }
-
 
     // =========================================================
     // LÓGICA DE NEGÓCIO: GESTÃO DE AVALIAÇÕES CORRENTES
@@ -234,7 +244,7 @@ public class Estudante extends Utilizador {
     public boolean adicionarNota(UnidadeCurricular uc, double nota, int anoAtual) {
         for (int i = 0; i < totalAvaliacoes; i++) {
             if (avaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(uc.getSigla())) {
-                return avaliacoes[i].adicionarResultado(nota); // Delega limite à Avaliação
+                return avaliacoes[i].adicionarResultado(nota);
             }
         }
 
@@ -270,10 +280,16 @@ public class Estudante extends Utilizador {
     }
 
     public boolean teveAprovacao(String siglaUC) {
-        for (int i = 0; i < this.totalAvaliacoes; i++) {
-            Avaliacao av = this.avaliacoes[i];
-            if (av.getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
-                return av.calcularMedia() >= 9.5;
+        // 1. Verifica no ano letivo corrente (buffer)
+        for (int i = 0; i < totalAvaliacoes; i++) {
+            if (avaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                return avaliacoes[i].calcularMedia() >= 9.5;
+            }
+        }
+        // 2. Verifica no histórico (para UCs já concluídas ou em repetição)
+        for (int i = 0; i < totalHistorico; i++) {
+            if (historicoAvaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                return historicoAvaliacoes[i].calcularMedia() >= 9.5;
             }
         }
         return false; // Reprova por falta de nota (ausência de avaliação)
@@ -284,11 +300,14 @@ public class Estudante extends Utilizador {
      * @return 1 (Inscrito c/ nota), 2 (Inscrito s/ nota), 3 (Concluída no histórico), 0 (Sem vínculo).
      */
     public int obterCodigoEstadoUc(String sigla) {
+        // Primeiro, verificar se a UC já está concluída no histórico
+        Avaliacao hist = getAvaliacaoHistorico(sigla);
+        if (hist != null && hist.calcularMedia() >= 9.5) {
+            return 3; // Concluída
+        }
+        // Se não estiver concluída, verificar inscrição atual
         if (estaInscrito(sigla)) {
             return (getAvaliacaoAtual(sigla) != null) ? 1 : 2;
-        } else {
-            Avaliacao hist = getAvaliacaoHistorico(sigla);
-            if (hist != null && hist.calcularMedia() >= 9.5) return 3;
         }
         return 0;
     }
@@ -298,15 +317,18 @@ public class Estudante extends Utilizador {
      * em alternativa, no histórico se a cadeira já estiver feita.
      */
     public double obterNotaUc(String sigla) {
+        // Se a UC já está concluída no histórico, devolve a média do histórico
+        Avaliacao hist = getAvaliacaoHistorico(sigla);
+        if (hist != null && hist.calcularMedia() >= 9.5) {
+            return hist.calcularMedia();
+        }
+        // Caso contrário, verifica a inscrição atual
         if (estaInscrito(sigla)) {
             Avaliacao av = getAvaliacaoAtual(sigla);
             return (av != null) ? av.calcularMedia() : 0.0;
-        } else {
-            Avaliacao hist = getAvaliacaoHistorico(sigla);
-            return (hist != null && hist.calcularMedia() >= 9.5) ? hist.calcularMedia() : 0.0;
         }
+        return 0.0;
     }
-
 
     // =========================================================
     // LÓGICA DE NEGÓCIO: ARQUIVO HISTÓRICO E CONCLUSÃO
@@ -394,56 +416,32 @@ public class Estudante extends Utilizador {
                 }
             }
         }
-        // Se o número de disciplinas feitas bater certo com a estrutura do curso, formou-se!
         return ucsAprovadas == this.curso.getTotalUCs();
     }
 
-
-    // =========================================================
-    // LÓGICA DE NEGÓCIO: GESTÃO FINANCEIRA
-    // =========================================================
-
-    public void adicionarPropina(int anoLetivo, double valor) {
-        if (totalPropinas < propinas.length) {
-            propinas[totalPropinas++] = new Propina(anoLetivo, valor);
-        }
-    }
-
-    public Propina getPropinaDoAno(int ano) {
-        for (int i = 0; i < totalPropinas; i++) {
-            if (propinas[i].getAnoLetivo() == ano) return propinas[i];
-        }
-        return null;
-    }
-
     /**
-     * Vistoria todo o trajeto histórico do aluno e determina se este tem pagamentos pendentes.
-     * Esta infração bloqueia progressões académicas (transições de ano).
-     * @return true se o aluno tiver propinas abertas.
+     * Tenta reinscrever o estudante (avançar ano se possível) e reconstrói o percurso.
+     * @param anoAtual Ano letivo corrente.
+     * @return true se a reinscrição foi bem‑sucedida, false se o estudante estiver inativo ou com dívidas.
      */
-    public boolean temDividas() {
-        for (int i = 0; i < totalPropinas; i++) {
-            if (propinas[i] != null && !propinas[i].isPagaTotalmente()) {
-                return true;
-            }
+    public boolean reinscrever(int anoAtual) {
+        if (!isAtivo()) {
+            return false;
         }
-        return false;
-    }
-
-    /**
-     * Calcula o montante financeiro total devido pela acumulação de juros/propinas em dívida.
-     * @param anoAtual O ano letivo até ao qual a divida deve ser calculada.
-     * @return O valor real que o estudante deve à instituição.
-     */
-    public double calcularDividaTotal(int anoAtual) {
-        double dividaTotal = 0.0;
-        for (int ano = this.anoPrimeiraInscricao; ano <= anoAtual; ano++) {
-            Propina p = getPropinaDoAno(ano);
-            if (p != null) dividaTotal += p.getValorEmDivida();
+        if (Propina.temDividas(this, anoAtual)) {
+            return false;
         }
-        return dividaTotal;
-    }
 
+        // Aplicar progressão com base na regra de 60%
+        if (temAproveitamentoParaProgredir() && anoFrequencia < 3) {
+            anoFrequencia++;
+            anoCurricular = anoFrequencia;
+        }
+
+        // Reconstruir o percurso (inscreve UCs não concluídas)
+        reconstruirPercurso();
+        return true;
+    }
 
     // ---------- OVERRIDES ----------
 

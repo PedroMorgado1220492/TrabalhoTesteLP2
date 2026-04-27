@@ -1,5 +1,14 @@
 package model.bll;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Representa um Curso (ou plano de estudos) lecionado na instituição.
  * No padrão MVC, esta classe atua como um Model puro de Domínio.
@@ -44,88 +53,33 @@ public class Curso {
     }
 
     // ---------- GETTERS ----------
-
-    public String getSigla() {
-        return sigla;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public Departamento getDepartamento() {
-        return departamento;
-    }
-
-    public Docente getDocenteResponsavel() {
-        return docenteResponsavel;
-    }
-
-    public int getDuracaoAnos() {
-        return duracaoAnos;
-    }
-
-    public UnidadeCurricular[] getUnidadesCurriculares() {
-        return unidadesCurriculares;
-    }
-
-    public int getTotalUCs() {
-        return totalUCs;
-    }
-
-    public boolean isAtivo() {
-        return ativo;
-    }
-
-    public double getValorPropinaAnual() {
-        return valorPropinaAnual;
-    }
+    public String getSigla() { return sigla; }
+    public String getNome() { return nome; }
+    public Departamento getDepartamento() { return departamento; }
+    public Docente getDocenteResponsavel() { return docenteResponsavel; }
+    public int getDuracaoAnos() { return duracaoAnos; }
+    public UnidadeCurricular[] getUnidadesCurriculares() { return unidadesCurriculares; }
+    public int getTotalUCs() { return totalUCs; }
+    public boolean isAtivo() { return ativo; }
+    public double getValorPropinaAnual() { return valorPropinaAnual; }
 
     // ---------- SETTERS ----------
-
-    public void setSigla(String sigla) {
-        this.sigla = sigla;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public void setDepartamento(Departamento departamento) {
-        this.departamento = departamento;
-    }
-
-    public void setDocenteResponsavel(Docente docenteResponsavel) {
-        this.docenteResponsavel = docenteResponsavel;
-    }
-
-    public void setAtivo(boolean ativo) {
-        this.ativo = ativo;
-    }
-
-    public void setValorPropinaAnual(double valorPropinaAnual) {
-        this.valorPropinaAnual = valorPropinaAnual;
-    }
+    public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setNome(String nome) { this.nome = nome; }
+    public void setDepartamento(Departamento departamento) { this.departamento = departamento; }
+    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
+    public void setValorPropinaAnual(double valorPropinaAnual) { this.valorPropinaAnual = valorPropinaAnual; }
 
 
     // =========================================================
     // MÉTODOS DE LÓGICA DE NEGÓCIO: GESTÃO DE UCS
     // =========================================================
 
-    /**
-     * Adiciona uma unidade curricular ao plano de estudos do curso,
-     * evitando a inserção de duplicados (mesma sigla).
-     *
-     * @param uc A unidade curricular a ser adicionada.
-     * @return {@code true} se a UC foi adicionada com sucesso;
-     *         {@code false} se a UC já existe no curso ou se o limite
-     *         máximo de UCs (15) foi atingido.
-     */
     public boolean adicionarUnidadeCurricular(UnidadeCurricular uc) {
-        // Verifica se a UC já existe no curso (evita duplicados)
         for (int i = 0; i < totalUCs; i++) {
             if (unidadesCurriculares[i] != null && unidadesCurriculares[i].getSigla().equals(uc.getSigla())) {
-                return false; // Já existe, não adiciona novamente
+                return false;
             }
         }
         if (totalUCs < unidadesCurriculares.length) {
@@ -136,17 +90,9 @@ public class Curso {
         return false;
     }
 
-
-    /**
-     * Remove uma Unidade Curricular do plano de estudos deste curso, reorganizando o array.
-     * * @param siglaUC A sigla da Unidade Curricular a ser removida.
-     *
-     * @return true se a remoção for efetuada com sucesso; false caso a UC não seja encontrada.
-     */
     public boolean removerUnidadeCurricular(String siglaUC) {
         for (int i = 0; i < totalUCs; i++) {
             if (unidadesCurriculares[i].getSigla().equalsIgnoreCase(siglaUC)) {
-                // Efetua um Shift-Left para não deixar posições nulas no meio do array
                 for (int j = i; j < totalUCs - 1; j++) {
                     unidadesCurriculares[j] = unidadesCurriculares[j + 1];
                 }
@@ -158,12 +104,6 @@ public class Curso {
         return false;
     }
 
-    /**
-     * Verifica se o curso já possui uma determinada Unidade Curricular integrada na sua matriz.
-     * * @param siglaUC A sigla da UC a verificar.
-     *
-     * @return true se a UC já fizer parte do curso, false caso contrário.
-     */
     public boolean temUnidadeCurricular(String siglaUC) {
         for (int i = 0; i < totalUCs; i++) {
             if (unidadesCurriculares[i] != null && unidadesCurriculares[i].getSigla().equalsIgnoreCase(siglaUC)) {
@@ -178,13 +118,6 @@ public class Curso {
     // MÉTODOS DE LÓGICA DE NEGÓCIO: VALIDAÇÕES DE REGRAS
     // =========================================================
 
-    /**
-     * Valida o limite de carga letiva por ano.
-     * Regra de Negócio: Um curso não pode ter mais do que 5 Unidades Curriculares por ano curricular.
-     * * @param anoCurricular O ano alvo a ser verificado (1, 2 ou 3).
-     *
-     * @return true se o ano ainda suportar mais disciplinas; false se já atingiu o limite de 5.
-     */
     public boolean podeAdicionarUcNoAno(int anoCurricular) {
         int contador = 0;
         for (int i = 0; i < totalUCs; i++) {
@@ -195,15 +128,8 @@ public class Curso {
         return contador < 5;
     }
 
-    /**
-     * Verifica a viabilidade de funcionamento do curso.
-     * Regra de Negócio: Para ser considerado válido e aceitar matrículas, um curso tem de ter
-     * obrigatoriamente pelo menos uma UC ATIVA em cada um dos 3 anos letivos.
-     * * @return true se a estrutura for válida, false se algum dos anos não tiver UCs ativas.
-     */
     public boolean temEstruturaValida() {
         boolean temAno1 = false, temAno2 = false, temAno3 = false;
-
         for (int i = 0; i < totalUCs; i++) {
             UnidadeCurricular uc = unidadesCurriculares[i];
             if (uc != null && uc.isAtivo()) {
@@ -215,20 +141,8 @@ public class Curso {
         return temAno1 && temAno2 && temAno3;
     }
 
-    /**
-     * Avalia se as propriedades vitais do curso (como a Sigla) estão bloqueadas a edições.
-     * Regra de Negócio: Um curso não pode sofrer alterações profundas se já tiver UCs na matriz
-     * ou estudantes a frequentá-lo, de forma a não corromper o histórico do sistema.
-     * * @param todosEstudantes Lista global de estudantes do sistema a ser analisada.
-     *
-     * @param totalEstudantes O total de estudantes atualmente registados.
-     * @return true se a edição estiver bloqueada, false se for seguro alterar.
-     */
     public boolean isBloqueado(Estudante[] todosEstudantes, int totalEstudantes) {
-        // Bloqueia se já tiver UCs
         if (this.totalUCs > 0) return true;
-
-        // Bloqueia se encontrar algum aluno associado a este curso
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante e = todosEstudantes[i];
             if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(this.sigla)) {
@@ -238,22 +152,66 @@ public class Curso {
         return false;
     }
 
-    /**
-     * Avalia se é seguro desativar o curso da instituição.
-     * Regra de Negócio: Um curso não pode ser desativado ou suspenso se ainda tiver
-     * estudantes no estado "Ativo" a frequentá-lo (para não prejudicar percursos em andamento).
-     * * @param todosEstudantes Lista global de estudantes do sistema a ser analisada.
-     *
-     * @param totalEstudantes O total de estudantes atualmente registados.
-     * @return true se a desativação for segura, false se o model a recusar.
-     */
     public boolean podeSerDesativado(Estudante[] todosEstudantes, int totalEstudantes) {
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante e = todosEstudantes[i];
             if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(this.sigla) && e.isAtivo()) {
-                return false; // Model recusa a desativação se encontrar um aluno ativo no curso
+                return false;
             }
         }
         return true;
+    }
+
+
+    // =========================================================
+    // GESTÃO DE PREÇOS ANUAIS (CSV)
+    // =========================================================
+    private static final String PRECOS_FILE = "bd/cursos_precos.csv";
+
+    private static void garantirFicheiroPrecos() {
+        File f = new File(PRECOS_FILE);
+        if (!f.exists()) {
+            try (PrintWriter pw = new PrintWriter(new FileWriter(f))) {
+                pw.println("ANO_CURSO;SIGLA_CURSO;PRECO");
+            } catch (IOException e) { }
+        }
+    }
+
+    public static double obterPrecoCurso(String siglaCurso, int ano) {
+        garantirFicheiroPrecos();
+        try (BufferedReader br = new BufferedReader(new FileReader(PRECOS_FILE))) {
+            br.readLine(); // cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
+                    return Double.parseDouble(p[2]);
+                }
+            }
+        } catch (IOException | NumberFormatException e) { }
+        return 1000.0; // valor padrão (fallback)
+    }
+
+    public static void atualizarPrecoCurso(String siglaCurso, int ano, double novoPreco) {
+        garantirFicheiroPrecos();
+        List<String> linhas = new ArrayList<>();
+        boolean atualizado = false;
+        try (BufferedReader br = new BufferedReader(new FileReader(PRECOS_FILE))) {
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
+                    linha = ano + ";" + siglaCurso + ";" + novoPreco;
+                    atualizado = true;
+                }
+                linhas.add(linha);
+            }
+        } catch (IOException e) { }
+        if (!atualizado) {
+            linhas.add(ano + ";" + siglaCurso + ";" + novoPreco);
+        }
+        try (PrintWriter pw = new PrintWriter(new FileWriter(PRECOS_FILE))) {
+            for (String l : linhas) pw.println(l);
+        } catch (IOException e) { }
     }
 }

@@ -12,6 +12,7 @@ import model.bll.UnidadeCurricular;
 import model.bll.Docente;
 import model.bll.Estudante;
 import utils.Validador;
+import model.bll.Propina;
 import utils.Seguranca;
 
 
@@ -64,11 +65,10 @@ public class GestorController {
                     case 3: gerirUCs(); break;
                     case 4: gerirEstudantes(); break;
                     case 5: gerirDocentes(); break;
-                    case 6: avancarAnoLetivo(); break;
+                    case 6: gerirGestores(); break;
                     case 7: gerirRelatorios(); break;
                     case 8: listarAlunosComDividas(); break;
                     case 9: alterarPrecoCurso(); break;
-                    case 10: gerirGestores(); break;
                     case 0:
                         view.mostrarMensagemSaida();
                         aExecutar = false;
@@ -206,21 +206,30 @@ public class GestorController {
 
         String nomeCurso = view.pedirNomeCurso();
         int escolhaIndex;
-
         while (true) {
             escolhaIndex = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
-            if (escolhaIndex >= 0 && escolhaIndex < repositorio.getTotalDepartamentos()) {
-                break;
-            }
+            if (escolhaIndex >= 0 && escolhaIndex < repositorio.getTotalDepartamentos()) break;
             view.mostrarOpcaoInvalida();
         }
-
         Departamento dep = repositorio.getDepartamentos()[escolhaIndex];
+
+        // --- NOVO: pedir o preço anual inicial ---
+        double precoInicial = view.pedirNovoPreco(1000.0); // valor sugerido 1000€
+        if (precoInicial <= 0) {
+            view.mostrarErroPrecoInvalido();
+            return;
+        }
+
         view.mostrarRevisaoCurso(siglaCurso, nomeCurso, dep.getSigla());
 
         if (view.confirmarDados()) {
             Curso novoCurso = gestorAtivo.criarCurso(siglaCurso, nomeCurso, dep);
+            novoCurso.setValorPropinaAnual(precoInicial); // guarda no objeto
+
             if (repositorio.adicionarCurso(novoCurso)) {
+                // Guarda o preço no CSV para o ano atual
+                int anoAtual = repositorio.getAnoAtual();
+                Curso.atualizarPrecoCurso(siglaCurso, anoAtual, precoInicial);
                 view.mostrarSucessoRegistoCurso(nomeCurso);
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
@@ -308,14 +317,15 @@ public class GestorController {
      * Altera o valor anual da propina de um Curso.
      */
     private void alterarPrecoCurso() {
-        int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos());
+        int anoAlvo = repositorio.getAnoAtual() + 1;
+        int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getAnoAtual());
         if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
             Curso cursoEscolhido = repositorio.getCursos()[escolha - 1];
-
-            double novoPreco = view.pedirNovoPreco(cursoEscolhido.getValorPropinaAnual());
-
+            double precoAntigo = Curso.obterPrecoCurso(cursoEscolhido.getSigla(), anoAlvo);
+            double novoPreco = view.pedirNovoPreco(precoAntigo);
             if (novoPreco > 0) {
-                cursoEscolhido.setValorPropinaAnual(novoPreco);
+                Curso.atualizarPrecoCurso(cursoEscolhido.getSigla(), anoAlvo, novoPreco);
+                cursoEscolhido.setValorPropinaAnual(novoPreco); // atualiza o valor base para novos alunos
                 view.mostrarSucessoAlteracaoPreco(cursoEscolhido.getSigla(), novoPreco);
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
@@ -601,6 +611,7 @@ public class GestorController {
                     case 2: alterarEstudante(); break;
                     case 3: view.mostrarListaEstudantes(repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
                     case 4: alternarEstadoEstudante(); break;
+                    case 5: reinscreverEstudante(); break;  // NOVA OPÇÃO
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -713,6 +724,17 @@ public class GestorController {
             int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
             Estudante est = repositorio.obterEstudantePorNumMec(numMec);
             if (est != null) {
+                // Se for ativar (está inativo)
+                if (!est.isAtivo()) {
+                    int anoAtual = repositorio.getAnoAtual();
+                    // Verificar dívidas de anos anteriores
+                    if (Propina.temDividasAteAno(est, anoAtual - 1)) {
+                        double multa = 100.0;
+                        String data = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                        Propina.adicionarMulta(numMec, anoAtual, multa, data);
+                        view.mostrarMultaAplicada(multa);
+                    }
+                }
                 est.setAtivo(!est.isAtivo());
                 view.msgSucessoEstadoAlterado("Estudante", est.isAtivo());
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
@@ -845,22 +867,6 @@ public class GestorController {
     // =========================================================
 
     /**
-     * Gere a transição da instituição para o próximo ano letivo, processando históricos e novas inscrições.
-     */
-    private void avancarAnoLetivo() {
-        view.mostrarAvisoTransicaoAno();
-        int proximoAno = repositorio.getAnoAtual() + 1;
-
-        if (view.pedirConfirmacaoAvancoAno(proximoAno)) {
-            repositorio.avancarAno();
-            view.mostrarSucessoAvancoAno(repositorio.getAnoAtual());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-        } else {
-            view.mostrarCancelamentoAvancoAno(repositorio.getAnoAtual());
-        }
-    }
-
-    /**
      * Gere o sub-menu de consulta de relatórios gerenciais e estatísticas globais.
      */
     private void gerirRelatorios() {
@@ -900,14 +906,12 @@ public class GestorController {
         Estudante[] devedores = new Estudante[repositorio.getTotalEstudantes()];
         double[] dividas = new double[repositorio.getTotalEstudantes()];
         int totalDevedores = 0;
+        int anoAtual = repositorio.getAnoAtual();
 
         for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
             Estudante e = repositorio.getEstudantes()[i];
-
-            if (e != null && e.temDividas()) {
-                // Delegação de cálculo de dívida ao Model Estudante
-                double dividaTotal = e.calcularDividaTotal(repositorio.getAnoAtual());
-
+            if (e != null && e.isAtivo() && Propina.temDividas(e, anoAtual)) {
+                double dividaTotal = Propina.calcularDividaTotal(e, anoAtual);
                 if (dividaTotal > 0.0) {
                     devedores[totalDevedores] = e;
                     dividas[totalDevedores] = dividaTotal;
@@ -1057,8 +1061,13 @@ public class GestorController {
     private String pedirDataNascimentoValida() {
         while (true) {
             String data = view.pedirDataNascimento();
-            if (Validador.isDataNascimentoValida(data)) return data;
-            view.mostrarErroDataInvalida();
+            if (!Validador.isDataNascimentoValida(data)) {
+                view.mostrarErroDataInvalida();
+            } else if (!Validador.temIdadeMinima(data)) {
+                view.mostrarErroIdadeMinima();
+            } else {
+                return data;
+            }
         }
     }
 
@@ -1086,6 +1095,44 @@ public class GestorController {
                 return email;
             }
             view.mostrarErroEmailInvalido();
+        }
+    }
+
+    private void reinscreverEstudante() {
+        try {
+            int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
+            Estudante est = repositorio.obterEstudantePorNumMec(numMec);
+            if (est == null) {
+                view.mostrarErroEstudanteNaoEncontrado();
+                return;
+            }
+            if (!est.isAtivo()) {
+                view.mostrarErroEstudanteInativo();
+                return;
+            }
+            int anoAtual = repositorio.getAnoAtual();
+            // Verificar dívida apenas dos anos anteriores (até anoAtual - 1)
+            if (Propina.temDividasAteAno(est, anoAtual - 1)) {
+                view.mostrarErroEstudanteComDividas();
+                return;
+            }
+
+            // Aplicar progressão com base na regra de 60%
+            if (est.temAproveitamentoParaProgredir() && est.getAnoFrequencia() < 3) {
+                est.setAnoFrequencia(est.getAnoFrequencia() + 1);
+                est.setAnoCurricular(est.getAnoFrequencia());
+                view.mostrarInfoProgrediu(est.getAnoFrequencia());
+            } else {
+                view.mostrarInfoNaoProgrediu(est.getAnoFrequencia());
+            }
+
+            // Reconstruir o percurso
+            est.reconstruirPercurso();
+            view.msgSucessoReinscricao(est.getNome(), est.getAnoFrequencia());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+
+        } catch (NumberFormatException e) {
+            view.mostrarErroNumMecNumerico();
         }
     }
 }

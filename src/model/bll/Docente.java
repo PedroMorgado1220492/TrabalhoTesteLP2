@@ -26,14 +26,14 @@ public class Docente extends Utilizador {
      * Inicializa o docente com os dados demográficos (herdados de Utilizador) e prepara
      * as estruturas internas para gerir a sua alocação às disciplinas.
      *
-     * @param sigla           A sigla identificativa única do docente (ex: ABC).
-     * @param email           O email institucional de acesso ao sistema.
-     * @param password        A password (encriptada) de acesso.
-     * @param nome            O nome completo do docente.
-     * @param nif             O Número de Identificação Fiscal.
-     * @param morada          A morada de residência.
-     * @param dataNascimento  A data de nascimento do docente.
-     * @param emailPessoal    O email pessoal secundário (para contactos e recuperações).
+     * @param sigla          A sigla identificativa única do docente (ex: ABC).
+     * @param email          O email institucional de acesso ao sistema.
+     * @param password       A password (encriptada) de acesso.
+     * @param nome           O nome completo do docente.
+     * @param nif            O Número de Identificação Fiscal.
+     * @param morada         A morada de residência.
+     * @param dataNascimento A data de nascimento do docente.
+     * @param emailPessoal   O email pessoal secundário (para contactos e recuperações).
      */
     public Docente(String sigla, String email, String password, String nome, String nif, String morada, String dataNascimento, String emailPessoal) {
         // Chamada ao construtor da classe pai (Utilizador) para inicializar os dados comuns
@@ -52,17 +52,39 @@ public class Docente extends Utilizador {
 
     // ---------- GETTERS ----------
 
-    public String getSigla() { return sigla; }
-    public boolean isAtivo() { return ativo; }
-    public UnidadeCurricular[] getUcsLecionadas() { return ucsLecionadas; }
-    public int getTotalUcsLecionadas() { return totalUcsLecionadas; }
-    public UnidadeCurricular[] getUcsResponsavel() { return ucsResponsavel; }
-    public int getTotalUcsResponsavel() { return totalUcsResponsavel; }
+    public String getSigla() {
+        return sigla;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public UnidadeCurricular[] getUcsLecionadas() {
+        return ucsLecionadas;
+    }
+
+    public int getTotalUcsLecionadas() {
+        return totalUcsLecionadas;
+    }
+
+    public UnidadeCurricular[] getUcsResponsavel() {
+        return ucsResponsavel;
+    }
+
+    public int getTotalUcsResponsavel() {
+        return totalUcsResponsavel;
+    }
 
     // ---------- SETTERS ----------
 
-    public void setSigla(String sigla) { this.sigla = sigla; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
+    public void setSigla(String sigla) {
+        this.sigla = sigla;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
 
 
     // =========================================================
@@ -137,6 +159,12 @@ public class Docente extends Utilizador {
      * @return true se o docente não tiver turmas atribuídas (seguro desativar), false se a regra impedir.
      */
     public boolean podeSerDesativado() {
-        return this.totalUcsLecionadas == 0 && this.totalUcsResponsavel == 0;
+        for (int i = 0; i < totalUcsResponsavel; i++) {
+            UnidadeCurricular uc = ucsResponsavel[i];
+            if (uc != null && uc.isAtivo()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

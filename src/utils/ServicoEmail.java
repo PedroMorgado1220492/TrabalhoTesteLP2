@@ -217,11 +217,11 @@ public class ServicoEmail {
      * Envia um e-mail ao estudante sempre que o docente lança uma avaliação individual,
      * listando todas as notas obtidas nessa UC no ano letivo atual.
      */
-    public static boolean enviarEmailAvaliacao(String emailDestino, String nomeAluno, String nomeUc, model.bll.Avaliacao avaliacao) {
+    public static boolean enviarEmailAvaliacao(Estudante estudante, String nomeUc, Avaliacao avaliacao) {
         String assunto = "ISSMF - Nova Avaliação Lançada: " + nomeUc;
 
         StringBuilder corpo = new StringBuilder();
-        corpo.append("Caro(a) Estudante ").append(nomeAluno).append(",\n\n");
+        corpo.append("Caro(a) Estudante ").append(estudante.getNome()).append(",\n\n");
         corpo.append("Foi registada uma nova nota à unidade curricular de ").append(nomeUc).append(".\n\n");
         corpo.append("O seu registo atual de avaliações nesta UC é o seguinte:\n");
 
@@ -233,7 +233,22 @@ public class ServicoEmail {
         corpo.append("\nMédia atual: ").append(Math.round(avaliacao.calcularMedia() * 100.0) / 100.0).append(" valores\n\n");
         corpo.append("Votos de bom estudo,\nOs Serviços Académicos - ISSMF.");
 
-        return enviarEmailComAnexo(emailDestino, assunto, corpo.toString(), null);
+        boolean enviadoPessoal = false;
+        boolean enviadoInstitucional = false;
+
+        // Envia para o email pessoal
+        String emailPessoal = estudante.getEmailPessoal();
+        if (emailPessoal != null && !emailPessoal.isEmpty()) {
+            enviadoPessoal = enviarEmailComAnexo(emailPessoal, assunto, corpo.toString(), null);
+        }
+
+        // Envia para o email institucional
+        String emailInstitucional = estudante.getEmail();
+        if (emailInstitucional != null && !emailInstitucional.isEmpty()) {
+            enviadoInstitucional = enviarEmailComAnexo(emailInstitucional, assunto, corpo.toString(), null);
+        }
+
+        return enviadoPessoal || enviadoInstitucional;
     }
 
     /**

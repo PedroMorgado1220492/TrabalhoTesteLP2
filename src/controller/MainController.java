@@ -99,7 +99,6 @@ public class MainController {
         Utilizador userLogado = repositorio.autenticar(emailLogin, passEncriptada);
 
         if (userLogado != null) {
-            // Delegação do controlo de estado às classes filhas
             if (userLogado instanceof Estudante && !((Estudante) userLogado).isAtivo() ||
                     userLogado instanceof Docente && !((Docente) userLogado).isAtivo() ||
                     userLogado instanceof Gestor && !((Gestor) userLogado).isAtivo()) {
@@ -107,6 +106,18 @@ public class MainController {
                 view.msgErroInativo();
                 return;
             }
+
+            String identificador = "";
+            if (userLogado instanceof Estudante) {
+                identificador = String.valueOf(((Estudante) userLogado).getNumeroMecanografico());
+            } else if (userLogado instanceof Docente) {
+                identificador = ((Docente) userLogado).getSigla();
+            } else if (userLogado instanceof Gestor) {
+                identificador = ((Gestor) userLogado).getMorada();
+            }
+
+            view.msgBemVindoUsuario(userLogado.getNome(), identificador, tipoUtilizador);
+
             abrirMenuPorRole(tipoUtilizador, userLogado);
         }
 
@@ -118,13 +129,13 @@ public class MainController {
      */
     private void abrirMenuPorRole(String tipo, Utilizador user) {
         if (tipo.equals("GESTOR")) {
-            view.msgBemVindoRole("Gestor");
+
             new GestorController((Gestor) user, repositorio).iniciarMenuGestor();
         } else if (tipo.equals("DOCENTE")) {
-            view.msgBemVindoRole("Docente");
+
             new DocenteController((Docente) user, repositorio).iniciarMenu();
         } else if (tipo.equals("ESTUDANTE")) {
-            view.msgBemVindoRole("Estudante");
+
             new EstudanteController((Estudante) user, repositorio).iniciarMenu();
         }
     }
@@ -283,7 +294,7 @@ public class MainController {
                 }
 
                 // Verifica a regra financeira (mínimo de alunos) delegada ao Repositório
-                int inscritos = repositorio.contarInscritosPrimeiroAno(curso.getSigla(), anoAlvo);
+                int inscritos = repositorio.contarAlunosNoPrimeiroAno(curso.getSigla());
 
                 if (inscritos > 0 && inscritos < 5) {
                     view.mostrarCursoCancelado(curso.getSigla(), inscritos);
@@ -359,7 +370,7 @@ public class MainController {
      * e apaga a instância em memória por questões de segurança.
      */
     private void encerrarSessaoESalvar() {
-        ExportadorCSV.exportarDados("bd", repositorio);
+        //ExportadorCSV.exportarDados("bd", repositorio);
         this.repositorio = new RepositorioDados(); // Reset à memória
         view.msgSessaoEncerrada();
     }
@@ -369,14 +380,13 @@ public class MainController {
      */
     private void carregarBaseDeDadosCompleta() {
         repositorio.limpar();
-
         ImportadorCSV.importarGestores("bd/gestores.csv", repositorio);
         ImportadorCSV.importarDepartamentos("bd/departamentos.csv", repositorio);
         ImportadorCSV.importarCursos("bd/cursos.csv", repositorio);
         ImportadorCSV.importarDocentes("bd/docentes.csv", repositorio);
         ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
         ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
-        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
+        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio); // <-- apenas uma vez!
     }
 
     private String validarDominioEmail() {
@@ -413,8 +423,13 @@ public class MainController {
     private String validarDataNascimento() {
         while (true) {
             String data = view.pedirDataNascimento();
-            if (Validador.isDataNascimentoValida(data)) return data;
-            view.msgErroData();
+            if (!Validador.isDataNascimentoValida(data)) {
+                view.msgErroData();
+            } else if (!Validador.temIdadeMinima(data)) {
+                view.msgErroIdadeMinima();
+            } else {
+                return data;
+            }
         }
     }
 

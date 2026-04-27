@@ -260,18 +260,29 @@ public class DocenteController {
         }
 
         // 4. Pedir a nota e delegar ao modelo para guardar
-        try {
-            double nota = Double.parseDouble(view.pedirNotaIndividual(alu.getNome(), numNota, uc.getNumAvaliacoes()));
+        double nota = -1;
+        boolean notaValida = false;
+        while (!notaValida) {
+            try {
+                String input = view.pedirNotaIndividual(alu.getNome(), numNota, uc.getNumAvaliacoes());
+                nota = Double.parseDouble(input);
+                if (nota >= 0 && nota <= 20) {
+                    notaValida = true;
+                } else {
+                    view.msgErroNotaInvalida();
+                }
+            } catch (NumberFormatException e) {
+                view.msgErroFormato();
+            }
+        }
 
-            if (nota < 0 || nota > 20) {
-                view.msgErroNotaInvalida();
-            } else if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
-                view.msgSucesso();
+        if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
+            view.msgSucesso();
 
                 // Disparo de notificação por email para o estudante
                 model.bll.Avaliacao avAtual = alu.getAvaliacaoAtual(uc.getSigla());
                 if (avAtual != null && alu.getEmailPessoal() != null && !alu.getEmailPessoal().isEmpty()) {
-                    boolean emailEnviado = utils.ServicoEmail.enviarEmailAvaliacao(alu.getEmailPessoal(), alu.getNome(), uc.getNome(), avAtual);
+                    boolean emailEnviado = utils.ServicoEmail.enviarEmailAvaliacao(alu, uc.getNome(), avAtual);
 
                     if (emailEnviado) {
                         view.msgNotificacaoEnviada();
@@ -281,9 +292,6 @@ public class DocenteController {
                 // Gravar alterações no CSV
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             }
-        } catch (NumberFormatException e) {
-            view.msgErroFormato();
-        }
     }
 
     /**
@@ -304,25 +312,43 @@ public class DocenteController {
         view.cabecalhoLote(uc.getNome());
         int count = 0;
 
-        // O Controller limita-se a iterar, pedir dados e delegar a gravação
         for (int i = 0; i < alunos.length; i++) {
             Estudante alu = alunos[i];
-
             if (!alu.isAtivo()) continue;
 
             int num = alu.obterNumeroProximaAvaliacao(uc.getSigla());
             if (num > uc.getNumAvaliacoes()) continue;
 
-            String input = view.inputNotaLote(i + 1, alunos.length, alu.getNome(), num, uc.getNumAvaliacoes());
-            if (input.isEmpty()) continue; // Enter vazio para saltar aluno
+            boolean notaValida = false;
+            double nota = -1;
+            String input = "";  // declarado fora do while para ser usado depois
 
-            try {
-                double nota = Double.parseDouble(input);
-                if (nota >= 0 && nota <= 20 && alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
-                    count++;
+            while (!notaValida) {
+                try {
+                    input = view.inputNotaLote(i + 1, alunos.length, alu.getNome(), num, uc.getNumAvaliacoes());
+                    if (input.isEmpty()) {
+                        notaValida = true;  // saltar aluno
+                        break;
+                    }
+                    nota = Double.parseDouble(input);
+                    if (nota >= 0 && nota <= 20) {
+                        notaValida = true;
+                    } else {
+                        view.msgErroNotaInvalida();
+                        // continua o loop para pedir novamente
+                    }
+                } catch (NumberFormatException e) {
+                    view.msgErroFormato();
+                    // continua o loop
+                } catch (utils.CancelamentoException e) {
+                    // Utilizador escreveu "/" - cancela toda a operação em lote
+                    view.mostrarCancelamento("de Lançamento em Lote");
+                    return;
                 }
-            } catch (Exception e) {
-                // Silencioso em lote, ignora entradas mal formatadas e passa ao seguinte
+            }
+
+            if (notaValida && !input.isEmpty() && alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
+                count++;
             }
         }
 
@@ -330,8 +356,6 @@ public class DocenteController {
 
         if (count > 0) {
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-
-            // Gera e guarda o ficheiro TXT da pauta
             String caminhoTxt = model.bll.Pauta.gerarFicheiroPauta(uc, alunos);
             if (caminhoTxt != null) {
                 view.msgPautaGeradaSucesso(caminhoTxt);

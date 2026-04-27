@@ -383,11 +383,17 @@ public class RepositorioDados {
      * em todos os estudantes ativos (transição de ano, arquivo e novas dívidas).
      */
     public void avancarAno() {
-        this.anoAtual++;
-        // processa alunos, etc.
+        int anoAntigo = this.anoAtual;   // guarda o ano que termina
+        this.anoAtual++;                 // passa para o novo ano
+
         for (int i = 0; i < totalEstudantes; i++) {
-            if (estudantes[i] != null && estudantes[i].isAtivo()) {
-                estudantes[i].processarFimDeAno(this.anoAtual);
+            Estudante e = estudantes[i];
+            if (e != null && e.isAtivo()) {
+                if (Propina.temDividas(e, anoAntigo)) {
+                    e.setAtivo(false);
+                } else {
+                    e.processarFimDeAno(this.anoAtual);
+                }
             }
         }
         ExportadorCSV.exportarAno("bd", this.anoAtual);
@@ -420,6 +426,23 @@ public class RepositorioDados {
                 i--;
             }
         }
+    }
+
+    /**
+     * Conta os alunos ativos que estão a frequentar o 1º ano de um determinado curso
+     * no ano letivo atual (considerando retidos).
+     */
+    public int contarAlunosNoPrimeiroAno(String siglaCurso) {
+        int conta = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante e = estudantes[i];
+            if (e != null && e.isAtivo() && e.getCurso() != null &&
+                    e.getCurso().getSigla().equalsIgnoreCase(siglaCurso) &&
+                    e.getAnoFrequencia() == 1) {
+                conta++;
+            }
+        }
+        return conta;
     }
 
     /**
