@@ -6,126 +6,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 /**
- * Representa a obrigação financeira (propina) anual de um estudante.
- * No padrão MVC, atua como um Model de domínio financeiro.
- * Regista o valor total devido, o montante já liquidado e mantém um histórico
- * detalhado das prestações ou pagamentos efetuados durante um específico ano letivo.
+ * Classe utilitária para gestão de pagamentos e cálculo de dívidas de propinas.
+ * Toda a persistência é feita através do ficheiro CSV "pagamentos_propinas.csv".
+ *
+ * @see model.dal.ImportadorCSV
+ * @see model.dal.ExportadorCSV
  */
 public class Propina {
 
-    // ---------- ATRIBUTOS ----------
-    private int anoLetivo;
-    private double valorTotal;
-    private double valorPago;
-
-    // Matriz de arquivo para o histórico de transações (prestações)
-    private double[] historicoPagamentos;
-    private int totalPagamentos;
-
-    // ---------- CONSTRUTOR ----------
-
-    /**
-     * Construtor da classe Propina.
-     * Inicializa o registo financeiro de um determinado ano letivo com o valor base a cobrar.
-     * Prepara uma matriz em memória para suportar até 20 registos de pagamento (prestações) ao longo do ano.
-     *
-     * @param anoLetivo  O ano civil/letivo a que a propina diz respeito.
-     * @param valorTotal O valor total a pagar pelo estudante nesse ano.
-     */
-    public Propina(int anoLetivo, double valorTotal) {
-        this.anoLetivo = anoLetivo;
-        this.valorTotal = valorTotal;
-        this.valorPago = 0.0;
-        this.historicoPagamentos = new double[20];
-        this.totalPagamentos = 0;
-    }
-
-    // ---------- GETTERS SIMPLES ----------
-    public int getAnoLetivo() {
-        return anoLetivo;
-    }
-
-    public double getValorTotal() {
-        return valorTotal;
-    }
-
-    public double getValorPago() {
-        return valorPago;
-    }
-
-    public double[] getHistoricoPagamentos() {
-        return historicoPagamentos;
-    }
-
-    public int getTotalPagamentos() {
-        return totalPagamentos;
-    }
-
-    // ---------- SETTERS SIMPLES ----------
-    public void setValorTotal(double valorTotal) {
-        this.valorTotal = valorTotal;
-    }
-
-    public void setValorPago(double valorPago) {
-        this.valorPago = valorPago;
-    }
-
     // =========================================================
-    // LÓGICA DE NEGÓCIO: GESTÃO FINANCEIRA E PAGAMENTOS
-    // =========================================================
-
-    /**
-     * Calcula dinamicamente o montante que ainda falta liquidar à instituição.
-     *
-     * @return A diferença exata entre o valor total da propina e o valor que já foi pago.
-     */
-    public double getValorEmDivida() {
-        return valorTotal - valorPago;
-    }
-
-    /**
-     * Calcula a fasquia mínima financeira exigida para aceitar um pagamento em prestações.
-     * Regra de Negócio: O valor mínimo de prestação aceite é 10% do valor total da propina anual.
-     *
-     * @return O valor correspondente a 10% da propina anual.
-     */
-    public double calcularValorMinimoPrestacao() {
-        return this.valorTotal / 10.0;
-    }
-
-    /**
-     * Verifica o estado global de regularização desta propina específica.
-     *
-     * @return true se o montante pago for igual ou superior ao montante total cobrado; false se houver dívida.
-     */
-    public boolean isPagaTotalmente() {
-        return valorPago >= valorTotal - 0.01;
-    }
-
-    /**
-     * Processa e regista uma transação (pagamento total ou parcial em prestação) associada a esta propina.
-     *
-     * @param valor O montante monetário a liquidar na transação atual.
-     * @return true se o pagamento for validado e registado com sucesso; false caso contrário.
-     */
-    public boolean registarPagamento(double valor) {
-        if (valor <= 0 || (valorPago + valor) > (valorTotal + 0.01)) {
-            return false;
-        }
-        this.valorPago += valor;
-        if (totalPagamentos < historicoPagamentos.length) {
-            historicoPagamentos[totalPagamentos++] = valor;
-        }
-        return true;
-    }
-
-    // =========================================================
-    // MÉTODOS ESTÁTICOS PARA GESTÃO DE PAGAMENTOS (CSV)
+    // CONSTANTES E MÉTODOS DE ACESSO AO FICHEIRO
     // =========================================================
     private static final String PAGAMENTOS_FILE = "bd/pagamentos_propinas.csv";
 
@@ -134,10 +26,13 @@ public class Propina {
         if (!f.exists()) {
             try (PrintWriter pw = new PrintWriter(new FileWriter(f))) {
                 pw.println("NUM_MEC;ANO_LETIVO;VALOR_PAGO;DATA_PAGAMENTO");
-            } catch (IOException e) {
-            }
+            } catch (IOException e) { }
         }
     }
+
+    // =========================================================
+    // OPERAÇÕES DE REGISTO E CONSULTA DE PAGAMENTOS
+    // =========================================================
 
     /**
      * Regista um pagamento (adiciona uma linha ao CSV).
@@ -146,8 +41,7 @@ public class Propina {
         garantirFicheiroPagamentos();
         try (PrintWriter pw = new PrintWriter(new FileWriter(PAGAMENTOS_FILE, true))) {
             pw.println(numMec + ";" + anoLetivo + ";" + valor + ";" + data);
-        } catch (IOException e) {
-        }
+        } catch (IOException e) { }
     }
 
     /**
@@ -165,14 +59,60 @@ public class Propina {
                     total += Double.parseDouble(p[2]);
                 }
             }
-        } catch (IOException | NumberFormatException e) {
-        }
+        } catch (IOException | NumberFormatException e) { }
         return total;
     }
 
     /**
-     * Calcula a dívida total de um estudante até ao ano atual (inclusive).
-     * O total devido é a soma dos preços do curso ano a ano desde o ano de ingresso.
+     * Obtém todos os pagamentos registados para um estudante, ordenados cronologicamente.
+     * @return Array de {@link Pagamento} (vazio se não existirem)
+     */
+    public static Pagamento[] getPagamentos(int numMec) {
+        garantirFicheiroPagamentos();
+        // Primeira passagem: contar quantos pagamentos existem
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(PAGAMENTOS_FILE))) {
+            br.readLine(); // cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 4 && Integer.parseInt(p[0]) == numMec) count++;
+            }
+        } catch (IOException | NumberFormatException e) { }
+
+        Pagamento[] pagamentos = new Pagamento[count];
+        int idx = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(PAGAMENTOS_FILE))) {
+            br.readLine();
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 4 && Integer.parseInt(p[0]) == numMec) {
+                    int ano = Integer.parseInt(p[1]);
+                    double valor = Double.parseDouble(p[2]);
+                    String data = p[3];
+                    pagamentos[idx++] = new Pagamento(ano, valor, data);
+                }
+            }
+        } catch (IOException | NumberFormatException e) { }
+        return pagamentos;
+    }
+
+    /**
+     * Adiciona uma multa (pagamento negativo) para aumentar a dívida.
+     */
+    public static void adicionarMulta(int numMec, int anoLetivo, double valorMulta, String data) {
+        if (valorMulta <= 0) return;
+        registarPagamento(numMec, anoLetivo, -valorMulta, data + " [MULTA]");
+    }
+
+    // =========================================================
+    // CÁLCULO DE DÍVIDAS
+    // =========================================================
+
+    /**
+     * Calcula a dívida total do estudante até ao ano atual (inclusive).
+     * Considera todos os preços dos cursos desde o ano de ingresso e todos os pagamentos registados.
      */
     public static double calcularDividaTotal(Estudante estudante, int anoAtual) {
         double totalDevido = 0.0;
@@ -190,93 +130,21 @@ public class Propina {
         return calcularDividaTotal(estudante, anoAtual) > 0.01;
     }
 
-    // ---------- PAGAMENTO (CLASSE INTERNA PARA HISTÓRICO) ----------
-    public static class Pagamento {
-        private int anoLetivo;
-        private double valor;
-        private String data;
-
-        public Pagamento(int anoLetivo, double valor, String data) {
-            this.anoLetivo = anoLetivo;
-            this.valor = valor;
-            this.data = data;
-        }
-
-        public int getAnoLetivo() {
-            return anoLetivo;
-        }
-
-        public double getValor() {
-            return valor;
-        }
-
-        public String getData() {
-            return data;
-        }
-    }
-
     /**
-     * Obtém a lista de todos os pagamentos registados para um estudante, ordenados por ano e data.
-     *
-     * @param numMec Número mecanográfico do estudante.
-     * @return Lista de pagamentos.
-     */
-    public static Pagamento[] getPagamentos(int numMec) {
-        garantirFicheiroPagamentos();
-        // Primeira passagem: contar quantos pagamentos existem
-        int count = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(PAGAMENTOS_FILE))) {
-            br.readLine(); // cabeçalho
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] p = linha.split(";");
-                if (p.length >= 4 && Integer.parseInt(p[0]) == numMec) {
-                    count++;
-                }
-            }
-        } catch (IOException | NumberFormatException e) {
-        }
-
-        // Alocar array do tamanho certo
-        Pagamento[] pagamentos = new Pagamento[count];
-
-        // Segunda passagem: preencher o array
-        int idx = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(PAGAMENTOS_FILE))) {
-            br.readLine();
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] p = linha.split(";");
-                if (p.length >= 4 && Integer.parseInt(p[0]) == numMec) {
-                    int ano = Integer.parseInt(p[1]);
-                    double valor = Double.parseDouble(p[2]);
-                    String data = p[3];
-                    pagamentos[idx++] = new Pagamento(ano, valor, data);
-                }
-            }
-        } catch (IOException | NumberFormatException e) {
-        }
-        return pagamentos;
-    }
-
-
-    /**
-     * Verifica se o estudante tem dívidas até um determinado ano limite (inclusive).
-     * @param estudante O estudante.
-     * @param anoLimite Último ano a considerar.
-     * @return true se existir dívida (valor > 0.01), false caso contrário.
+     * Calcula a dívida acumulada apenas até um determinado ano limite,
+     * usando todos os pagamentos já efectuados (mesmo de anos posteriores) para abater as dívidas mais antigas (FIFO).
+     * @param anoLimite   Último ano a considerar no valor devido (ex: 2026)
+     * @param anoCorrente Ano letivo actual (ex: 2027) – usado para buscar pagamentos até essa data
      */
     public static double getDividaAteAno(Estudante estudante, int anoLimite, int anoCorrente) {
         double totalDevido = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoLimite; ano++) {
             totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
         }
-
         double totalPagoGeral = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoCorrente; ano++) {
             totalPagoGeral += getTotalPago(estudante.getNumeroMecanografico(), ano);
         }
-
         double divida = totalDevido - totalPagoGeral;
         return divida > 0 ? divida : 0.0;
     }
@@ -284,16 +152,23 @@ public class Propina {
     public static boolean temDividasAteAno(Estudante estudante, int anoLimite, int anoCorrente) {
         return getDividaAteAno(estudante, anoLimite, anoCorrente) > 0.01;
     }
-    /**
-     * Adiciona uma multa ao estudante, registando um valor negativo como pagamento.
-     * @param numMec Número mecanográfico.
-     * @param anoLetivo Ano a que a multa se aplica (geralmente o ano atual).
-     * @param valorMulta Valor positivo da multa (será convertido para negativo).
-     * @param data Data da aplicação da multa.
-     */
-    public static void adicionarMulta(int numMec, int anoLetivo, double valorMulta, String data) {
-        if (valorMulta <= 0) return;
-        // Registar um pagamento negativo para aumentar a dívida
-        registarPagamento(numMec, anoLetivo, -valorMulta, data + " [MULTA]");
+
+    // =========================================================
+    // CLASSE AUXILIAR PARA REPRESENTAR UM PAGAMENTO
+    // =========================================================
+    public static class Pagamento {
+        private final int anoLetivo;
+        private final double valor;
+        private final String data;
+
+        public Pagamento(int anoLetivo, double valor, String data) {
+            this.anoLetivo = anoLetivo;
+            this.valor = valor;
+            this.data = data;
+        }
+
+        public int getAnoLetivo() { return anoLetivo; }
+        public double getValor() { return valor; }
+        public String getData() { return data; }
     }
 }

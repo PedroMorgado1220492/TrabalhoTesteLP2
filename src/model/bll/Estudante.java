@@ -224,9 +224,6 @@ public class Estudante extends Utilizador {
                 }
             }
         }
-
-        // Nota: A nova propina para o próximo ano letivo já não é gerada internamente;
-        // a dívida é calculada dinamicamente a partir dos preços dos cursos e dos pagamentos registados.
     }
 
     // =========================================================
