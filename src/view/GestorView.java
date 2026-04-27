@@ -55,6 +55,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Departamento");
         System.out.println("2 - Alterar Departamento");
         System.out.println("3 - Listar Todos os Departamentos");
+        System.out.println("4 - Listar Cursos por Departamento");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -67,11 +68,10 @@ public class GestorView {
         System.out.println("\n--- MÓDULO: CURSOS ---");
         System.out.println("1 - Adicionar Curso");
         System.out.println("2 - Alterar Curso");
-        System.out.println("3 - Listar Cursos por Departamento");
-        System.out.println("4 - Alternar Estado (Ativo/Inativo)");
-        System.out.println("5 - Consultar Percurso Académico do Curso");
-        System.out.println("6 - Atualizar Preço do Curso");
-        System.out.println("7 - Listar Alunos por Curso");
+        System.out.println("3 - Alternar Estado (Ativo/Inativo)");
+        System.out.println("4 - Consultar Percurso Académico do Curso");
+        System.out.println("5 - Atualizar Preço do Curso");
+        System.out.println("6 - Listar Alunos por Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -406,22 +406,41 @@ public class GestorView {
             System.out.println(">> Não existem cursos registados.");
             return;
         }
+
+        int totalGeralAtivos = 0;
+        int totalGeralInativos = 0;
+
         for (int i = 0; i < totalDep; i++) {
             Departamento dep = departamentos[i];
             if (dep != null) {
                 System.out.println("\nDEPARTAMENTO: " + dep.getNome());
                 boolean temCursos = false;
+                int ativos = 0;
+                int inativos = 0;
                 for (int j = 0; j < totalCursos; j++) {
                     Curso c = cursos[j];
                     if (c != null && c.getDepartamento().getSigla().equals(dep.getSigla())) {
                         temCursos = true;
                         String estado = c.isAtivo() ? "[ATIVO]" : "[INATIVO]";
                         System.out.println("  > " + estado + " " + c.getSigla() + " - " + c.getNome());
+                        if (c.isAtivo()) {
+                            ativos++;
+                            totalGeralAtivos++;
+                        } else {
+                            inativos++;
+                            totalGeralInativos++;
+                        }
                     }
                 }
-                if (!temCursos) System.out.println("  (Sem cursos associados)");
+                if (!temCursos) {
+                    System.out.println("  (Sem cursos associados)");
+                } else {
+                    System.out.println("  -- Total: " + ativos + " ativo(s), " + inativos + " inativo(s)");
+                }
             }
         }
+
+        System.out.println("\nRESUMO GERAL: " + totalGeralAtivos + " curso(s) ativo(s), " + totalGeralInativos + " curso(s) inativo(s).");
     }
 
     /**

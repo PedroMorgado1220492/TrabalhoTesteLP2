@@ -47,8 +47,6 @@ public class PercursoAcademico {
     public Estudante getEstudante() { return estudante; }
     public UnidadeCurricular[] getUcsInscrito() { return ucsInscrito; }
     public int getTotalUcsInscrito() { return totalUcsInscrito; }
-    public Avaliacao[] getAvaliacoes() { return avaliacoes; }
-    public int getTotalAvaliacoes() { return totalAvaliacoes; }
 
 
     // =========================================================

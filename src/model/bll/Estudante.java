@@ -26,8 +26,6 @@ public class Estudante extends Utilizador {
     private Avaliacao[] historicoAvaliacoes;
     private int totalHistorico;
 
-    // ---------- ATRIBUTOS FINANCEIROS ----------
-    private double valorPropinaBase;
 
     // ---------- CONSTRUTOR ----------
 
@@ -66,10 +64,6 @@ public class Estudante extends Utilizador {
         this.historicoAvaliacoes = new Avaliacao[150]; // Histórico com capacidade estendida
         this.totalHistorico = 0;
 
-        // Valor base da propina (apenas para referência, a dívida é calculada externamente)
-        if (this.curso != null) {
-            this.valorPropinaBase = curso.getValorPropinaAnual();
-        }
     }
 
     // ---------- GETTERS SIMPLES ----------
@@ -79,12 +73,10 @@ public class Estudante extends Utilizador {
     public int getAnoPrimeiraInscricao() { return anoPrimeiraInscricao; }
     public int getAnoCurricular() { return anoCurricular; }
     public int getAnoFrequencia() { return anoFrequencia; }
-    public PercursoAcademico getPercursoAcademico() { return percursoAcademico; }
     public Avaliacao[] getAvaliacoes() { return this.avaliacoes; }
     public int getTotalAvaliacoes() { return this.totalAvaliacoes; }
     public Avaliacao[] getHistoricoAvaliacoes() { return historicoAvaliacoes; }
     public int getTotalHistorico() { return totalHistorico; }
-    public double getValorPropinaBase() { return valorPropinaBase; }
     public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS SIMPLES ----------
@@ -92,8 +84,6 @@ public class Estudante extends Utilizador {
     public void setCurso(Curso curso) { this.curso = curso; }
     public void setAnoCurricular(int anoCurricular) { this.anoCurricular = anoCurricular; }
     public void setAnoFrequencia(int anoFrequencia) { this.anoFrequencia = anoFrequencia; }
-    public void setPercursoAcademico(PercursoAcademico percursoAcademico) { this.percursoAcademico = percursoAcademico; }
-    public void setValorPropinaBase(double valorPropinaBase) { this.valorPropinaBase = valorPropinaBase; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // =========================================================

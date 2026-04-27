@@ -68,14 +68,6 @@ public class Docente extends Utilizador {
         return totalUcsLecionadas;
     }
 
-    public UnidadeCurricular[] getUcsResponsavel() {
-        return ucsResponsavel;
-    }
-
-    public int getTotalUcsResponsavel() {
-        return totalUcsResponsavel;
-    }
-
     // ---------- SETTERS ----------
 
     public void setSigla(String sigla) {

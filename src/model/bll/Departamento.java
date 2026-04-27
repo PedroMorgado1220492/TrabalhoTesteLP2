@@ -9,7 +9,6 @@ public class Departamento {
     // ---------- ATRIBUTOS ----------
     private String sigla;
     private String nome;
-    private Docente docenteResponsavel;
 
     private Curso[] cursos;
     private int totalCursos;
@@ -36,11 +35,8 @@ public class Departamento {
 
     public String getNome() { return nome; }
 
-    public Docente getDocenteResponsavel() { return docenteResponsavel; }
-
     public Curso[] getCursos() { return cursos; }
 
-    public int getTotalCursos() { return totalCursos; }
 
     // ---------- SETTERS ----------
 
@@ -48,7 +44,6 @@ public class Departamento {
 
     public void setNome(String nome) { this.nome = nome; }
 
-    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

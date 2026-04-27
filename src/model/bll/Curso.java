@@ -14,7 +14,7 @@ public class Curso {
     private String sigla;
     private String nome;
     private Departamento departamento;
-    private Docente docenteResponsavel; // Coordenador do Curso
+
 
     // Regras estruturais fixas
     private final int duracaoAnos = 3; // Estrutura fixa de 3 anos (Licenciatura)
@@ -48,8 +48,6 @@ public class Curso {
     public String getSigla() { return sigla.toUpperCase(); }
     public String getNome() { return nome; }
     public Departamento getDepartamento() { return departamento; }
-    public Docente getDocenteResponsavel() { return docenteResponsavel; }
-    public int getDuracaoAnos() { return duracaoAnos; }
     public UnidadeCurricular[] getUnidadesCurriculares() { return unidadesCurriculares; }
     public int getTotalUCs() { return totalUCs; }
     public boolean isAtivo() { return ativo; }
@@ -59,7 +57,6 @@ public class Curso {
     public void setSigla(String sigla) { this.sigla = sigla; }
     public void setNome(String nome) { this.nome = nome; }
     public void setDepartamento(Departamento departamento) { this.departamento = departamento; }
-    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
     public void setValorPropinaAnual(double valorPropinaAnual) { this.valorPropinaAnual = valorPropinaAnual; }
 
