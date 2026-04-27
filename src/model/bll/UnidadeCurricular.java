@@ -179,6 +179,13 @@ public class UnidadeCurricular {
      * @return true se a UC estiver livre de vínculos e puder ser desativada; false caso contrário.
      */
     public boolean podeSerDesativada() {
-        return this.totalCursos == 0;
+        // Verifica se existe pelo menos um curso ATIVO associado a esta UC
+        for (int i = 0; i < totalCursos; i++) {
+            Curso c = cursos[i];
+            if (c != null && c.isAtivo()) {
+                return false; // não pode desativar porque há curso ativo
+            }
+        }
+        return true; // pode desativar (nenhum curso ativo ou nenhum curso associado)
     }
 }

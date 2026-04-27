@@ -356,4 +356,8 @@ public class MainView {
     public void msgErroArquivoNaoEncontrado(String c) {
         System.err.println(">> Erro: Ficheiro " + c + " não localizado.");
     }
+
+    public void msgGestorNaoPodeRecuperar() {
+        System.out.println(">> Utilizador Gestor não pode recuperar palavra-passe por este meio.");
+    }
 }

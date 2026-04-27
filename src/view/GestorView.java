@@ -71,6 +71,7 @@ public class GestorView {
         System.out.println("4 - Alternar Estado (Ativo/Inativo)");
         System.out.println("5 - Consultar Percurso Académico do Curso");
         System.out.println("6 - Atualizar Preço do Curso");
+        System.out.println("7 - Listar Alunos por Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -87,6 +88,8 @@ public class GestorView {
         System.out.println("4 - Listar Todas as Unidades Curriculares");
         System.out.println("5 - Alternar Estado (Ativo/Inativo)");
         System.out.println("6 - Remover Unidade Curricular de Curso");
+        System.out.println("7 - Listar Alunos por Unidade Curricular");
+        System.out.println("8 - Listar Unidades Curriculares por Curso");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -127,10 +130,7 @@ public class GestorView {
      */
     public int mostrarMenuRelatorios() {
         System.out.println("\n--- MÓDULO: RELATÓRIOS ---");
-        System.out.println("1 - Listar Alunos por Curso");
-        System.out.println("2 - Listar Alunos por Unidade Curricular");
-        System.out.println("3 - Listar Unidades Curriculares por Curso");
-        System.out.println("4 - Consultar Estatísticas");
+        System.out.println("1 - Consultar Estatísticas");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -144,6 +144,7 @@ public class GestorView {
         System.out.println("1 - Adicionar Gestor");
         System.out.println("2 - Alterar Gestor para Inativo");
         System.out.println("3 - Listar Todos os Gestores");
+        System.out.println("4 - Alterar Palavra-passe");
         System.out.println("0 - Recuar");
         System.out.print("Opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -270,6 +271,18 @@ public class GestorView {
         return utils.Consola.lerString("Novo nº de Avaliações [Enter p/ manter]: ");
     }
 
+    public String pedirPassAtual() {
+        return utils.Consola.lerString("Palavra-passe Atual: ");
+    }
+
+    public String pedirNovaPass() {
+        return utils.Consola.lerString("Nova Palavra-passe: ");
+    }
+
+    public String pedirConfirmacaoPass() {
+        return utils.Consola.lerString("Confirme a Nova Palavra-passe: ");
+    }
+
     /**
      * Confirmação para transição global de ano letivo.
      *
@@ -307,7 +320,7 @@ public class GestorView {
      */
     public void mostrarRevisaoCurso(String sigla, String nome, String siglaDep) {
         System.out.println("\n--- REVISÃO: CURSO ---");
-        System.out.println("Identificador: " + sigla + "\nDesignação: " + nome + "\nDepartamento: " + siglaDep);
+        System.out.println("Identificador: " + sigla.toUpperCase() + "\nDesignação: " + nome + "\nDepartamento: " + siglaDep);
     }
 
     /**
@@ -483,7 +496,7 @@ public class GestorView {
      * Exibe os KPIs (média global, melhor aluno, curso com mais alunos).
      */
     public void mostrarEstatisticas(double media, String melhor, String cursoTop) {
-        System.out.println("\n=============== KPI - MÉTRICAS INSTITUCIONAIS ===============");
+        System.out.println("\n=============== MÉTRICAS INSTITUCIONAIS ===============");
         System.out.printf("Média Global da Instituição : %.2f Valores\n", media);
         System.out.println("Mérito Académico (Melhor Aluno): " + melhor);
         System.out.println("Aderência (Curso com mais inscritos): " + (cursoTop != null ? cursoTop : "N/D"));
@@ -509,10 +522,10 @@ public class GestorView {
      * @return Índice do curso selecionado (1‑based, como aparece na lista).
      */
     public int mostrarCursosParaPropina(Curso[] cursos, int total, int anoAtual) {
-        System.out.println("\n--- ATUALIZAÇÃO DE PREÇÁRIO ---");
+        System.out.println("\n--- ATUALIZAÇÃO DE PREÇO ---");
         int anoAlvo = anoAtual + 1;
         for (int i = 0; i < total; i++) {
-            if (cursos[i] != null) {
+            if (cursos[i] != null && cursos[i].isAtivo()) {
                 double precoAlvo = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAlvo);
                 System.out.printf("%d - [%s] %s (Preço para %d: %.2f€)\n", (i+1), cursos[i].getSigla(), cursos[i].getNome(), anoAlvo, precoAlvo);
             }
@@ -835,6 +848,10 @@ public class GestorView {
         System.out.println(">> Sucesso: Estado de '" + e + "' alterado para " + (a ? "ACTIVO" : "INACTIVO") + ".");
     }
 
+    public void msgCursoNaoAtivarPorUCsInativas() {
+        System.out.println(">> Não é possível ativar o curso porque existem Unidades Curriculares inativas associadas.");
+    }
+
     // Gestores
     public void mostrarErroNomeGestor() {
         System.out.println(">> Erro: O nome do gestor deve ser uma palavra única.");
@@ -862,6 +879,18 @@ public class GestorView {
 
     public void mostrarErroCursoInativo() {
         System.out.println(">> Erro: Curso inactivo.");
+    }
+
+    public void msgSucesso() {
+        System.out.println(">> Operação concluída com sucesso.");
+    }
+
+    public void msgErroPassIncorreta() {
+        System.out.println(">> Erro: A palavra-passe atual está incorreta.");
+    }
+
+    public void msgErroPassNaoCoincidem() {
+        System.out.println(">> Erro: As novas palavras-passe não coincidem.");
     }
 
     // Email e credenciais

@@ -180,6 +180,7 @@ public class GestorController {
                     case 4: alternarEstadoCurso(); break;
                     case 5: verPercursoAcademicoCurso(); break;
                     case 6: alterarPrecoCurso(); break;
+                    case 7: view.mostrarRelatorioAlunosPorCurso(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -230,7 +231,7 @@ public class GestorController {
                 String[] linhas = model.dal.ImportadorCSV.lerTodasLinhasPrecos();
                 String[] novasLinhas = new String[linhas.length + 1];
                 System.arraycopy(linhas, 0, novasLinhas, 0, linhas.length);
-                novasLinhas[novasLinhas.length - 1] = anoAtual + ";" + siglaCurso + ";" + precoInicial;
+                novasLinhas[novasLinhas.length - 1] = anoAtual + ";" + siglaCurso.toUpperCase() + ";" + precoInicial;
                 model.dal.ExportadorCSV.escreverFicheiroPrecos(novasLinhas);
                 view.mostrarSucessoRegistoCurso(nomeCurso);
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
@@ -293,7 +294,15 @@ public class GestorController {
 
         Curso curso = repositorio.getCursos()[escolha];
 
-        // Regra de negócio (verificação de alunos ativos) delegada ao Model Curso
+        // Se o curso está inativo e vai ser ativado, verificar se todas as UCs estão ativas
+        if (!curso.isAtivo()) {
+            if (!curso.todasUcsAtivas()) {
+                view.msgCursoNaoAtivarPorUCsInativas();
+                return;
+            }
+        }
+
+        // Regras existentes para desativação (alunos ativos)
         if (curso.isAtivo() && !curso.podeSerDesativado(repositorio.getEstudantes(), repositorio.getTotalEstudantes())) {
             view.msgAvisoCursoComAlunosAtivos(curso.getSigla());
             return;
@@ -328,6 +337,7 @@ public class GestorController {
      */
     private void alterarPrecoCurso() {
         int escolha = view.mostrarCursosParaPropina(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getAnoAtual());
+        if (escolha == -1) return;
         if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
             Curso cursoEscolhido = repositorio.getCursos()[escolha - 1];
             // Mostrar histórico (leitura)
@@ -344,7 +354,7 @@ public class GestorController {
                 for (int i = 0; i < linhas.length; i++) {
                     String[] p = linhas[i].split(";");
                     if (p.length >= 3 && p[1].equalsIgnoreCase(cursoEscolhido.getSigla()) && Integer.parseInt(p[0]) == anoAlvo) {
-                        linhas[i] = anoAlvo + ";" + cursoEscolhido.getSigla() + ";" + novoPreco;
+                        linhas[i] = anoAlvo + ";" + cursoEscolhido.getSigla().toUpperCase() + ";" + novoPreco;
                         atualizado = true;
                         break;
                     }
@@ -353,7 +363,7 @@ public class GestorController {
                     // Adicionar nova linha
                     String[] novasLinhas = new String[linhas.length + 1];
                     System.arraycopy(linhas, 0, novasLinhas, 0, linhas.length);
-                    novasLinhas[novasLinhas.length - 1] = anoAlvo + ";" + cursoEscolhido.getSigla() + ";" + novoPreco;
+                    novasLinhas[novasLinhas.length - 1] = anoAlvo + ";" + cursoEscolhido.getSigla().toUpperCase() + ";" + novoPreco;
                     linhas = novasLinhas;
                 }
                 // Escrever de volta
@@ -388,6 +398,8 @@ public class GestorController {
                     case 4: view.mostrarListaUCs(repositorio.getUcs(), repositorio.getTotalUcs()); break;
                     case 5: alternarEstadoUC(); break;
                     case 6: removerUcDeCurso(); break;
+                    case 7: view.mostrarRelatorioAlunosPorUC(repositorio.getUcs(), repositorio.getTotalUcs(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
+                    case 8: view.mostrarRelatorioUCsPorCurso(repositorio.getCursos(), repositorio.getTotalCursos()); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -907,10 +919,7 @@ public class GestorController {
             int opcao = view.mostrarMenuRelatorios();
             try {
                 switch (opcao) {
-                    case 1: view.mostrarRelatorioAlunosPorCurso(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
-                    case 2: view.mostrarRelatorioAlunosPorUC(repositorio.getUcs(), repositorio.getTotalUcs(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
-                    case 3: view.mostrarRelatorioUCsPorCurso(repositorio.getCursos(), repositorio.getTotalCursos()); break;
-                    case 4: verEstatisticas(); break;
+                    case 1: verEstatisticas(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -971,6 +980,7 @@ public class GestorController {
                     case 1: adicionarGestor(); break;
                     case 2: desativarGestor(); break;
                     case 3: view.mostrarListaGestores(repositorio.getGestores(), repositorio.getTotalGestores()); break;
+                    case 4: alterarPassword(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -1044,6 +1054,26 @@ public class GestorController {
             }
         } else {
             view.mostrarErroCredenciaisGestor();
+        }
+    }
+
+    private void alterarPassword() {
+        String passAtualRaw = view.pedirPassAtual();
+        String passAtualEnc = Seguranca.encriptar(passAtualRaw);
+
+        if (gestorAtivo.verificarPassword(passAtualEnc)) {
+            String novaPassRaw = view.pedirNovaPass();
+            String confirmacaoRaw = view.pedirConfirmacaoPass();
+
+            if (!novaPassRaw.isEmpty() && novaPassRaw.equals(confirmacaoRaw)) {
+                gestorAtivo.setPassword(Seguranca.encriptar(novaPassRaw));
+                view.msgSucesso();
+                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+            } else {
+                view.msgErroPassNaoCoincidem();
+            }
+        } else {
+            view.msgErroPassIncorreta();
         }
     }
 

@@ -134,14 +134,14 @@ public class Curso {
     }
 
     public boolean isBloqueado(Estudante[] todosEstudantes, int totalEstudantes) {
-        if (this.totalUCs > 0) return true;
+        // Apenas bloqueia se existir pelo menos um estudante associado a este curso
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante e = todosEstudantes[i];
             if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(this.sigla)) {
-                return true;
+                return true; // há pelo menos um aluno, curso em funcionamento
             }
         }
-        return false;
+        return false; // sem alunos, pode alterar
     }
 
     public boolean podeSerDesativado(Estudante[] todosEstudantes, int totalEstudantes) {
@@ -154,4 +154,17 @@ public class Curso {
         return true;
     }
 
+    /**
+     * Verifica se todas as Unidades Curriculares associadas a este curso estão ativas.
+     * @return true se todas as UCs estiverem ativas (ou se não houver UCs), false caso contrário.
+     */
+    public boolean todasUcsAtivas() {
+        for (int i = 0; i < totalUCs; i++) {
+            UnidadeCurricular uc = unidadesCurriculares[i];
+            if (uc != null && !uc.isAtivo()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

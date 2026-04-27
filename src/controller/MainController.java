@@ -343,11 +343,19 @@ public class MainController {
     private void processarRecuperacaoPassword() {
         view.mostrarCabecalhoLogin();
         String email = view.pedirEmail();
-        String nif = view.pedirNifRecuperacao();
 
         carregarBaseDeDadosCompleta();
 
+        // Verificar se o email pertence a um Gestor
+        Utilizador user = repositorio.procurarUtilizadorPorEmail(email);
+        if (user instanceof Gestor) {
+            view.msgGestorNaoPodeRecuperar();
+            this.repositorio = new RepositorioDados();
+            return;
+        }
+
         // Delegação de lógica de segurança aos Utilitários
+        String nif = view.pedirNifRecuperacao();
         boolean sucesso = utils.Seguranca.recuperarPassword(email, nif, repositorio);
 
         if (sucesso) {
