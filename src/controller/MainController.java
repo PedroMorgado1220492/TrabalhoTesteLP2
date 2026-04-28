@@ -299,7 +299,7 @@ public class MainController {
                 if (inscritos > 0 && inscritos < 5) {
                     view.mostrarCursoCancelado(curso.getSigla(), inscritos);
                     repositorio.anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
-                    curso.setAtivo(false);
+                    //curso.setAtivo(false);
                 } else if (inscritos >= 5) {
                     view.mostrarCursoAprovado(curso.getSigla(), inscritos);
                 }

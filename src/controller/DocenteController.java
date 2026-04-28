@@ -307,7 +307,10 @@ public class DocenteController {
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idx];
         Estudante[] alunos = repositorio.obterEstudantesPorUC(uc.getSigla());
 
-        if (alunos.length == 0) return;
+        if (alunos.length == 0) {
+            view.msgAvisoTurmaVazia();
+            return;
+        }
 
         view.cabecalhoLote(uc.getNome());
 
