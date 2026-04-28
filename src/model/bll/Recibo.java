@@ -33,8 +33,7 @@ public class Recibo {
         String numReciboFormatado = String.format("%08d", numRecibo);
 
         // O CSV guardará: ID_Recibo ; Num_Mecanografico ; Valor_Pago ; Data
-        String detalhesCSV = String.format("%.2f", valorPago).replace(",", ".") + ";" + dataAtual;
-        registarNoCSV(csvCaminho, numReciboFormatado, e.getNumeroMecanografico(), detalhesCSV, "ID_RECIBO;NUM_MECANOGRAFICO;VALOR_PAGO;DATA");
+        registarNoCSV(csvCaminho, numReciboFormatado, e.getNumeroMecanografico());
 
         // 4. Define o caminho do documento de texto
         String caminhoTxt = "recibos/recibo_" + numReciboFormatado + ".txt";
@@ -96,15 +95,15 @@ public class Recibo {
         return ultimoNumero + 1;
     }
 
-    private static void registarNoCSV(String caminho, String id, int numMec, String extra, String cabecalho) {
-        java.io.File ficheiro = new java.io.File(caminho);
+    private static void registarNoCSV(String caminho, String id, int numMec) {
+        File ficheiro = new File(caminho);
         boolean ficheiroJaExiste = ficheiro.exists();
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(ficheiro, true))) {
             if (!ficheiroJaExiste) {
-                pw.println(cabecalho);
+                pw.println("ID_RECIBO;NUM_MECANOGRAFICO");
             }
-            pw.println(id + ";" + numMec + (extra != null ? ";" + extra : ""));
-        } catch(IOException e) {}
+            pw.println(id + ";" + numMec);
+        } catch (IOException e) { }
     }
 }
