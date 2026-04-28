@@ -261,4 +261,25 @@ public class ExportadorCSV {
         } catch (IOException e) { }
     }
 
+    // =========================================================
+    // MÉTODOS PARA GESTÃO DE RECIBOS
+    // =========================================================
+
+    /**
+     * Regista um recibo no ficheiro recibos.csv.
+     * @param id     Número do recibo (ex: "00000001").
+     * @param numMec Número mecanográfico do estudante.
+     */
+    public static void registarRecibo(String id, int numMec) {
+        String caminho = "bd/recibos.csv";
+        File ficheiro = new File(caminho);
+        boolean ficheiroJaExiste = ficheiro.exists();
+        try (PrintWriter pw = new PrintWriter(new FileWriter(caminho, true))) {
+            if (!ficheiroJaExiste) {
+                pw.println("ID_RECIBO;NUM_MECANOGRAFICO");
+            }
+            pw.println(id + ";" + numMec);
+        } catch (IOException e) { }
+    }
+
 }

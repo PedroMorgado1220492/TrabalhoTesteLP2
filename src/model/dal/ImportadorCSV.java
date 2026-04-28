@@ -20,7 +20,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 1. MECANISMOS DE AUTENTICAÇÃO RÁPIDA
+    // MECANISMOS DE AUTENTICAÇÃO RÁPIDA
     // =========================================================
 
     /**
@@ -73,7 +73,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 2. CARREGAMENTO DE INFRAESTRUTURA E DOCÊNCIA
+    // CARREGAMENTO DE INFRAESTRUTURA E DOCÊNCIA
     // =========================================================
 
     /**
@@ -126,7 +126,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 3. CARREGAMENTO ACADÉMICO (CURSOS E UCS)
+    // CARREGAMENTO ACADÉMICO (CURSOS E UCS)
     // =========================================================
 
     /**
@@ -198,7 +198,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 4. CARREGAMENTO DE ESTUDANTES E AVALIAÇÕES
+    // CARREGAMENTO DE ESTUDANTES E AVALIAÇÕES
     // =========================================================
 
     /**
@@ -302,7 +302,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 5. MÉTODOS DE PESQUISA INTERNA (DESSERIALIZAÇÃO)
+    // MÉTODOS DE PESQUISA INTERNA (DESSERIALIZAÇÃO)
     // =========================================================
 
     private static Departamento procurarDepartamento(String sigla, RepositorioDados repo) {
@@ -341,7 +341,7 @@ public class ImportadorCSV {
     }
 
     // =========================================================
-    // 6. CARREGAMENTO DE PREÇOS CURSOS
+    // CARREGAMENTO DE PREÇOS CURSOS
     // =========================================================
 
     // Dentro de ImportadorCSV
@@ -410,5 +410,36 @@ public class ImportadorCSV {
             }
         } catch (IOException e) { return new String[0]; }
         return linhas;
+    }
+
+    // =========================================================
+    // MÉTODOS PARA GESTÃO DE RECIBOS
+    // =========================================================
+
+    /**
+     * Obtém o próximo número sequencial para um novo recibo.
+     * @return Número sequencial (incrementado a partir do último ID encontrado).
+     */
+    public static int obterProximoNumeroRecibo() {
+        return obterProximoNumero("bd/recibos.csv");
+    }
+
+    private static int obterProximoNumero(String caminhoArquivo) {
+        int ultimoNumero = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
+            br.readLine(); // ignorar cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
+                String[] partes = linha.split(";");
+                if (partes.length > 0) {
+                    try {
+                        int num = Integer.parseInt(partes[0]);
+                        if (num > ultimoNumero) ultimoNumero = num;
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        } catch (IOException e) { }
+        return ultimoNumero + 1;
     }
 }

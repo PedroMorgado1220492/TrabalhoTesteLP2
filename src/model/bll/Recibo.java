@@ -1,8 +1,6 @@
 package model.bll;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,31 +9,35 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Classe utilitária responsável pela geração de recibos de pagamento de propinas.
+ * A gestão da numeração sequencial é delegada às classes DAL.
  */
 public class Recibo {
 
-    public static String gerarRecibo(Estudante e, double valorPago, double valorTotalCurso, double valorEmFalta) {
-
-        // 1. Criar a pasta dedicada para recibos se ela não existir
+    /**
+     * Gera um recibo em formato .txt e regista a sua numeração no CSV.
+     *
+     * @param e               Estudante que efetuou o pagamento.
+     * @param valorPago       Montante pago nesta transação.
+     * @param totalDevido     Valor total em dívida antes deste pagamento (soma de todas as propinas desde o ingresso).
+     * @param novoSaldo       Saldo devedor após o pagamento.
+     * @return Caminho do ficheiro .txt gerado, ou null em caso de erro.
+     */
+    public static String gerarRecibo(Estudante e, double valorPago, double totalDevido, double novoSaldo) {
+        // 1. Criar a pasta de recibos se não existir
         File diretorio = new File("recibos");
         if (!diretorio.exists()) {
             diretorio.mkdirs();
         }
 
-        // 2. Definir a data de hoje formatada
+        // 2. Obter data atual formatada
         String dataAtual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
-        // 3. Obter o próximo número sequencial e registar no CSV
-        String csvCaminho = "bd/recibos.csv";
-        int numRecibo = obterProximoNumero(csvCaminho);
-
-        // Formatação do número para 8 dígitos com zeros à esquerda ---
+        // 3. Obter próximo número sequencial e registar recibo através das classes DAL
+        int numRecibo = model.dal.ImportadorCSV.obterProximoNumeroRecibo();
         String numReciboFormatado = String.format("%08d", numRecibo);
+        model.dal.ExportadorCSV.registarRecibo(numReciboFormatado, e.getNumeroMecanografico());
 
-        // O CSV guardará: ID_Recibo ; Num_Mecanografico ; Valor_Pago ; Data
-        registarNoCSV(csvCaminho, numReciboFormatado, e.getNumeroMecanografico());
-
-        // 4. Define o caminho do documento de texto
+        // 4. Caminho do ficheiro .txt
         String caminhoTxt = "recibos/recibo_" + numReciboFormatado + ".txt";
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(caminhoTxt))) {
@@ -48,20 +50,18 @@ public class Recibo {
             pw.println("morada " + e.getMorada() + ",");
             pw.println("na data " + dataAtual + ",");
 
-            // Formatar para duas casas decimais
             String valorPagoStr = String.format("%.2f", valorPago);
-            String valorEmFaltaStr = String.format("%.2f", valorEmFalta);
-            String valorTotalStr = String.format("%.2f", valorTotalCurso);
-
+            String totalDevidoStr = String.format("%.2f", totalDevido);
+            String novoSaldoStr = String.format("%.2f", novoSaldo);
             String nomeCurso = (e.getCurso() != null) ? e.getCurso().getNome() : "Desconhecido";
 
-            pw.println("pagou " + valorPagoStr + " euros de um total de " + valorTotalStr + " euros,");
+            pw.println("pagou " + valorPagoStr + " euros de um total de " + totalDevidoStr + " euros,");
             pw.println("do curso de " + nomeCurso + ".");
             pw.println("");
-            if (valorEmFalta <= 0) {
+            if (novoSaldo <= 0) {
                 pw.println("Situação Financeira: REGULARIZADA (0.00 euros em falta).");
             } else {
-                pw.println("Falta pagar: " + valorEmFaltaStr + " euros.");
+                pw.println("Falta pagar: " + novoSaldoStr + " euros.");
             }
             pw.println("=====================================================");
             pw.println("Recibo Nº " + numReciboFormatado);
@@ -69,41 +69,7 @@ public class Recibo {
             return caminhoTxt;
 
         } catch (IOException ex) {
-            return null; // Falha silenciosa
+            return null;
         }
-    }
-
-    // --- MÉTODOS DE CONTROLO SEQUENCIAL ---
-
-    private static int obterProximoNumero(String caminhoArquivo) {
-        int ultimoNumero = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
-            br.readLine(); // Ignora o cabeçalho
-
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                if (linha.trim().isEmpty()) continue;
-                String[] partes = linha.split(";");
-                if (partes.length > 0) {
-                    try {
-                        int numeroAAtual = Integer.parseInt(partes[0]);
-                        if (numeroAAtual > ultimoNumero) ultimoNumero = numeroAAtual;
-                    } catch (NumberFormatException ignored) {}
-                }
-            }
-        } catch (IOException e) { }
-        return ultimoNumero + 1;
-    }
-
-    private static void registarNoCSV(String caminho, String id, int numMec) {
-        File ficheiro = new File(caminho);
-        boolean ficheiroJaExiste = ficheiro.exists();
-
-        try (PrintWriter pw = new PrintWriter(new FileWriter(ficheiro, true))) {
-            if (!ficheiroJaExiste) {
-                pw.println("ID_RECIBO;NUM_MECANOGRAFICO");
-            }
-            pw.println(id + ";" + numMec);
-        } catch (IOException e) { }
     }
 }
