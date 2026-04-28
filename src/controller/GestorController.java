@@ -739,25 +739,58 @@ public class GestorController {
     private void alterarEstudante() {
         try {
             int numMec = Integer.parseInt(view.pedirNumMecEstudanteAlterar());
-            Estudante estEditar = repositorio.obterEstudantePorNumMec(numMec);
-
-            if (estEditar != null) {
-                view.mostrarInfoEdicao(estEditar.getNome());
-
-                String novoNomeEst = view.pedirNovoNome(estEditar.getNome());
-                if (!novoNomeEst.trim().isEmpty()) {
-                    if (Validador.isNomeValido(novoNomeEst)) estEditar.setNome(novoNomeEst);
-                    else view.mostrarErroNomeInvalidoMantido();
-                }
-
-                String novaMorada = view.pedirNovaMorada(estEditar.getMorada());
-                if (!novaMorada.trim().isEmpty()) estEditar.setMorada(novaMorada);
-
-                view.mostrarSucessoAtualizacao();
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-            } else {
+            Estudante est = repositorio.obterEstudantePorNumMec(numMec);
+            if (est == null) {
                 view.mostrarErroEstudanteNaoEncontrado();
+                return;
             }
+
+            view.mostrarInfoEdicao(est.getNome());
+
+            // Alterar Nome
+            String novoNomeEst = view.pedirNovoNome(est.getNome());
+            if (!novoNomeEst.trim().isEmpty()) {
+                if (Validador.isNomeValido(novoNomeEst)) {
+                    est.setNome(novoNomeEst);
+                } else {
+                    view.mostrarErroNomeInvalidoMantido();
+                }
+            }
+
+            // Alterar Morada
+            String novaMorada = view.pedirNovaMorada(est.getMorada());
+            if (!novaMorada.trim().isEmpty()) {
+                est.setMorada(novaMorada);
+            }
+
+            // Alterar NIF
+            String novoNif = view.pedirNovoNif(est.getNif());
+            if (!novoNif.trim().isEmpty()) {
+                if (Validador.isNifValido(novoNif)) {
+                    // Verifica se o NIF já existe noutro utilizador (estudante, docente ou gestor)
+                    if (repositorio.existeNif(novoNif) && !est.getNif().equals(novoNif)) {
+                        view.mostrarErroNifDuplicado();
+                    } else {
+                        est.setNif(novoNif);
+                    }
+                } else {
+                    view.mostrarErroNifFormato();
+                }
+            }
+
+            // Alterar Email Pessoal
+            String novoEmail = view.pedirNovoEmailPessoal(est.getEmailPessoal());
+            if (!novoEmail.trim().isEmpty()) {
+                if (Validador.isEmailPessoalValido(novoEmail)) {
+                    est.setEmailPessoal(novoEmail);
+                } else {
+                    view.mostrarErroEmailInvalido();
+                }
+            }
+
+            view.mostrarSucessoAtualizacao();
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+
         } catch (NumberFormatException e) {
             view.mostrarErroNumMecNumerico();
         }

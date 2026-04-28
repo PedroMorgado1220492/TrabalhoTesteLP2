@@ -30,6 +30,8 @@ public class Propina {
         }
     }
 
+
+
     // =========================================================
     // OPERAÇÕES DE REGISTO E CONSULTA DE PAGAMENTOS
     // =========================================================
@@ -40,8 +42,12 @@ public class Propina {
     public static void registarPagamento(int numMec, int anoLetivo, double valor, String data) {
         garantirFicheiroPagamentos();
         try (PrintWriter pw = new PrintWriter(new FileWriter(PAGAMENTOS_FILE, true))) {
-            pw.println(numMec + ";" + anoLetivo + ";" + valor + ";" + data);
-        } catch (IOException e) { }
+            // Garantir que o registo começa numa nova linha
+            pw.println();
+            pw.print(numMec + ";" + anoLetivo + ";" + valor + ";" + data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

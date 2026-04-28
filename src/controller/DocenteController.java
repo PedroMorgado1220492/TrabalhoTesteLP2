@@ -310,7 +310,10 @@ public class DocenteController {
         if (alunos.length == 0) return;
 
         view.cabecalhoLote(uc.getNome());
-        int count = 0;
+
+        // Array temporário para guardar as notas (máximo = número de alunos)
+        double[][] notasTemp = new double[alunos.length][2]; // [índice do aluno, nota]
+        int tempCount = 0;
 
         for (int i = 0; i < alunos.length; i++) {
             Estudante alu = alunos[i];
@@ -321,13 +324,13 @@ public class DocenteController {
 
             boolean notaValida = false;
             double nota = -1;
-            String input = "";  // declarado fora do while para ser usado depois
+            String input = "";
 
             while (!notaValida) {
                 try {
                     input = view.inputNotaLote(i + 1, alunos.length, alu.getNome(), num, uc.getNumAvaliacoes());
                     if (input.isEmpty()) {
-                        notaValida = true;  // saltar aluno
+                        notaValida = true;
                         break;
                     }
                     nota = Double.parseDouble(input);
@@ -335,19 +338,30 @@ public class DocenteController {
                         notaValida = true;
                     } else {
                         view.msgErroNotaInvalida();
-                        // continua o loop para pedir novamente
                     }
                 } catch (NumberFormatException e) {
                     view.msgErroFormato();
-                    // continua o loop
                 } catch (utils.CancelamentoException e) {
-                    // Utilizador escreveu "/" - cancela toda a operação em lote
+                    // Cancelamento -> aborta sem guardar nada
                     view.mostrarCancelamento("de Lançamento em Lote");
                     return;
                 }
             }
 
-            if (notaValida && !input.isEmpty() && alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
+            if (notaValida && !input.isEmpty()) {
+                notasTemp[tempCount][0] = i;
+                notasTemp[tempCount][1] = nota;
+                tempCount++;
+            }
+        }
+
+        // Se chegou aqui, não houve cancelamento -> grava todas as notas acumuladas
+        int count = 0;
+        for (int t = 0; t < tempCount; t++) {
+            int idxAluno = (int) notasTemp[t][0];
+            double nota = notasTemp[t][1];
+            Estudante alu = alunos[idxAluno];
+            if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
                 count++;
             }
         }

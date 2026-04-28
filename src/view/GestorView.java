@@ -223,6 +223,10 @@ public class GestorView {
         return utils.Consola.lerString("Nº Mecanográfico do Estudante: ");
     }
 
+    public String pedirNovoNif(String atual) {
+        return utils.Consola.lerString("Novo NIF (atual: " + atual + ") [Enter p/ manter]: ");
+    }
+
     public String pedirSiglaDocenteBusca() {
         return utils.Consola.lerString("Sigla do Docente: ");
     }

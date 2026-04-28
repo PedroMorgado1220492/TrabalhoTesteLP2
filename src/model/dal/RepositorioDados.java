@@ -383,22 +383,23 @@ public class RepositorioDados {
      * em todos os estudantes ativos (transição de ano, arquivo e novas dívidas).
      */
     public void avancarAno() {
-
-        removerAlunosInativosSemAvaliacoes(); // Remover alunos inativos sem qualquer avaliação
-        int anoAntigo = this.anoAtual;   // guarda o ano que termina
-        this.anoAtual++;                 // passa para o novo ano
+        int anoAntigo = this.anoAtual;
+        this.anoAtual++;
 
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante e = estudantes[i];
-            if (e != null && e.isAtivo()) {
+            if (e != null) {
                 if (Propina.temDividas(e, anoAntigo)) {
+                    // Se tem dívidas, arquiva as avaliações (passa para histórico) e desativa
+                    e.arquivarAvaliacoes();
                     e.setAtivo(false);
-                } else {
+                } else if (e.isAtivo()) {
                     e.processarFimDeAno(this.anoAtual);
                 }
             }
         }
         ExportadorCSV.exportarAno("bd", this.anoAtual);
+        ExportadorCSV.exportarDados("bd", this);
     }
     /**
      * Define o ano letivo corrente do sistema.

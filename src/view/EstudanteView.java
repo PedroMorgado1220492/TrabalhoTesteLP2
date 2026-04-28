@@ -222,17 +222,18 @@ public class EstudanteView {
         double pagoExibicao = pagoAnual < 0 ? 0.0 : pagoAnual;
         // Dívida do ano atual exibida = valor anual (sem incluir multa)
         double dividaAnualExibicao = valorAnual;
-        // Dívida de anos anteriores = dívida total - dívida do ano atual
+        // Dívida de anos anteriores = dívida total - propina do ano atual
         double dividaAnteriorExibicao = dividaTotal - dividaAnualExibicao;
+        // Total pago = propina do ano atual + dívida de anos anteriores - total por pagar
+        double valorPago = valorAnual + dividaAnteriorExibicao - dividaTotal;
         if (dividaAnteriorExibicao < 0) dividaAnteriorExibicao = 0;
 
-        System.out.println("\n----------- EXTRATO FINANCEIRO -----------");
-        System.out.printf("Valor Total do Ano %d : %.2f€\n", anoAtual, valorAnual);
-        System.out.printf("Montante Liquidado Ano Atual: %.2f€\n", pagoExibicao);
-        System.out.printf("Dívida do Ano Atual: %.2f€\n", dividaAnualExibicao);
+        System.out.println("\n--------- EXTRATO FINANCEIRO ----------");
+        System.out.printf("Propina do Ano %d : %.2f€\n", anoAtual, valorAnual);
         System.out.printf("Dívida Anos Anteriores: %.2f€\n", dividaAnteriorExibicao);
-        System.out.printf("Dívida Total: %.2f€\n", dividaTotal);
-        System.out.println("------------------------------------------");
+        System.out.printf("Total Pago: %.2f€\n", valorPago);
+        System.out.printf("Total por Pagar: %.2f€\n", dividaTotal);
+        System.out.println("---------------------------------------");
     }
 
     /**
@@ -241,13 +242,13 @@ public class EstudanteView {
      */
     public void mostrarHistoricoPagamentos(Propina.Pagamento[] pagamentos) {
         if (pagamentos == null || pagamentos.length == 0) {
-            System.out.println("\n--- Histórico de Pagamentos ---");
+            System.out.println("\n------- HISTÓRICO DE PAGAMENTOS -------");
             System.out.println(">> Nenhum pagamento registado.");
             return;
         }
-        System.out.println("\n--- HISTÓRICO DE PAGAMENTOS ---");
+        System.out.println("\n------- HISTÓRICO DE PAGAMENTOS -------");
         System.out.printf("%-10s %-12s %-15s\n", "Ano Letivo", "Valor (€)", "Data");
-        System.out.println("----------------------------------------");
+        System.out.println("---------------------------------------");
         for (Propina.Pagamento p : pagamentos) {
             System.out.printf("%-10d %-12.2f %-15s\n", p.getAnoLetivo(), p.getValor(), p.getData());
         }
