@@ -12,6 +12,7 @@ public class RepositorioDados {
 
     // ---------- ATRIBUTOS DE ESTADO GLOBAL ----------
     private int anoAtual;
+    private boolean anoIniciado;
 
     // Coleções (Arrays de tamanho fixo para simular restrições de memória estática)
     private Estudante[] estudantes;
@@ -41,6 +42,7 @@ public class RepositorioDados {
      */
     public RepositorioDados() {
         this.anoAtual = ImportadorCSV.importarAno("bd/ano.csv");
+        this.anoIniciado = ImportadorCSV.importarAnoIniciado("bd/ano.csv");
 
         this.estudantes = new Estudante[1000];
         this.totalEstudantes = 0;
@@ -382,25 +384,41 @@ public class RepositorioDados {
      * Incrementa o ano letivo institucional e despoleta o processamento de fim de ciclo
      * em todos os estudantes ativos (transição de ano, arquivo e novas dívidas).
      */
+    public boolean isAnoIniciado() { return anoIniciado; }
+
+    public void setAnoIniciado(boolean anoIniciado) {
+        this.anoIniciado = anoIniciado;
+        ExportadorCSV.exportarAno("bd", this.anoAtual, this.anoIniciado);
+    }
+
     public void avancarAno() {
+        removerAlunosInativosSemAvaliacoes();
+
         int anoAntigo = this.anoAtual;
         this.anoAtual++;
+        this.anoIniciado = false;
 
+        // Resetar número de avaliações de todas as UCs
+        for (int i = 0; i < totalUcs; i++) {
+            if (ucs[i] != null) ucs[i].setNumAvaliacoes(null);
+        }
+
+        // Processar alunos ativos (mesmo código existente)
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante e = estudantes[i];
-            if (e != null) {
+            if (e != null && e.isAtivo()) {
                 if (Propina.temDividas(e, anoAntigo)) {
-                    // Se tem dívidas, arquiva as avaliações (passa para histórico) e desativa
-                    e.arquivarAvaliacoes();
                     e.setAtivo(false);
-                } else if (e.isAtivo()) {
+                } else {
                     e.processarFimDeAno(this.anoAtual);
                 }
             }
         }
-        ExportadorCSV.exportarAno("bd", this.anoAtual);
+
+        ExportadorCSV.exportarAno("bd", this.anoAtual, this.anoIniciado);
         ExportadorCSV.exportarDados("bd", this);
     }
+
     /**
      * Define o ano letivo corrente do sistema.
      * Normalmente utilizado durante o arranque da aplicação para restaurar o

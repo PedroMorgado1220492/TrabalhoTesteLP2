@@ -1,18 +1,12 @@
 package controller;
 
+import model.bll.*;
 import utils.GeradorEmail;
 import utils.GeradorPassword;
 import utils.ServicoEmail;
 import view.GestorView;
-import model.bll.Gestor;
 import model.dal.RepositorioDados;
-import model.bll.Departamento;
-import model.bll.Curso;
-import model.bll.UnidadeCurricular;
-import model.bll.Docente;
-import model.bll.Estudante;
 import utils.Validador;
-import model.bll.Propina;
 import utils.Seguranca;
 
 
@@ -219,7 +213,7 @@ public class GestorController {
             return;
         }
 
-        view.mostrarRevisaoCurso(siglaCurso, nomeCurso, dep.getSigla());
+        view.mostrarRevisaoCurso(siglaCurso, nomeCurso, dep.getSigla(), precoInicial);
 
         if (view.confirmarDados()) {
             Curso novoCurso = gestorAtivo.criarCurso(siglaCurso, nomeCurso, dep);
@@ -435,8 +429,9 @@ public class GestorController {
 
         Docente docenteResponsavel = null;
         while (true) {
-            String siglaDoc = view.pedirSiglaDocenteBusca();
-            docenteResponsavel = repositorio.obterDocentePorSigla(siglaDoc);
+            int idxDoc = view.pedirDocenteLista(repositorio.getDocentes(), repositorio.getTotalDocentes());
+            if (idxDoc < 0 || idxDoc >= repositorio.getTotalDocentes()) return;
+            docenteResponsavel = repositorio.getDocentes()[idxDoc];
 
             if (docenteResponsavel == null) {
                 view.mostrarErroDocenteNaoEncontrado();
@@ -447,39 +442,15 @@ public class GestorController {
             }
         }
 
-        Curso cursoAssociado = null;
-        while (true) {
-            String siglaCurso = view.pedirSiglaCursoBusca();
-            cursoAssociado = repositorio.obterCursoPorSigla(siglaCurso);
+        int idxCurso = view.pedirCursoLista(repositorio.getCursos(), repositorio.getTotalCursos());
+        if (idxCurso < 0 || idxCurso >= repositorio.getTotalCursos()) return;
+        Curso cursoAssociado = repositorio.getCursos()[idxCurso];
 
-            if (cursoAssociado == null) {
-                view.mostrarErroCursoNaoEncontrado();
-            } else if (!cursoAssociado.isAtivo()) {
-                view.mostrarErroCursoInativo();
-            } else {
-                break;
-            }
-        }
 
-        // Validação da carga letiva do curso delegada ao Model
-        if (!cursoAssociado.podeAdicionarUcNoAno(anoCurricular)) {
-            view.mostrarErroLimiteUCsAno(cursoAssociado.getSigla(), anoCurricular);
-            return;
-        }
-
-        int numAvaliacoes;
-        while (true) {
-            numAvaliacoes = view.pedirNumAvaliacoesUC();
-            if (numAvaliacoes >= 1 && numAvaliacoes <= 3) {
-                break;
-            }
-            view.mostrarErroNumAvaliacoes();
-        }
-
-        view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla(), numAvaliacoes);
+        view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla());
 
         if (view.confirmarDados()) {
-            UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel, numAvaliacoes);
+            UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
 
             if (repositorio.adicionarUnidadeCurricular(novaUc)) {
                 // A própria UC encarrega-se de amarrar as referências cruzadas
@@ -597,7 +568,7 @@ public class GestorController {
                 }
             }
 
-            String novoNumAvStr = view.pedirNovoNumAvaliacoes(ucEditar.getNumAvaliacoes());
+            String novoNumAvStr = view.pedirNovoNumAvaliacoes(ucEditar.getNumAvaliacoes() == null ? 0 : ucEditar.getNumAvaliacoes());
             if (!novoNumAvStr.trim().isEmpty()) {
                 try {
                     int novoNum = Integer.parseInt(novoNumAvStr);
@@ -667,6 +638,7 @@ public class GestorController {
 
     private void adicionarEstudante() {
         Curso[] cursosAtivos = repositorio.obterCursosDisponiveisParaMatricula();
+
 
         if (cursosAtivos.length == 0) {
             view.mostrarErroFaltaCurso();
@@ -1156,8 +1128,10 @@ public class GestorController {
     private String pedirDataNascimentoValida() {
         while (true) {
             String data = view.pedirDataNascimento();
-            if (!Validador.isDataNascimentoValida(data)) {
-                view.mostrarErroDataInvalida();
+            if (!Validador.isDataFormatoValido(data)) {
+                view.msgErroDataFormato();
+            } else if (!Validador.isDataReal(data)) {
+                view.msgErroDataInexistente();
             } else if (!Validador.temIdadeMinima(data)) {
                 view.mostrarErroIdadeMinima();
             } else {
@@ -1192,5 +1166,4 @@ public class GestorController {
             view.mostrarErroEmailInvalido();
         }
     }
-
 }

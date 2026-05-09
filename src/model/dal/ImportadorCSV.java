@@ -164,8 +164,15 @@ public class ImportadorCSV {
                 Docente doc = procurarDocente(dados[4], repositorio);
                 if (doc == null) continue;
 
-                int numAv = (dados.length > 7) ? Integer.parseInt(dados[7]) : 3;
-                UnidadeCurricular uc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc, numAv);
+                String numAvStr = (dados.length > 7) ? dados[7] : "";
+                Integer numAv = null;
+                if (!numAvStr.isEmpty()) {
+                    try {
+                        numAv = Integer.parseInt(numAvStr);
+                    } catch (NumberFormatException e) { }
+                }
+                UnidadeCurricular uc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
+                uc.setNumAvaliacoes(numAv);
 
                 if (dados.length > 6) uc.setAtivo(Boolean.parseBoolean(dados[6]));
 
@@ -293,11 +300,26 @@ public class ImportadorCSV {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             br.readLine(); // cabeçalho
             String linha = br.readLine();
-            if (linha != null) {
-                return Integer.parseInt(linha.trim());
+            if (linha == null) return 2026;
+            String[] partes = linha.split(";");
+            int ano = Integer.parseInt(partes[0].trim());
+            return ano;
+        } catch (IOException | NumberFormatException e) {
+            return 2026;
+        }
+    }
+
+    public static boolean importarAnoIniciado(String caminho) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
+            br.readLine(); // cabeçalho
+            String linha = br.readLine();
+            if (linha == null) return false;
+            String[] partes = linha.split(";");
+            if (partes.length >= 2) {
+                return Boolean.parseBoolean(partes[1].trim());
             }
-        } catch (IOException | NumberFormatException e) { }
-        return 2026; // valor padrão se ficheiro não existir
+        } catch (IOException e) { }
+        return false;
     }
 
 

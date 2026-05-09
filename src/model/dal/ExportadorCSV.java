@@ -171,8 +171,9 @@ public class ExportadorCSV {
                         }
                     }
 
+                    String numAvStr = (uc.getNumAvaliacoes() == null) ? "" : String.valueOf(uc.getNumAvaliacoes());
                     pw.println("UC;" + uc.getSigla() + ";" + uc.getNome() + ";" + uc.getAnoCurricular() + ";" +
-                            siglaDoc + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + uc.getNumAvaliacoes());
+                            siglaDoc + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + numAvStr);
                 }
             }
         } catch (IOException e) { }
@@ -243,10 +244,11 @@ public class ExportadorCSV {
      * @param pastaBD  Diretoria onde o ficheiro será guardado (ex: "bd").
      * @param anoAtual O ano letivo a ser persistido.
      */
-    public static void exportarAno(String pastaBD, int anoAtual) {
-        try (PrintWriter pw = new PrintWriter(new FileWriter("bd/ano.csv"))) {
-            pw.println("ANO");
-            pw.println(anoAtual);
+    public static void exportarAno(String pastaBD, int anoAtual, boolean anoIniciado) {
+        if (!pastaBD.endsWith("/")) pastaBD += "/";
+        try (PrintWriter pw = new PrintWriter(new FileWriter(pastaBD + "ano.csv"))) {
+            pw.println("ANO;INICIADO");
+            pw.println(anoAtual + ";" + anoIniciado);
         } catch (IOException e) {
             System.err.println("Erro ao guardar ano: " + e.getMessage());
         }

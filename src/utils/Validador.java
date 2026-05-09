@@ -63,6 +63,32 @@ public class Validador {
     }
 
     /**
+     * Verifica se a data tem formato válido (DD-MM-AAAA).
+     * @param data String da data.
+     * @return true se formato é válido, false caso contrário.
+     */
+    public static boolean isDataFormatoValido(String data) {
+        if (data == null) return false;
+        return data.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(19|20)[0-9]{2}$");
+    }
+
+    /**
+     * Verifica se a data existe no calendário (considera anos bissextos).
+     * @param data String da data no formato DD-MM-AAAA.
+     * @return true se a data é real (ex: 29-02-2000), false caso contrário.
+     */
+    public static boolean isDataReal(String data) {
+        if (!isDataFormatoValido(data)) return false;
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            LocalDate.parse(data, formatter);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    /**
      * Valida se uma data de nascimento respeita o formato estrutural e lógico do sistema.
      * Critério: Seguir rigorosamente o padrão DD-MM-AAAA, ser uma data real do calendário e não estar no futuro.
      * * @param data A data de nascimento em formato String.

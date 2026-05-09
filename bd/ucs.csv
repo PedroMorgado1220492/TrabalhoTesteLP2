@@ -1,15 +1,16 @@
 TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSOS;ATIVO;NUM_AVALIACOES
-UC;MAT1;Matematica 1;1;PTI;LEC,LEM,LEE;true;2
-UC;MAT2;Matematica 2;2;PTI;LEC,LEM,LEE;true;2
-UC;EM1;Engenharia dos Materiais 1;1;PTL;LEC;true;1
-UC;DES;Desenho Técnico;1;PTL;LEC;true;1
-UC;EST1;Estruturas 1;2;PIG;LEC;true;1
-UC;EST2;Estruturas 2;3;PIG;LEC;true;1
-UC;COM1;Construções Mecanicas 1;1;PYS;LEM;true;1
-UC;COM2;Construções Mecanicas 2;3;PYS;LEM;true;1
-UC;PRO1;Programação 1;1;PJR;LEE;true;1
-UC;CIR;Circuitos;1;PJR;LEE;true;1
-UC;SDE;Sistemas Digitais Eletricos;1;PJR;LEE;true;1
-UC;ELE;Eletromagnetismo;1;PJR;LEE;true;1
-UC;PRO2;Programação 2;2;PJR;LEE;true;1
-UC;REA1;Reatores 1;1;PVM;;false;3
+UC;MAC;Matemática Clássica;1;PVU;;false;
+UC;MAT1;Matemática 1;1;PDZ;LEC,LEM,LEE;true;2
+UC;DES;Desenho Técnico;1;PBQ;LEC;true;1
+UC;MAT2;Matemática 2;2;PDZ;LEC,LEM,LEE;true;2
+UC;EST1;Estruturas 1;2;PYA;LEC;true;1
+UC;EST2;Estruturas 2;3;PYA;LEC;true;1
+UC;COM1;Construções Mecânicas 1;1;PCU;LEM;true;1
+UC;COM2;Construções Mecânicas 2;3;PCU;LEM;true;1
+UC;PRO1;Programação 1;1;PGN;LEE;true;1
+UC;CIR;Circuitos;1;PGN;LEE;true;1
+UC;SDE;Sistemas Digitais Elétricos;1;PGN;LEE;true;1
+UC;ELE;Eletromagnetismo;1;PGN;LEE;true;1
+UC;PRO2;Programação 2;2;PGN;LEE;true;1
+UC;REA;Reatores;1;PIM;LEN;false;3
+UC;SIE;Sistemas de Energia;3;PGN;;true;

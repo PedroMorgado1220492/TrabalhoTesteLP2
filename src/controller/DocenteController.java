@@ -175,6 +175,7 @@ public class DocenteController {
                     case 2: lancarNotasEmLote(); break;
                     case 3: listarAvaliacoesUc(); break;
                     case 4: alterarNumAvaliacoes(); break;
+                    case 5: visualizarMomentosAvaliacao(); break;
                     case 0: sub = false; break;
                     default: view.msgOpcaoInvalida();
                 }
@@ -229,6 +230,11 @@ public class DocenteController {
             return;
         }
 
+        if (!repositorio.isAnoIniciado()) {
+            view.msgAnoNaoIniciado();
+            return;
+        }
+
         // 1. Selecionar a UC
         int idxUC = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
@@ -279,7 +285,8 @@ public class DocenteController {
         if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
             view.msgSucesso();
 
-                // Disparo de notificação por email para o estudante
+            // Anular Email Nota Individual
+                // Notificação por email para o estudante
                 model.bll.Avaliacao avAtual = alu.getAvaliacaoAtual(uc.getSigla());
                 if (avAtual != null && alu.getEmailPessoal() != null && !alu.getEmailPessoal().isEmpty()) {
                     boolean emailEnviado = utils.ServicoEmail.enviarEmailAvaliacao(alu, uc.getNome(), avAtual);
@@ -288,6 +295,7 @@ public class DocenteController {
                         view.msgNotificacaoEnviada();
                     }
                 }
+            // Até aqui.
 
                 // Gravar alterações no CSV
                 model.dal.ExportadorCSV.exportarDados("bd", repositorio);
@@ -299,6 +307,12 @@ public class DocenteController {
      * Ideal para o preenchimento no final do semestre.
      */
     private void lancarNotasEmLote() {
+
+        if (!repositorio.isAnoIniciado()) {
+            view.msgAnoNaoIniciado();
+            return;
+        }
+
         if (docenteLogado.getTotalUcsLecionadas() == 0) return;
 
         int idx = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
@@ -392,17 +406,54 @@ public class DocenteController {
         }
         int idxUC = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
-
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
-        int novoNum = view.pedirNovoNumAvaliacoes();
 
-        // Delegação da regra de negócio (validar entre 1 e 3 avaliações) ao Model
-        if (uc.alterarNumeroAvaliacoes(novoNum)) {
+        // Verificar estado atual
+        Integer numAtual = uc.getNumAvaliacoes();
+        if (numAtual == null) {
+            view.msgNumAvaliacoesNaoDefinido(uc.getSigla());
+        } else {
+            view.msgNumAvaliacoesAtual(uc.getSigla(), numAtual);
+        }
+
+        int num = view.pedirNumAvaliacoes(uc.getSigla());
+        if (num >= 1 && num <= 3) {
+            uc.setNumAvaliacoes(num);
             view.msgSucesso();
             model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.msgErroNumAvaliacoes();
         }
+    }
+
+    /**
+     * Visualiza os momentos de avaliação de todas as Unidades Curriculares lecionadas pelo docente.
+     * Exibe o estado atual (definido ou não definido) de cada UC.
+     */
+    private void visualizarMomentosAvaliacao() {
+        if (docenteLogado.getTotalUcsLecionadas() == 0) {
+            view.msgSemUcsParaVisualizar();
+            return;
+        }
+
+        view.cabecalhoMomentosAvaliacao();
+        boolean temAlgumaDefinida = false;
+
+        for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
+            UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
+            if (uc != null) {
+                Integer numAv = uc.getNumAvaliacoes();
+                if (numAv != null) {
+                    temAlgumaDefinida = true;
+                }
+                view.mostrarUcComMomentosAvaliacao(uc.getSigla(), uc.getNome(), numAv);
+            }
+        }
+
+        if (!temAlgumaDefinida) {
+            view.msgNenhumMomentoDefinido();
+        }
+        // Sem pausa - volta automaticamente ao menu
     }
 
 

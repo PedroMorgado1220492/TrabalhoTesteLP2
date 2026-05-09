@@ -250,7 +250,7 @@ public class EstudanteController {
         double dividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
         double dividaAnteriorReal = Propina.getDividaAteAno(estudanteLogado, anoAtual - 1, anoAtual);
 
-        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, pagoAnoAtual, dividaAnoAtual, dividaTotal, dividaAnteriorReal);
+        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, dividaTotal);
 
         if (dividaTotal <= 0.01) return;
 
@@ -277,6 +277,8 @@ public class EstudanteController {
         // Gerar recibo
         String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, totalDevido, novaDividaTotal);
         if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
+
+            // Anular Email Recibo
             boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
                     estudanteLogado.getNome(),
                     caminhoRecibo);
@@ -285,6 +287,8 @@ public class EstudanteController {
             } else {
                 view.msgFalhaEnvioEmail();
             }
+            // Até aqui.
+
         } else {
             view.msgReciboNaoEnviado();
         }

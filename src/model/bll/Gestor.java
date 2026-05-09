@@ -88,15 +88,15 @@ public class Gestor extends Utilizador {
 
     /**
      * Fabrica uma nova instância de Unidade Curricular (UC).
+     * O número de avaliações é inicialmente null (não definido).
      *
      * @param sigla              A sigla da disciplina.
      * @param nome               O nome extenso da disciplina.
      * @param anoCurricular      O ano do plano de estudos em que é lecionada (1, 2 ou 3).
      * @param docenteResponsavel O professor regente/responsável da disciplina.
-     * @param numAvaliacoes      O número de avaliações planeadas para o ano letivo.
      * @return Uma nova instância de Unidade Curricular.
      */
-    public UnidadeCurricular criarUnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel, int numAvaliacoes) {
-        return new UnidadeCurricular(sigla, nome, anoCurricular, docenteResponsavel, numAvaliacoes);
+    public UnidadeCurricular criarUnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel) {
+        return new UnidadeCurricular(sigla, nome, anoCurricular, docenteResponsavel);
     }
 }

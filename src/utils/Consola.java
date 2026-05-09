@@ -1,72 +1,135 @@
 package utils;
 
+import java.io.Console;
 import java.util.Scanner;
 
 /**
- * Classe utilitária centralizada para leitura de dados da consola.
- * Interceta o valor "/" para cancelar operações em curso.
+ * Classe utilitária centralizada para toda a interação com a consola.
+ *
+ * Regras implementadas:
+ *  1. Usa Console quando disponível (CMD, Git Bash) e Scanner como fallback (IDE).
+ *  2. Inputs inválidos re-apresentam o prompt (loop).
+ *  3. "/" em inputs de dados → lança CancelamentoException.
+ *  4. Em menus, "0" é opção legítima de saída — usa lerOpcaoMenu().
+ *  5. lerPassword() usa System.console() para ocultar a digitação (quando disponível).
+ *  6. lerDouble() aceita vírgula ou ponto como separador decimal.
+ *  7. O prompt só é impresso se não for vazio (evita duplicação do ":").
  */
-public class Consola {
+public final class Consola {
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Console CONSOLE = System.console();
+    private static final Scanner FALLBACK_SCANNER = new Scanner(System.in);
+
+    private Consola() {}
+
+    // =========================================================================
+    // LEITURA DE DADOS
+    // =========================================================================
 
     /**
-     * Lê uma String. Se o utilizador introduzir "/", aborta a operação.
-     * @param mensagem O texto a perguntar ao utilizador.
-     * @return A string validada.
+     * Lê uma String não vazia. "/" → CancelamentoException.
+     * O prompt só é impresso se não for vazio.
+     *
+     * @param prompt Texto a mostrar ao utilizador (pode ser vazio)
+     * @return String lida (trimmed)
+     * @throws CancelamentoException se o utilizador digitar "/"
      */
-    public static String lerString(String mensagem) {
-        System.out.print(mensagem);
-        String input = scanner.nextLine().trim();
-
-        if (input.equals("/")) {
-            throw new CancelamentoException();
+    public static String lerString(String prompt) {
+        if (prompt != null && !prompt.isEmpty()) {
+            System.out.print(prompt);
         }
-
+        String input;
+        if (CONSOLE != null) {
+            input = CONSOLE.readLine();
+        } else {
+            input = FALLBACK_SCANNER.nextLine();
+        }
+        if (input == null) throw new CancelamentoException();
+        input = input.trim();
+        if (input.equals("/")) throw new CancelamentoException();
         return input;
     }
 
     /**
-     * Lê um valor numérico decimal. Se introduzir "/", cancela.
-     * Agora permite a introdução perfeita da nota "0" ou "0.0".
+     * Lê um inteiro. "/" → CancelamentoException.
+     *
+     * @param prompt Texto a mostrar ao utilizador (pode ser vazio)
+     * @return Inteiro lido
+     * @throws CancelamentoException se o utilizador digitar "/"
      */
-    public static double lerDouble(String mensagem) {
+    public static int lerInt(String prompt) {
         while (true) {
-            String input = lerString(mensagem); // A interceção do "/" já acontece lá dentro!
             try {
-                return Double.parseDouble(input);
+                return Integer.parseInt(lerString(prompt));
             } catch (NumberFormatException e) {
-                // Mensagem de erro atualizada para refletir o "/"
-                System.out.println(">> Erro: Formato numérico inválido. Introduza um valor válido ou '/' para cancelar.");
+                System.out.println(">> Número inválido. Tente novamente.");
             }
         }
     }
 
     /**
-     * Lê um valor numérico inteiro (útil para NIFs em formato numérico, números mecanográficos, etc).
+     * Lê um double. "/" → CancelamentoException.
+     * Aceita vírgula ou ponto como separador decimal.
+     *
+     * @param prompt Texto a mostrar ao utilizador (pode ser vazio)
+     * @return Double lido
+     * @throws CancelamentoException se o utilizador digitar "/"
      */
-    public static int lerInt(String mensagem) {
+    public static double lerDouble(String prompt) {
         while (true) {
-            String input = lerString(mensagem);
             try {
-                return Integer.parseInt(input);
+                return Double.parseDouble(lerString(prompt).replace(",", "."));
             } catch (NumberFormatException e) {
-                System.out.println(">> Erro: Formato inteiro inválido. Introduza um número válido ou '/' para cancelar.");
+                System.out.println(">> Número inválido. Tente novamente.");
             }
         }
     }
 
     /**
-     * Método EXCLUSIVO para menus.
-     * Aqui não usamos a CancelamentoException porque nos menus o "0" continua
-     * a ser a opção normal para "Sair" e se o utilizador digitar "/" por engano,
-     * simplesmente devolve -1 (o que aciona o 'default: Opção Inválida').
+     * Método EXCLUSIVO para leitura de opções de menus.
+     * "0" é devolvido normalmente — não lança CancelamentoException.
+     * Não imprime prompt (a View já o fez).
+     *
+     * @return Opção escolhida (0-9), ou -1 se inválida.
      */
     public static int lerOpcaoMenu() {
         try {
-            return Integer.parseInt(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
+            String linha;
+            if (CONSOLE != null) {
+                linha = CONSOLE.readLine();
+            } else {
+                linha = FALLBACK_SCANNER.nextLine();
+            }
+            if (linha == null) return -1;
+            return Integer.parseInt(linha.trim());
+        } catch (Exception e) {
             return -1;
         }
+    }
+
+    /**
+     * Lê uma password com mascaramento via System.console().
+     * Fallback para Scanner se não houver consola (a password será visível).
+     *
+     * @param prompt Texto a mostrar ao utilizador
+     * @return Password lida
+     * @throws CancelamentoException se o utilizador digitar "/"
+     */
+    public static String lerPassword(String prompt) {
+        if (prompt != null && !prompt.isEmpty()) {
+            System.out.print(prompt + ": ");
+        }
+        String input;
+        if (CONSOLE != null) {
+            char[] chars = CONSOLE.readPassword();
+            if (chars == null) throw new CancelamentoException();
+            input = new String(chars);
+            System.out.println(); // quebra de linha após a password
+        } else {
+            input = FALLBACK_SCANNER.nextLine();
+        }
+        input = input.trim();
+        if (input.equals("/")) throw new CancelamentoException();
+        return input;
     }
 }
