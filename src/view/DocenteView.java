@@ -32,7 +32,7 @@ public class DocenteView {
     }
 
     public int mostrarMenuAtualizarDados() {
-        System.out.println("\n--- ATUALIZAR DADOS PESSOAIS ---");
+        System.out.println("\n--- ATUALIZAR DADOS DE PERFIL ---");
         System.out.println("1 - Alterar Nome Completo");
         System.out.println("2 - Alterar NIF");
         System.out.println("3 - Alterar Morada");
