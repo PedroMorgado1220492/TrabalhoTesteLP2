@@ -37,7 +37,6 @@ public class GestorView {
         System.out.println("1 - Adicionar Departamento");
         System.out.println("2 - Alterar Departamento");
         System.out.println("3 - Listar Todos os Departamentos");
-        System.out.println("4 - Listar Cursos por Departamento");
         System.out.println("0 - Recuar");
         System.out.print("Escolha uma opção: ");
         return utils.Consola.lerOpcaoMenu();
@@ -51,6 +50,7 @@ public class GestorView {
         System.out.println("4 - Consultar Percurso Académico do Curso");
         System.out.println("5 - Atualizar Preço do Curso");
         System.out.println("6 - Listar Alunos por Curso");
+        System.out.println("7 - Listar Cursos por Departamento");
         System.out.println("0 - Recuar");
         System.out.print("Escolha uma opção: ");
         return utils.Consola.lerOpcaoMenu();
