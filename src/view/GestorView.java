@@ -32,13 +32,18 @@ public class GestorView {
         return utils.Consola.lerOpcaoMenu();
     }
 
+    // Métodos para o menu de departamentos
     public int mostrarMenuDepartamentos() {
-        System.out.println("\n--- MÓDULO: DEPARTAMENTOS ---");
-        System.out.println("1 - Adicionar Departamento");
-        System.out.println("2 - Alterar Departamento");
-        System.out.println("3 - Listar Todos os Departamentos");
-        System.out.println("0 - Recuar");
-        System.out.print("Escolha uma opção: ");
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("         GESTÃO DE DEPARTAMENTOS");
+        System.out.println("=".repeat(50));
+        System.out.println("1. Adicionar Departamento");
+        System.out.println("2. Alterar Departamento");
+        System.out.println("3. Listar Departamentos");
+        System.out.println("4. Ativar/Inativar Departamento");
+        System.out.println("5. Alterar Curso de Departamento");
+        System.out.println("0. Voltar");
+        System.out.print("\nOpção: ");
         return utils.Consola.lerOpcaoMenu();
     }
 
@@ -201,8 +206,14 @@ public class GestorView {
 
     public void mostrarListaDepartamentos(Departamento[] deps, int total) {
         System.out.println("\n========== LISTA DE DEPARTAMENTOS ==========");
-        if (total == 0) System.out.println(">> Sem registos.");
-        else for (int i = 0; i < total; i++) System.out.printf("- [%s] %s\n", deps[i].getSigla(), deps[i].getNome());
+        if (total == 0) {
+            System.out.println(">> Sem registos.");
+        } else {
+            for (int i = 0; i < total; i++) {
+                String estado = deps[i].isAtivo() ? "ATIVO" : "INATIVO";
+                System.out.printf("- [%s] %s (%s)\n", deps[i].getSigla(), deps[i].getNome(), estado);
+            }
+        }
     }
     public int pedirEscolhaDepartamento(Departamento[] deps, int total) {
         System.out.println("\n--- SELECIONAR DEPARTAMENTO ---");
@@ -529,4 +540,20 @@ public class GestorView {
         System.out.println(">> Todos os estudantes estão matriculados nas UCs iniciais.");
     }
     public void mostrarMultaAplicada(double multa) { System.out.println(">> Multa de " + String.format("%.2f", multa) + "€ aplicada por dívidas de anos anteriores."); }
+    public void mostrarErroDepartamentoComCursosAtivos() { System.out.println("Erro: Departamento tem cursos ativos."); }
+    public boolean confirmarInativacaoDepartamento(String nomeDepartamento) { System.out.print("Inativar departamento " + nomeDepartamento + "? (S/N): ");
+        String resposta = utils.Consola.lerString("");
+        return resposta.equalsIgnoreCase("S"); }
+    public void mostrarSucessoInativacaoDepartamento(String nomeDepartamento) { System.out.println("Departamento " + nomeDepartamento + " inativado com sucesso."); }
+    public boolean confirmarAtivacaoDepartamento(String nomeDepartamento) {
+        System.out.print("Ativar departamento " + nomeDepartamento + "? (S/N): ");
+        String resposta = utils.Consola.lerString("");
+        return resposta.equalsIgnoreCase("S");
+    }
+    public void mostrarSucessoAtivacaoDepartamento(String nomeDepartamento) { System.out.println("Departamento " + nomeDepartamento + " ativado com sucesso."); }
+    public void mostrarErroCursoBloqueadoAlteracaoDepartamento() { System.out.println("Erro: Curso tem alunos inscritos. Nao pode alterar departamento."); }
+    public void mostrarInfoCursoAtual(String nomeCurso, String nomeDepartamento) { System.out.println("Curso: " + nomeCurso + " | Departamento: " + nomeDepartamento); }
+    public void mostrarRevisaoAlteracaoDepartamentoCurso(String nomeCurso, String depAntigo, String depNovo) { System.out.println("Mover curso " + nomeCurso + " de " + depAntigo + " para " + depNovo); }
+    public void mostrarSucessoAlteracaoDepartamentoCurso(String nomeCurso, String novoDepartamento) { System.out.println("Curso " + nomeCurso + " movido para " + novoDepartamento); }
+    public void mostrarErroDepartamentoInativo() { System.out.println("Erro: Departamento de destino esta inativo."); }
 }

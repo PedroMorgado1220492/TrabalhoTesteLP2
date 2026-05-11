@@ -91,6 +91,8 @@ public class GestorController {
                     case 1: adicionarDepartamento(); break;
                     case 2: alterarDepartamento(); break;
                     case 3: view.mostrarListaDepartamentos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos()); break;
+                    case 4: alternarEstadoDepartamento(); break;
+                    case 5: alterarCursoDeDepartamento(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -154,6 +156,147 @@ public class GestorController {
         }
     }
 
+    /**
+     * Alterna o estado de um departamento (Ativo/Inativo).
+     * - Para INATIVAR: verifica se todos os cursos estão inativos
+     * - Para ATIVAR: permite ativar livremente (sem restrições)
+     */
+    private void alternarEstadoDepartamento() {
+        if (repositorio.getTotalDepartamentos() == 0) {
+            view.mostrarAvisoSemDepartamentos();
+            return;
+        }
+
+        int escolha = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
+        if (escolha < 0 || escolha >= repositorio.getTotalDepartamentos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+
+        Departamento dep = repositorio.getDepartamentos()[escolha];
+
+        // Verificar qual operação será realizada
+        if (dep.isAtivo()) {
+            // Tenta INATIVAR o departamento
+            inativarDepartamentoValidacao(dep);
+        } else {
+            // Tenta ATIVAR o departamento
+            ativarDepartamento(dep);
+        }
+    }
+
+    /**
+     * Inativa um departamento apenas se todos os seus cursos estiverem inativos.
+     */
+    private void inativarDepartamentoValidacao(Departamento dep) {
+        // Verificar se todos os cursos deste departamento estão inativos
+        if (!todosCursosDoDepartamentoInativos(dep)) {
+            view.mostrarErroDepartamentoComCursosAtivos();
+            return;
+        }
+
+        // Confirmar a inativação
+        if (view.confirmarInativacaoDepartamento(dep.getNome())) {
+            dep.setAtivo(false);
+            view.mostrarSucessoInativacaoDepartamento(dep.getNome());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.mostrarAvisoSemAlteracao();
+        }
+    }
+
+    /**
+     * Ativa um departamento inativo.
+     * Não há restrições para ativação (pode ter cursos ativos ou inativos).
+     */
+    private void ativarDepartamento(Departamento dep) {
+        // Confirmar a ativação
+        if (view.confirmarAtivacaoDepartamento(dep.getNome())) {
+            dep.setAtivo(true);
+            view.mostrarSucessoAtivacaoDepartamento(dep.getNome());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.mostrarAvisoSemAlteracao();
+        }
+    }
+
+    /**
+     * Verifica se todos os cursos de um departamento estão inativos.
+     */
+    private boolean todosCursosDoDepartamentoInativos(Departamento departamento) {
+        for (int i = 0; i < repositorio.getTotalCursos(); i++) {
+            Curso curso = repositorio.getCursos()[i];
+            if (curso != null &&
+                    curso.getDepartamento() != null &&
+                    curso.getDepartamento().getSigla().equals(departamento.getSigla()) &&
+                    curso.isAtivo()) {
+                return false; // Encontrou um curso ativo neste departamento
+            }
+        }
+        return true; // Nenhum curso ativo encontrado
+    }
+
+    /**
+     * Altera o departamento de um curso existente.
+     */
+    private void alterarCursoDeDepartamento() {
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarAvisoSemCursos();
+            return;
+        }
+
+        if (repositorio.getTotalDepartamentos() == 0) {
+            view.mostrarAvisoSemDepartamentos();
+            return;
+        }
+
+        // 1. Selecionar o curso a ser alterado
+        int escolhaCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
+        if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+
+        Curso curso = repositorio.getCursos()[escolhaCurso];
+
+        // Verificar se o curso pode ser alterado (não tem alunos inscritos)
+        if (curso.isBloqueado(repositorio.getEstudantes(), repositorio.getTotalEstudantes())) {
+            view.mostrarErroCursoBloqueadoAlteracaoDepartamento();
+            return;
+        }
+
+        // 2. Mostrar informações atuais
+        view.mostrarInfoCursoAtual(curso.getNome(), curso.getDepartamento().getNome());
+
+        // 3. Selecionar o novo departamento
+        int escolhaDep = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
+        if (escolhaDep < 0 || escolhaDep >= repositorio.getTotalDepartamentos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+
+        Departamento novoDepartamento = repositorio.getDepartamentos()[escolhaDep];
+
+        // Verificar se o novo departamento está ativo
+        if (!novoDepartamento.isAtivo()) {
+            view.mostrarErroDepartamentoInativo();
+            return;
+        }
+
+        // 4. Confirmar a alteração
+        view.mostrarRevisaoAlteracaoDepartamentoCurso(curso.getNome(),
+                curso.getDepartamento().getNome(),
+                novoDepartamento.getNome());
+
+        if (view.confirmarDados()) {
+            Departamento departamentoAntigo = curso.getDepartamento();
+            curso.setDepartamento(novoDepartamento);
+            view.mostrarSucessoAlteracaoDepartamentoCurso(curso.getNome(), novoDepartamento.getNome());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.mostrarAvisoSemAlteracao();
+        }
+    }
 
     // =========================================================
     // 3. GESTÃO DE CURSOS E PROPINAS
@@ -200,14 +343,21 @@ public class GestorController {
 
         String nomeCurso = view.pedirNomeCurso();
         int escolhaIndex;
+        Departamento dep = null;
         while (true) {
             escolhaIndex = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
-            if (escolhaIndex >= 0 && escolhaIndex < repositorio.getTotalDepartamentos()) break;
+            if (escolhaIndex >= 0 && escolhaIndex < repositorio.getTotalDepartamentos()) {
+                dep = repositorio.getDepartamentos()[escolhaIndex];
+                if (!dep.isAtivo()) {
+                    view.mostrarErroDepartamentoInativo();
+                    continue;
+                }
+                break;
+            }
             view.mostrarOpcaoInvalida();
         }
-        Departamento dep = repositorio.getDepartamentos()[escolhaIndex];
 
-        double precoInicial = view.pedirNovoPreco(1000.0); // valor sugerido 1000€
+        double precoInicial = view.pedirNovoPreco(1000.0);
         if (precoInicial <= 0) {
             view.mostrarErroPrecoInvalido();
             return;
@@ -217,10 +367,9 @@ public class GestorController {
 
         if (view.confirmarDados()) {
             Curso novoCurso = gestorAtivo.criarCurso(siglaCurso, nomeCurso, dep);
-            novoCurso.setValorPropinaAnual(precoInicial); // guarda no objeto
+            novoCurso.setValorPropinaAnual(precoInicial);
 
             if (repositorio.adicionarCurso(novoCurso)) {
-                // Guarda o preço no CSV para o ano atual
                 int anoAtual = repositorio.getAnoAtual();
                 String[] linhas = model.dal.ImportadorCSV.lerTodasLinhasPrecos();
                 String[] novasLinhas = new String[linhas.length + 1];

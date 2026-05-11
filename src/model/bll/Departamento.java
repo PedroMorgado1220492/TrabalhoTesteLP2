@@ -9,7 +9,7 @@ public class Departamento {
     // ---------- ATRIBUTOS ----------
     private String sigla;
     private String nome;
-
+    private boolean ativo;
     private Curso[] cursos;
     private int totalCursos;
 
@@ -27,6 +27,7 @@ public class Departamento {
         this.nome = nome;
         this.cursos = new Curso[10]; // Limite estrutural fixado em 10 cursos por departamento
         this.totalCursos = 0;
+        this.ativo = true;
     }
 
     // ---------- GETTERS ----------
@@ -37,6 +38,7 @@ public class Departamento {
 
     public Curso[] getCursos() { return cursos; }
 
+    public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS ----------
 
@@ -44,6 +46,7 @@ public class Departamento {
 
     public void setNome(String nome) { this.nome = nome; }
 
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 
