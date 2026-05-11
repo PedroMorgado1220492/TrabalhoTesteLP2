@@ -32,7 +32,6 @@ public class GestorView {
         return utils.Consola.lerOpcaoMenu();
     }
 
-    // Métodos para o menu de departamentos
     public int mostrarMenuDepartamentos() {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("         GESTÃO DE DEPARTAMENTOS");
@@ -159,35 +158,131 @@ public class GestorView {
     public boolean confirmarDados() { return utils.Consola.lerString("\nConfirmar a gravação destes dados? (S/N): ").equalsIgnoreCase("S"); }
 
     // =========================================================
-    // 3. ECRÃS DE REVISÃO E FICHAS INDIVIDUAIS
+    // 3. SELEÇÃO DE LISTAS (CURSOS, DOCENTES, DEPARTAMENTOS)
+    // =========================================================
+
+    public int pedirEscolhaDepartamento(Departamento[] deps, int total) {
+        System.out.println("\n--- SELECIONAR DEPARTAMENTO ---");
+        for (int i = 0; i < total; i++) System.out.printf("%d - %s (%s)\n", (i + 1), deps[i].getSigla(), deps[i].getNome());
+        return utils.Consola.lerInt("Indique o número: ") - 1;
+    }
+
+    public int pedirEscolhaCurso(Curso[] cursos, int total) {
+        System.out.println("\n--- SELECIONAR CURSO ---");
+        for (int i = 0; i < total; i++) System.out.printf("%d - [%s] %s\n", (i + 1), cursos[i].getSigla(), cursos[i].getNome());
+        return utils.Consola.lerInt("Indique o número: ") - 1;
+    }
+
+    public int pedirCursoLista(Curso[] cursos, int total) {
+        System.out.println("\n--- SELECIONAR CURSO ---");
+        System.out.println("(Digite o número da lista ou a sigla do curso)");
+
+        int cont = 0;
+        int[] indicesValidos = new int[total];
+        for (int i = 0; i < total; i++) {
+            if (cursos[i] != null && cursos[i].isAtivo()) {
+                System.out.printf("%d - [%s] %s\n", ++cont, cursos[i].getSigla(), cursos[i].getNome());
+                indicesValidos[cont-1] = i;
+            }
+        }
+        if (cont == 0) {
+            System.out.println(">> Não existem cursos ativos.");
+            return -1;
+        }
+
+        while (true) {
+            String input = utils.Consola.lerString("Escolha o curso: ");
+
+            try {
+                int escolha = Integer.parseInt(input) - 1;
+                if (escolha >= 0 && escolha < cont) {
+                    return indicesValidos[escolha];
+                }
+                System.out.println(">> Número inválido. Tente novamente.");
+            } catch (NumberFormatException e) {
+                String sigla = input.trim().toUpperCase();
+                for (int i = 0; i < total; i++) {
+                    if (cursos[i] != null && cursos[i].isAtivo() && cursos[i].getSigla().equalsIgnoreCase(sigla)) {
+                        return i;
+                    }
+                }
+                System.out.println(">> Sigla inválida. Tente novamente.");
+            }
+        }
+    }
+
+    public int pedirDocenteLista(Docente[] docentes, int total) {
+        System.out.println("\n--- SELECIONAR DOCENTE RESPONSÁVEL ---");
+        System.out.println("(Digite o número da lista ou a sigla do docente)");
+        int cont = 0;
+        for (int i = 0; i < total; i++) {
+            if (docentes[i] != null && docentes[i].isAtivo()) {
+                System.out.printf("%d - %s (%s)\n", ++cont, docentes[i].getNome(), docentes[i].getSigla());
+            }
+        }
+
+        while (true) {
+            String input = utils.Consola.lerString("Escolha o número ou a sigla do docente: ");
+
+            try {
+                int escolha = Integer.parseInt(input) - 1;
+                cont = 0;
+                for (int i = 0; i < total; i++) {
+                    if (docentes[i] != null && docentes[i].isAtivo()) {
+                        if (cont++ == escolha) {
+                            return i;
+                        }
+                    }
+                }
+                System.out.println(">> Número inválido. Tente novamente.");
+            } catch (NumberFormatException e) {
+                String sigla = input.trim().toUpperCase();
+                for (int i = 0; i < total; i++) {
+                    if (docentes[i] != null && docentes[i].isAtivo() && docentes[i].getSigla().equalsIgnoreCase(sigla)) {
+                        return i;
+                    }
+                }
+                System.out.println(">> Sigla inválida. Tente novamente.");
+            }
+        }
+    }
+
+    // =========================================================
+    // 4. ECRÃS DE REVISÃO E FICHAS INDIVIDUAIS
     // =========================================================
 
     public void mostrarRevisaoDepartamento(String sigla, String nome) {
         System.out.println("\n--- REVISÃO: DEPARTAMENTO ---");
         System.out.println("Sigla: " + sigla + " | Nome: " + nome);
     }
+
     public void mostrarRevisaoCurso(String sigla, String nome, String siglaDep, Double preco) {
         System.out.println("\n--- REVISÃO: CURSO ---");
         System.out.println("Identificador: " + sigla.toUpperCase() + "\nDesignação: " + nome + "\nDepartamento: " + siglaDep + "\nPropina: " + preco + "€");
     }
+
     public void mostrarRevisaoUC(String sigla, String nome, int ano, String nomeDocente, String siglaCurso) {
         System.out.println("\n--- REVISÃO: UNIDADE CURRICULAR ---");
         System.out.printf("UC: [%s] %s | Ano Letívo: %dº Ano\nResponsável: %s | Curso Origem: %s\n", sigla, nome, ano, nomeDocente, siglaCurso);
     }
+
     public void mostrarRevisaoEstudante(String nome, String nif, String morada, String dataNasc, String email, String siglaCurso) {
         System.out.println("\n--- REVISÃO: ESTUDANTE ---");
         System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
         System.out.println("Nascimento: " + dataNasc + " | Email: " + email + " | Curso: " + siglaCurso);
     }
+
     public void mostrarRevisaoDocente(String nome, String nif, String morada, String dataNasc, String email, String sigla) {
         System.out.println("\n--- REVISÃO: DOCENTE ---");
         System.out.println("Nome: " + nome + " | NIF: " + nif + " | Morada: " + morada);
         System.out.println("Sigla Sistema: " + sigla + " | Email: " + email);
     }
+
     public void mostrarRevisaoGestor(String nome, String morada, String emailGerado) {
         System.out.println("\n--- REVISÃO: NOVO ADMINISTRADOR ---");
         System.out.println("Nome: " + nome + " | Morada: " + morada + "\nLogin Institucional: " + emailGerado);
     }
+
     public void mostrarFichaDocente(Docente d) {
         System.out.println("\n--------- FICHA DO DOCENTE ---------");
         System.out.println("Nome          : " + d.getNome());
@@ -201,7 +296,7 @@ public class GestorView {
     }
 
     // =========================================================
-    // 4. LISTAGENS, RELATÓRIOS E ESTATÍSTICAS
+    // 5. LISTAGENS E RELATÓRIOS
     // =========================================================
 
     public void mostrarListaDepartamentos(Departamento[] deps, int total) {
@@ -215,11 +310,7 @@ public class GestorView {
             }
         }
     }
-    public int pedirEscolhaDepartamento(Departamento[] deps, int total) {
-        System.out.println("\n--- SELECIONAR DEPARTAMENTO ---");
-        for (int i = 0; i < total; i++) System.out.printf("%d - %s (%s)\n", (i + 1), deps[i].getSigla(), deps[i].getNome());
-        return utils.Consola.lerInt("Indique o número: ") - 1;
-    }
+
     public void mostrarListaCursos(Departamento[] departamentos, int totalDep, Curso[] cursos, int totalCursos) {
         System.out.println("\n============= CURSOS POR DEPARTAMENTO =============");
         if (totalCursos == 0) { System.out.println(">> Não existem cursos registados."); return; }
@@ -244,50 +335,7 @@ public class GestorView {
         }
         System.out.println("\nRESUMO GERAL: " + totalAtivos + " curso(s) ativo(s), " + totalInativos + " curso(s) inativo(s).");
     }
-    public int pedirEscolhaCurso(Curso[] cursos, int total) {
-        System.out.println("\n--- SELECIONAR CURSO ---");
-        for (int i = 0; i < total; i++) System.out.printf("%d - [%s] %s\n", (i + 1), cursos[i].getSigla(), cursos[i].getNome());
-        return utils.Consola.lerInt("Indique o número: ") - 1;
-    }
-    public int pedirCursoLista(Curso[] cursos, int total) {
-        System.out.println("\n--- SELECIONAR CURSO ---");
-        System.out.println("(Digite o número da lista ou a sigla do curso)");
 
-        int cont = 0;
-        int[] indicesValidos = new int[total];
-        for (int i = 0; i < total; i++) {
-            if (cursos[i] != null && cursos[i].isAtivo()) {
-                System.out.printf("%d - [%s] %s\n", ++cont, cursos[i].getSigla(), cursos[i].getNome());
-                indicesValidos[cont-1] = i;
-            }
-        }
-        if (cont == 0) {
-            System.out.println(">> Não existem cursos ativos.");
-            return -1;
-        }
-
-        while (true) {
-            String input = utils.Consola.lerString("Escolha o curso: ");
-
-            // Tentar interpretar como número
-            try {
-                int escolha = Integer.parseInt(input) - 1;
-                if (escolha >= 0 && escolha < cont) {
-                    return indicesValidos[escolha];
-                }
-                System.out.println(">> Número inválido. Tente novamente.");
-            } catch (NumberFormatException e) {
-                // Não é número, tentar como sigla
-                String sigla = input.trim().toUpperCase();
-                for (int i = 0; i < total; i++) {
-                    if (cursos[i] != null && cursos[i].isAtivo() && cursos[i].getSigla().equalsIgnoreCase(sigla)) {
-                        return i;
-                    }
-                }
-                System.out.println(">> Sigla inválida. Tente novamente.");
-            }
-        }
-    }
     public void mostrarListaUCs(UnidadeCurricular[] ucs, int total) {
         System.out.println("\n=============== CATÁLOGO DE UNIDADES CURRICULARES ===============");
         if (total == 0) { System.out.println(">> Sem registos."); return; }
@@ -299,44 +347,37 @@ public class GestorView {
             }
         }
     }
+
     public void mostrarListaDocentes(Docente[] docs, int total) {
         System.out.println("\n========== CORPO DOCENTE ==========");
         if (total == 0) System.out.println(">> Sem registos.");
         else for (int i = 0; i < total; i++) System.out.printf("- [%s] %-5s : %s\n", docs[i].isAtivo() ? "ATIVO" : "INATIVO", docs[i].getSigla(), docs[i].getNome());
     }
+
     public void mostrarListaEstudantes(Estudante[] ests, int total) {
         System.out.println("\n========== LISTAGEM DE ESTUDANTES ==========");
         if (total == 0) System.out.println(">> Sem registos.");
         else for (int i = 0; i < total; i++) System.out.printf("- [%s] %-10d : %-25s | Curso: %s\n", ests[i].isAtivo() ? "ATIVO" : "INATIVO", ests[i].getNumeroMecanografico(), ests[i].getNome(), (ests[i].getCurso() != null) ? ests[i].getCurso().getSigla() : "N/A");
     }
-    public void mostrarEstatisticas(double media, String melhor, String cursoTop) {
-        System.out.println("\n=============== MÉTRICAS INSTITUCIONAIS ===============");
-        System.out.printf("Média Global da Instituição : %.2f Valores\n", media);
-        System.out.println("Mérito Académico (Melhor Aluno): " + melhor);
-        System.out.println("Aderência (Curso com mais inscritos): " + (cursoTop != null ? cursoTop : "N/D"));
-        System.out.println("=============================================================");
+
+    public void mostrarListaGestores(Gestor[] gests, int total) {
+        System.out.println("\n========== EQUIPA DE BACKOFFICE ==========");
+        if (total == 0) { System.out.println(">> Sem registos."); return; }
+        System.out.printf("%-25s | %-35s | %s\n", "NOME", "LOGIN", "MORADA");
+        System.out.println("---------------------------------------------------------------------------------------");
+        for (int i = 0; i < total; i++) {
+            if (gests[i] != null) {
+                System.out.printf("- [%s] %-20s | %-35s | %s\n", gests[i].isAtivo() ? "ATIVO" : "INATIVO", gests[i].getNome(), gests[i].getEmail(), gests[i].getMorada());
+            }
+        }
     }
+
     public void mostrarListaDevedores(Estudante[] devs, double[] divs, int total) {
         System.out.println("\n========== ESTUDANTES COM DÍVIDAS ACTIVAS ==========");
         if (total == 0) System.out.println(">> Situação financeira global regularizada.");
         else for (int i = 0; i < total; i++) System.out.printf("-> %-8d %-25s | Dívida Total: %.2f€\n", devs[i].getNumeroMecanografico(), devs[i].getNome(), divs[i]);
     }
-    public int mostrarCursosParaPropina(Curso[] cursos, int total, int anoAtual) {
-        System.out.println("\n--- ATUALIZAÇÃO DE PREÇO ---");
-        int anoAlvo = anoAtual + 1;
-        for (int i = 0; i < total; i++) {
-            if (cursos[i] != null && cursos[i].isAtivo()) {
-                double precoAtual = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAtual);
-                double precoAlvo = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAlvo);
-                if (precoAlvo == 1000.0) {
-                    precoAlvo = precoAtual; // sugerir o preço atual se não houver registo para o ano seguinte
-                }
-                System.out.printf("%d - [%s] %s (Preço atual: %.2f€ | Preço para %d: %.2f€)\n",
-                        (i+1), cursos[i].getSigla(), cursos[i].getNome(), precoAtual, anoAlvo, precoAlvo);
-            }
-        }
-        return utils.Consola.lerInt("Indique o curso a alterar");
-    }
+
     public void mostrarPercursoAcademicoCurso(Curso curso, Estudante[] estudantes, int totalEstudantes) {
         System.out.println("\n============= PLANO E CARGA LECTIVA: " + curso.getNome() + " =============");
         if (curso.getTotalUCs() == 0) { System.out.println(">> Plano de estudos vazio."); return; }
@@ -355,17 +396,15 @@ public class GestorView {
             if (!tem) System.out.println("  (Sem UCs registadas)");
         }
     }
-    public void mostrarListaGestores(Gestor[] gests, int total) {
-        System.out.println("\n========== EQUIPA DE BACKOFFICE ==========");
-        if (total == 0) { System.out.println(">> Sem registos."); return; }
-        System.out.printf("%-25s | %-35s | %s\n", "NOME", "LOGIN", "MORADA");
-        System.out.println("---------------------------------------------------------------------------------------");
-        for (int i = 0; i < total; i++) {
-            if (gests[i] != null) {
-                System.out.printf("- [%s] %-20s | %-35s | %s\n", gests[i].isAtivo() ? "ATIVO" : "INATIVO", gests[i].getNome(), gests[i].getEmail(), gests[i].getMorada());
-            }
-        }
+
+    public void mostrarEstatisticas(double media, String melhor, String cursoTop) {
+        System.out.println("\n=============== MÉTRICAS INSTITUCIONAIS ===============");
+        System.out.printf("Média Global da Instituição : %.2f Valores\n", media);
+        System.out.println("Mérito Académico (Melhor Aluno): " + melhor);
+        System.out.println("Aderência (Curso com mais inscritos): " + (cursoTop != null ? cursoTop : "N/D"));
+        System.out.println("=============================================================");
     }
+
     public void mostrarRelatorioAlunosPorCurso(Curso[] cursos, int totalC, Estudante[] ests, int totalE) {
         System.out.println("\n========== ESTUDANTES POR CURSO ==========");
         for (int i = 0; i < totalC; i++) {
@@ -380,6 +419,7 @@ public class GestorView {
             if (!tem) System.out.println("  (Vazio)");
         }
     }
+
     public void mostrarRelatorioAlunosPorUC(UnidadeCurricular[] ucs, int totalU, Estudante[] ests, int totalE) {
         System.out.println("\n========== ESTUDANTES POR UNIDADE CURRICULAR ==========");
         for (int i = 0; i < totalU; i++) {
@@ -394,50 +434,13 @@ public class GestorView {
             if (!tem) System.out.println("  (Vazio)");
         }
     }
+
     public void mostrarRelatorioUCsPorCurso(Curso[] cursos, int total) {
         System.out.println("\n========== MATRIZES CURRICULARES ==========");
         for (int i = 0; i < total; i++) {
             System.out.println("\nCURSO: " + cursos[i].getNome());
             if (cursos[i].getTotalUCs() == 0) System.out.println("  (Vazio)");
             else for (int j = 0; j < cursos[i].getTotalUCs(); j++) System.out.println("  -> " + cursos[i].getUnidadesCurriculares()[j].getSigla() + " (Ano: " + cursos[i].getUnidadesCurriculares()[j].getAnoCurricular() + ")");
-        }
-    }
-    public int pedirDocenteLista(Docente[] docentes, int total) {
-        System.out.println("\n--- SELECIONAR DOCENTE RESPONSÁVEL ---");
-        System.out.println("(Digite o número da lista ou a sigla do docente)");
-        int cont = 0;
-        for (int i = 0; i < total; i++) {
-            if (docentes[i] != null && docentes[i].isAtivo()) {
-                System.out.printf("%d - %s (%s)\n", ++cont, docentes[i].getNome(), docentes[i].getSigla());
-            }
-        }
-
-        while (true) {
-            String input = utils.Consola.lerString("Escolha o número ou a sigla do docente: ");
-
-            // Tentar interpretar como número
-            try {
-                int escolha = Integer.parseInt(input) - 1;
-                // Mapear para o índice original
-                cont = 0;
-                for (int i = 0; i < total; i++) {
-                    if (docentes[i] != null && docentes[i].isAtivo()) {
-                        if (cont++ == escolha) {
-                            return i;
-                        }
-                    }
-                }
-                System.out.println(">> Número inválido. Tente novamente.");
-            } catch (NumberFormatException e) {
-                // Não é número, tentar como sigla
-                String sigla = input.trim().toUpperCase();
-                for (int i = 0; i < total; i++) {
-                    if (docentes[i] != null && docentes[i].isAtivo() && docentes[i].getSigla().equalsIgnoreCase(sigla)) {
-                        return i;
-                    }
-                }
-                System.out.println(">> Sigla inválida. Tente novamente.");
-            }
         }
     }
 
@@ -451,7 +454,28 @@ public class GestorView {
     }
 
     // =========================================================
-    // 5. MENSAGENS DE FEEDBACK E ESTADO
+    // 6. CURSOS (PREÇOS E SELEÇÃO)
+    // =========================================================
+
+    public int mostrarCursosParaPropina(Curso[] cursos, int total, int anoAtual) {
+        System.out.println("\n--- ATUALIZAÇÃO DE PREÇO ---");
+        int anoAlvo = anoAtual + 1;
+        for (int i = 0; i < total; i++) {
+            if (cursos[i] != null && cursos[i].isAtivo()) {
+                double precoAtual = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAtual);
+                double precoAlvo = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAlvo);
+                if (precoAlvo == 1000.0) {
+                    precoAlvo = precoAtual;
+                }
+                System.out.printf("%d - [%s] %s (Preço atual: %.2f€ | Preço para %d: %.2f€)\n",
+                        (i+1), cursos[i].getSigla(), cursos[i].getNome(), precoAtual, anoAlvo, precoAlvo);
+            }
+        }
+        return utils.Consola.lerInt("Indique o curso a alterar");
+    }
+
+    // =========================================================
+    // 7. MENSAGENS DE FEEDBACK E ESTADO
     // =========================================================
 
     public void mostrarMensagemSaida() { System.out.println(">> A terminar sessão administrativa..."); }

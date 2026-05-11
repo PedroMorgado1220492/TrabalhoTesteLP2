@@ -38,22 +38,6 @@ public class EstudanteView {
         return utils.Consola.lerOpcaoMenu();
     }
 
-    /**
-     * Exibe as modalidades de pagamento disponíveis.
-     * @param divida Valor total em dívida.
-     * @param prestacao Valor da prestação mínima.
-     * @return Opção escolhida (1, 2, 3 ou 0).
-     */
-    public int mostrarOpcoesPagamento(double divida, double prestacao) {
-        System.out.println("\n--- LIQUIDAÇÃO DE VALORES ---");
-        System.out.printf("1 - Pagamento Integral (%.2f€)\n", divida);
-        System.out.printf("2 - Pagar Prestação Mínima (%.2f€)\n", prestacao);
-        System.out.println("3 - Introduzir Valor Personalizado");
-        System.out.println("0 - Cancelar Operação");
-        System.out.print("Escolha uma opção: ");
-        return utils.Consola.lerOpcaoMenu();
-    }
-
     // =========================================================
     // 2. INPUTS DE DADOS (FORMULÁRIOS)
     // =========================================================
@@ -66,13 +50,14 @@ public class EstudanteView {
     public String pedirConfirmacaoPass() { return utils.Consola.lerString("Confirme a Nova Palavra-passe: "); }
     public double pedirValorLivre() { return utils.Consola.lerDouble("Montante a liquidar (€): "); }
     public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter p/ manter]: "); }
+
     public boolean pedirConfirmacaoDesativacao() {
         System.out.println("\n[AVISO] A desativação é imediata. Perderá o acesso a todos os serviços.");
         return utils.Consola.lerString("Deseja mesmo desativar a sua conta? (S/N): ").equalsIgnoreCase("S");
     }
 
     // =========================================================
-    // 3. EXIBIÇÃO DE DADOS ACADÉMICOS E RELATÓRIOS
+    // 3. EXIBIÇÃO DE DADOS ACADÉMICOS
     // =========================================================
 
     public void mostrarDadosFicha(Estudante e) {
@@ -90,9 +75,19 @@ public class EstudanteView {
         }
         System.out.println("----------------------------------------");
     }
-    public void mostrarCabecalhoPercurso() { System.out.println("\n============= REGISTO ACADÉMICO GLOBAL ============="); }
-    public void mostrarAnoPercurso(int ano) { System.out.println("\n--- [ " + ano + "º Ano Curricular ] ---"); }
-    public void mostrarLinhaUC(String sigla, String nome, int ano, String status) { System.out.printf(">> [%-6s] %-30s | Status: %s\n", sigla, nome, status); }
+
+    public void mostrarCabecalhoPercurso() {
+        System.out.println("\n============= REGISTO ACADÉMICO GLOBAL =============");
+    }
+
+    public void mostrarAnoPercurso(int ano) {
+        System.out.println("\n--- [ " + ano + "º Ano Curricular ] ---");
+    }
+
+    public void mostrarLinhaUC(String sigla, String nome, int ano, String status) {
+        System.out.printf(">> [%-6s] %-30s | Status: %s\n", sigla, nome, status);
+    }
+
     public String formatarStatusUC(int estado, double nota) {
         return switch (estado) {
             case 1 -> String.format("Em Curso (Inscrito) -> Média Atual: %.2f", nota);
@@ -101,19 +96,31 @@ public class EstudanteView {
             default -> "Não Inscrito / Pendente";
         };
     }
+
     public void mostrarMediaGlobal(double media) {
         System.out.println("\n-----------------------------------------------------");
         System.out.printf(">> MÉDIA GLOBAL ESTIMADA: %.2f Valores\n", media);
         System.out.println("-----------------------------------------------------");
     }
+
     public void mostrarAnoFrequencia(int ano) {
         System.out.println(">> Ano de Frequência Atual: " + ano + "º Ano");
         System.out.println("=================================================");
     }
 
     // =========================================================
-    // 4. EXIBIÇÃO FINANCEIRA (EXTRATO E HISTÓRICO)
+    // 4. GESTÃO FINANCEIRA (PROPINAS E PAGAMENTOS)
     // =========================================================
+
+    public int mostrarOpcoesPagamento(double divida, double prestacao) {
+        System.out.println("\n--- LIQUIDAÇÃO DE VALORES ---");
+        System.out.printf("1 - Pagamento Integral (%.2f€)\n", divida);
+        System.out.printf("2 - Pagar Prestação Mínima (%.2f€)\n", prestacao);
+        System.out.println("3 - Introduzir Valor Personalizado");
+        System.out.println("0 - Cancelar Operação");
+        System.out.print("Escolha uma opção: ");
+        return utils.Consola.lerOpcaoMenu();
+    }
 
     public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double dividaTotal) {
         double dividaAnualExibicao = valorAnual;
@@ -128,6 +135,7 @@ public class EstudanteView {
         System.out.printf("Total por Pagar: %.2f€\n", dividaTotal);
         System.out.println("---------------------------------------");
     }
+
     public void mostrarHistoricoPagamentos(Propina.Pagamento[] pagamentos) {
         if (pagamentos == null || pagamentos.length == 0) {
             System.out.println("\n------- HISTÓRICO DE PAGAMENTOS -------");
@@ -137,7 +145,9 @@ public class EstudanteView {
         System.out.println("\n------- HISTÓRICO DE PAGAMENTOS -------");
         System.out.printf("%-10s %-12s %-15s\n", "Ano Letivo", "Valor (€)", "Data");
         System.out.println("---------------------------------------");
-        for (Propina.Pagamento p : pagamentos) System.out.printf("%-10d %-12.2f %-15s\n", p.getAnoLetivo(), p.getValor(), p.getData());
+        for (Propina.Pagamento p : pagamentos) {
+            System.out.printf("%-10d %-12.2f %-15s\n", p.getAnoLetivo(), p.getValor(), p.getData());
+        }
         System.out.println("----------------------------------------");
     }
 

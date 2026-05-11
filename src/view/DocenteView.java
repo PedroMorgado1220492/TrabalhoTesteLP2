@@ -54,8 +54,6 @@ public class DocenteView {
         return utils.Consola.lerOpcaoMenu();
     }
 
-
-
     // =========================================================
     // 2. INPUTS DE DADOS (FORMULÁRIOS)
     // =========================================================
@@ -95,8 +93,12 @@ public class DocenteView {
         return utils.Consola.lerString(String.format("[%d/%d] %s (N%d/%d) ou '/' p/ cancelar: ", atual, total, nome, numAvaliacao, maxAvaliacoes));
     }
 
+    public int pedirNumAvaliacoes(String siglaUC) {
+        return utils.Consola.lerInt("Número de avaliações para a UC " + siglaUC + " (1 a 3): ");
+    }
+
     // =========================================================
-    // 3. EXIBIÇÃO DE DADOS E RELATÓRIOS
+    // 3. EXIBIÇÃO DE DADOS PROFISSIONAIS E RELATÓRIOS
     // =========================================================
 
     public void mostrarFichaDocente(Docente d) {
@@ -145,21 +147,56 @@ public class DocenteView {
         System.out.printf("Num: %-8d | %-20s | %dº Ano | Notas: [%s]\n", numMec, nome, anoFrequencia, notasStr);
     }
 
+    // =========================================================
+    // 4. MOMENTOS DE AVALIAÇÃO (VISUALIZAÇÃO E DEFINIÇÃO)
+    // =========================================================
+
+    public void cabecalhoMomentosAvaliacao() {
+        System.out.println("\n--- MOMENTOS DE AVALIAÇÃO DAS SUAS UCs ---");
+    }
+
     public void mostrarUcComMomentosAvaliacao(String sigla, String nome, Integer numAvaliacoes) {
         String estado = (numAvaliacoes == null) ? "NÃO DEFINIDO" : numAvaliacoes + " momento(s) de avaliação";
         System.out.printf(">> [%s] %s - %s\n", sigla, nome, estado);
     }
 
+    public void msgNenhumMomentoDefinido() {
+        System.out.println("\n>> Nenhuma UC tem momentos de avaliação definidos.");
+    }
+
+    public void msgSemUcsParaVisualizar() {
+        System.out.println(">> Não tem unidades curriculares atribuídas para visualizar.");
+    }
+
+    public void msgNumAvaliacoesNaoDefinido(String siglaUC) {
+        System.out.println(">> A UC " + siglaUC + " ainda não tem número de avaliações definido.");
+    }
+
+    public void msgNumAvaliacoesAtual(String siglaUC, int numAtual) {
+        System.out.println(">> A UC " + siglaUC + " tem atualmente " + numAtual + " momento(s) de avaliação definido(s).");
+    }
+
     // =========================================================
-    // 4. FEEDBACK E MENSAGENS AO UTILIZADOR
+    // 5. LANÇAMENTO EM LOTE
     // =========================================================
 
     public void cabecalhoLote(String uc) {
         System.out.println("\n--- LANÇAMENTO EM LOTE: " + uc + " ---");
         System.out.println("(Pressione ENTER sem valor para saltar aluno)");
     }
-    public void resumoLote(int totalLancadas) { System.out.println(">> Processamento concluído: " + totalLancadas + " notas registadas."); }
-    public void mostrarCancelamento(String menuDestino) { System.out.println("\n>> Operação cancelada. A regressar ao menu " + menuDestino + "..."); }
+
+    public void resumoLote(int totalLancadas) {
+        System.out.println(">> Processamento concluído: " + totalLancadas + " notas registadas.");
+    }
+
+    // =========================================================
+    // 6. FEEDBACK E MENSAGENS AO UTILIZADOR
+    // =========================================================
+
+    public void mostrarCancelamento(String menuDestino) {
+        System.out.println("\n>> Operação cancelada. A regressar ao menu " + menuDestino + "...");
+    }
+
     public void msgSaida() { System.out.println(">> Sessão terminada. Até breve!"); }
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção inexistente."); }
     public void msgSucesso() { System.out.println(">> Operação concluída com sucesso."); }
@@ -177,10 +214,4 @@ public class DocenteView {
     public void msgAvisoSemAlunosInscritos() { System.out.println(">> Aviso: Sem alunos inscritos no presente ano letivo."); }
     public void msgNotificacaoEnviada() { System.out.println(">> Estudante notificado por e-mail automaticamente."); }
     public void msgAnoNaoIniciado() { System.out.println(">> O ano letivo ainda não foi iniciado. Não é possível lançar avaliações."); }
-    public void cabecalhoMomentosAvaliacao() { System.out.println("\n--- MOMENTOS DE AVALIAÇÃO DAS SUAS UCs ---"); }
-    public void msgNenhumMomentoDefinido() { System.out.println("\n>> Nenhuma UC tem momentos de avaliação definidos."); }
-    public void msgSemUcsParaVisualizar() { System.out.println(">> Não tem unidades curriculares atribuídas para visualizar."); }
-    public void msgNumAvaliacoesNaoDefinido(String siglaUC) { System.out.println(">> A UC " + siglaUC + " ainda não tem número de avaliações definido."); }
-    public void msgNumAvaliacoesAtual(String siglaUC, int numAtual) { System.out.println(">> A UC " + siglaUC + " tem atualmente " + numAtual + " momento(s) de avaliação definido(s)."); }
-    public int pedirNumAvaliacoes(String siglaUC) { return utils.Consola.lerInt("Número de avaliações para a UC " + siglaUC + " (1 a 3): "); }
 }
