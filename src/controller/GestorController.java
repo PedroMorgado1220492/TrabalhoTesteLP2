@@ -92,7 +92,6 @@ public class GestorController {
                     case 2: alterarDepartamento(); break;
                     case 3: view.mostrarListaDepartamentos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos()); break;
                     case 4: alternarEstadoDepartamento(); break;
-                    case 5: alterarCursoDeDepartamento(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -236,68 +235,6 @@ public class GestorController {
         return true; // Nenhum curso ativo encontrado
     }
 
-    /**
-     * Altera o departamento de um curso existente.
-     */
-    private void alterarCursoDeDepartamento() {
-        if (repositorio.getTotalCursos() == 0) {
-            view.mostrarAvisoSemCursos();
-            return;
-        }
-
-        if (repositorio.getTotalDepartamentos() == 0) {
-            view.mostrarAvisoSemDepartamentos();
-            return;
-        }
-
-        // 1. Selecionar o curso a ser alterado
-        int escolhaCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
-        if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
-            view.mostrarOpcaoInvalida();
-            return;
-        }
-
-        Curso curso = repositorio.getCursos()[escolhaCurso];
-
-        // Verificar se o curso pode ser alterado (não tem alunos inscritos)
-        if (curso.isBloqueado(repositorio.getEstudantes(), repositorio.getTotalEstudantes())) {
-            view.mostrarErroCursoBloqueadoAlteracaoDepartamento();
-            return;
-        }
-
-        // 2. Mostrar informações atuais
-        view.mostrarInfoCursoAtual(curso.getNome(), curso.getDepartamento().getNome());
-
-        // 3. Selecionar o novo departamento
-        int escolhaDep = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
-        if (escolhaDep < 0 || escolhaDep >= repositorio.getTotalDepartamentos()) {
-            view.mostrarOpcaoInvalida();
-            return;
-        }
-
-        Departamento novoDepartamento = repositorio.getDepartamentos()[escolhaDep];
-
-        // Verificar se o novo departamento está ativo
-        if (!novoDepartamento.isAtivo()) {
-            view.mostrarErroDepartamentoInativo();
-            return;
-        }
-
-        // 4. Confirmar a alteração
-        view.mostrarRevisaoAlteracaoDepartamentoCurso(curso.getNome(),
-                curso.getDepartamento().getNome(),
-                novoDepartamento.getNome());
-
-        if (view.confirmarDados()) {
-            Departamento departamentoAntigo = curso.getDepartamento();
-            curso.setDepartamento(novoDepartamento);
-            view.mostrarSucessoAlteracaoDepartamentoCurso(curso.getNome(), novoDepartamento.getNome());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-        } else {
-            view.mostrarAvisoSemAlteracao();
-        }
-    }
-
     // =========================================================
     // 3. GESTÃO DE CURSOS E PROPINAS
     // =========================================================
@@ -318,6 +255,7 @@ public class GestorController {
                     case 5: alterarPrecoCurso(); break;
                     case 6: view.mostrarRelatorioAlunosPorCurso(repositorio.getCursos(), repositorio.getTotalCursos(), repositorio.getEstudantes(), repositorio.getTotalEstudantes()); break;
                     case 7: view.mostrarListaCursos(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos(), repositorio.getCursos(), repositorio.getTotalCursos()); break;
+                    case 8: alterarCursoDeDepartamento(); break;
                     case 0: aExecutar = false; break;
                     default: view.mostrarOpcaoInvalida();
                 }
@@ -521,6 +459,67 @@ public class GestorController {
         }
     }
 
+    /**
+     * Altera o departamento de um curso existente.
+     */
+    private void alterarCursoDeDepartamento() {
+        if (repositorio.getTotalCursos() == 0) {
+            view.mostrarAvisoSemCursos();
+            return;
+        }
+
+        if (repositorio.getTotalDepartamentos() == 0) {
+            view.mostrarAvisoSemDepartamentos();
+            return;
+        }
+
+        // 1. Selecionar o curso a ser alterado
+        int escolhaCurso = view.pedirEscolhaCurso(repositorio.getCursos(), repositorio.getTotalCursos());
+        if (escolhaCurso < 0 || escolhaCurso >= repositorio.getTotalCursos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+
+        Curso curso = repositorio.getCursos()[escolhaCurso];
+
+        // Verificar se o curso pode ser alterado (não tem alunos inscritos)
+        if (curso.isBloqueado(repositorio.getEstudantes(), repositorio.getTotalEstudantes())) {
+            view.mostrarErroCursoBloqueadoAlteracaoDepartamento();
+            return;
+        }
+
+        // 2. Mostrar informações atuais
+        view.mostrarInfoCursoAtual(curso.getNome(), curso.getDepartamento().getNome());
+
+        // 3. Selecionar o novo departamento
+        int escolhaDep = view.pedirEscolhaDepartamento(repositorio.getDepartamentos(), repositorio.getTotalDepartamentos());
+        if (escolhaDep < 0 || escolhaDep >= repositorio.getTotalDepartamentos()) {
+            view.mostrarOpcaoInvalida();
+            return;
+        }
+
+        Departamento novoDepartamento = repositorio.getDepartamentos()[escolhaDep];
+
+        // Verificar se o novo departamento está ativo
+        if (!novoDepartamento.isAtivo()) {
+            view.mostrarErroDepartamentoInativo();
+            return;
+        }
+
+        // 4. Confirmar a alteração
+        view.mostrarRevisaoAlteracaoDepartamentoCurso(curso.getNome(),
+                curso.getDepartamento().getNome(),
+                novoDepartamento.getNome());
+
+        if (view.confirmarDados()) {
+            Departamento departamentoAntigo = curso.getDepartamento();
+            curso.setDepartamento(novoDepartamento);
+            view.mostrarSucessoAlteracaoDepartamentoCurso(curso.getNome(), novoDepartamento.getNome());
+            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.mostrarAvisoSemAlteracao();
+        }
+    }
 
     // =========================================================
     // 4. GESTÃO DE UNIDADES CURRICULARES (UCs)
