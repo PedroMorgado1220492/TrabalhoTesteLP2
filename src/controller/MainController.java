@@ -384,6 +384,13 @@ public class MainController {
             return;
         }
 
+        // Verificar se faltam avaliações
+        String[] faltas = repositorio.verificarAvaliacoesEmFalta();
+        if (faltas.length > 0) {
+            view.msgTransicaoBloqueadaPorAvaliacoesEmFalta(faltas);
+            return;
+        }
+
         // Fase 1: Auditar se os cursos têm condições de abrir no próximo ano
         validarArranqueDeCursos(proximoAno);
 

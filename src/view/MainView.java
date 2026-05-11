@@ -142,6 +142,20 @@ public class MainView {
     public boolean pedirConfirmacaoAvanco(int proximoAno) { return utils.Consola.lerString("Deseja mesmo avançar para o ano letivo " + proximoAno + "? (S/N): ").equalsIgnoreCase("S"); }
     public boolean pedirConfirmacaoInicioAno(int ano) { String input = Consola.lerString("Deseja mesmo iniciar o ano letivo " + ano + "? (S/N): "); return input.equalsIgnoreCase("S"); }
 
+    public void msgTransicaoBloqueadaPorAvaliacoesEmFalta(String[] faltas) {
+        System.out.println(">> NÃO É POSSÍVEL TRANSITAR DE ANO.");
+        System.out.println(">> Existem alunos com avaliações em falta nas seguintes UCs:");
+        System.out.println("\n--- AVALIAÇÕES EM FALTA ---");
+        for (String falta : faltas) {
+            String[] partes = falta.split(";");
+            if (partes.length >= 6) {
+                System.out.printf("  - Aluno %s - %s | UC: %s - %s | Tem %s de %s avaliações\n",
+                        partes[0], partes[1], partes[2], partes[3], partes[4], partes[5]);
+            }
+        }
+        System.out.println();
+    }
+
     // =========================================================
     // 4. FEEDBACK E MENSAGENS DE SISTEMA
     // =========================================================

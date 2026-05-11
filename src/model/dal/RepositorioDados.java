@@ -544,4 +544,71 @@ public class RepositorioDados {
             }
         }
     }
+    /**
+     * Verifica se todos os alunos ativos têm todas as avaliações lançadas
+     * para as UCs em que estão inscritos.
+     *
+     * @return Um array de strings com as ocorrências em falta, ou array vazio se estiver tudo ok.
+     */
+    public String[] verificarAvaliacoesEmFalta() {
+        // Primeira passagem: contar quantas faltas existem
+        int countFaltas = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante e = estudantes[i];
+            if (e != null && e.isAtivo() && e.getCurso() != null) {
+                Curso curso = e.getCurso();
+                for (int j = 0; j < curso.getTotalUCs(); j++) {
+                    UnidadeCurricular uc = curso.getUnidadesCurriculares()[j];
+                    if (uc != null && uc.getAnoCurricular() == e.getAnoFrequencia() && uc.getNumAvaliacoes() != null) {
+                        int numNecessario = uc.getNumAvaliacoes();
+                        Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
+                        int numExistente = (av != null) ? av.getTotalAvaliacoesLancadas() : 0;
+                        if (numExistente < numNecessario) {
+                            countFaltas++;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (countFaltas == 0) {
+            return new String[0];
+        }
+
+        // Segunda passagem: preencher o array (apenas com dados, sem formatação)
+        Object[][] dadosFaltas = new Object[countFaltas][6]; // [numMec, nome, siglaUC, numExistente, numNecessario]
+        int idx = 0;
+        for (int i = 0; i < totalEstudantes; i++) {
+            Estudante e = estudantes[i];
+            if (e != null && e.isAtivo() && e.getCurso() != null) {
+                Curso curso = e.getCurso();
+                for (int j = 0; j < curso.getTotalUCs(); j++) {
+                    UnidadeCurricular uc = curso.getUnidadesCurriculares()[j];
+                    if (uc != null && uc.getAnoCurricular() == e.getAnoFrequencia() && uc.getNumAvaliacoes() != null) {
+                        int numNecessario = uc.getNumAvaliacoes();
+                        Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
+                        int numExistente = (av != null) ? av.getTotalAvaliacoesLancadas() : 0;
+                        if (numExistente < numNecessario) {
+                            dadosFaltas[idx][0] = e.getNumeroMecanografico();
+                            dadosFaltas[idx][1] = e.getNome();
+                            dadosFaltas[idx][2] = uc.getSigla();
+                            dadosFaltas[idx][3] = uc.getNome();
+                            dadosFaltas[idx][4] = numExistente;
+                            dadosFaltas[idx][5] = numNecessario;
+                            idx++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Converter para String[] (apenas para transporte)
+        String[] faltas = new String[countFaltas];
+        for (int i = 0; i < countFaltas; i++) {
+            faltas[i] = dadosFaltas[i][0] + ";" + dadosFaltas[i][1] + ";" + dadosFaltas[i][2] + ";" +
+                    dadosFaltas[i][3] + ";" + dadosFaltas[i][4] + ";" + dadosFaltas[i][5];
+        }
+
+        return faltas;
+    }
 }

@@ -37,12 +37,12 @@ public class GestorView {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("         GESTÃO DE DEPARTAMENTOS");
         System.out.println("=".repeat(50));
-        System.out.println("1. Adicionar Departamento");
-        System.out.println("2. Alterar Departamento");
-        System.out.println("3. Listar Departamentos");
-        System.out.println("4. Ativar/Inativar Departamento");
-        System.out.println("5. Alterar Curso de Departamento");
-        System.out.println("0. Voltar");
+        System.out.println("1 - Adicionar Departamento");
+        System.out.println("2 - Alterar Nome Departamento");
+        System.out.println("3 - Listar Departamentos");
+        System.out.println("4 - Alternar Estado (Ativo/Inativo)");
+        System.out.println("5 - Alterar Curso de Departamento");
+        System.out.println("0 - Voltar");
         System.out.print("\nOpção: ");
         return utils.Consola.lerOpcaoMenu();
     }
@@ -50,7 +50,7 @@ public class GestorView {
     public int mostrarMenuCursos() {
         System.out.println("\n--- MÓDULO: CURSOS ---");
         System.out.println("1 - Adicionar Curso");
-        System.out.println("2 - Alterar Curso");
+        System.out.println("2 - Alterar Nome Curso");
         System.out.println("3 - Alternar Estado (Ativo/Inativo)");
         System.out.println("4 - Consultar Percurso Académico do Curso");
         System.out.println("5 - Atualizar Preço do Curso");
