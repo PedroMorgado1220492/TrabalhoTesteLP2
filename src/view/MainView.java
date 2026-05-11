@@ -40,6 +40,11 @@ public class MainView {
         return utils.Consola.lerOpcaoMenu();
     }
 
+    public static void mostrarNota() {
+        System.out.println("\n>>> Diretoria de trabalho: " + System.getProperty("user.dir"));
+        System.out.println(">>> Usar '/' para cancelar operações.");
+    }
+
     public void mostrarCabecalhoLogin() {
         System.out.println("\n--- AUTENTICAÇÃO DE UTILIZADOR ---");
     }

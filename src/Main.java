@@ -18,7 +18,7 @@ public class Main {
     public static void main(String[] args) {
 
         // Log de diagnóstico para ajudar na localização dos ficheiros CSV na base de dados
-        System.out.println(">>> Diretoria de trabalho: " + System.getProperty("user.dir"));
+        MainView.mostrarNota();
 
         // 1. Instanciação da VIEW (Camada de Apresentação)
         MainView view = new MainView();
