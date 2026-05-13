@@ -1,13 +1,5 @@
 package model.bll;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Representa um Curso (ou plano de estudos) lecionado na instituição.
@@ -22,7 +14,7 @@ public class Curso {
     private String sigla;
     private String nome;
     private Departamento departamento;
-    private Docente docenteResponsavel; // Coordenador do Curso
+
 
     // Regras estruturais fixas
     private final int duracaoAnos = 3; // Estrutura fixa de 3 anos (Licenciatura)
@@ -44,7 +36,7 @@ public class Curso {
      * @param departamento O departamento institucional ao qual o curso está alocado.
      */
     public Curso(String sigla, String nome, Departamento departamento) {
-        this.sigla = sigla;
+        this.sigla = sigla.toUpperCase();
         this.nome = nome;
         this.departamento = departamento;
         this.unidadesCurriculares = new UnidadeCurricular[15]; // Limite estrutural de 15 UCs por curso (5 por ano)
@@ -53,11 +45,9 @@ public class Curso {
     }
 
     // ---------- GETTERS ----------
-    public String getSigla() { return sigla; }
+    public String getSigla() { return sigla.toUpperCase(); }
     public String getNome() { return nome; }
     public Departamento getDepartamento() { return departamento; }
-    public Docente getDocenteResponsavel() { return docenteResponsavel; }
-    public int getDuracaoAnos() { return duracaoAnos; }
     public UnidadeCurricular[] getUnidadesCurriculares() { return unidadesCurriculares; }
     public int getTotalUCs() { return totalUCs; }
     public boolean isAtivo() { return ativo; }
@@ -67,7 +57,6 @@ public class Curso {
     public void setSigla(String sigla) { this.sigla = sigla; }
     public void setNome(String nome) { this.nome = nome; }
     public void setDepartamento(Departamento departamento) { this.departamento = departamento; }
-    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
     public void setValorPropinaAnual(double valorPropinaAnual) { this.valorPropinaAnual = valorPropinaAnual; }
 
@@ -142,14 +131,14 @@ public class Curso {
     }
 
     public boolean isBloqueado(Estudante[] todosEstudantes, int totalEstudantes) {
-        if (this.totalUCs > 0) return true;
+        // Apenas bloqueia se existir pelo menos um estudante associado a este curso
         for (int i = 0; i < totalEstudantes; i++) {
             Estudante e = todosEstudantes[i];
             if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(this.sigla)) {
-                return true;
+                return true; // há pelo menos um aluno, curso em funcionamento
             }
         }
-        return false;
+        return false; // sem alunos, pode alterar
     }
 
     public boolean podeSerDesativado(Estudante[] todosEstudantes, int totalEstudantes) {
@@ -162,56 +151,17 @@ public class Curso {
         return true;
     }
 
-
-    // =========================================================
-    // GESTÃO DE PREÇOS ANUAIS (CSV)
-    // =========================================================
-    private static final String PRECOS_FILE = "bd/cursos_precos.csv";
-
-    private static void garantirFicheiroPrecos() {
-        File f = new File(PRECOS_FILE);
-        if (!f.exists()) {
-            try (PrintWriter pw = new PrintWriter(new FileWriter(f))) {
-                pw.println("ANO_CURSO;SIGLA_CURSO;PRECO");
-            } catch (IOException e) { }
-        }
-    }
-
-    public static double obterPrecoCurso(String siglaCurso, int ano) {
-        garantirFicheiroPrecos();
-        try (BufferedReader br = new BufferedReader(new FileReader(PRECOS_FILE))) {
-            br.readLine(); // cabeçalho
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] p = linha.split(";");
-                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
-                    return Double.parseDouble(p[2]);
-                }
+    /**
+     * Verifica se todas as Unidades Curriculares associadas a este curso estão ativas.
+     * @return true se todas as UCs estiverem ativas (ou se não houver UCs), false caso contrário.
+     */
+    public boolean todasUcsAtivas() {
+        for (int i = 0; i < totalUCs; i++) {
+            UnidadeCurricular uc = unidadesCurriculares[i];
+            if (uc != null && !uc.isAtivo()) {
+                return false;
             }
-        } catch (IOException | NumberFormatException e) { }
-        return 1000.0; // valor padrão (fallback)
-    }
-
-    public static void atualizarPrecoCurso(String siglaCurso, int ano, double novoPreco) {
-        garantirFicheiroPrecos();
-        List<String> linhas = new ArrayList<>();
-        boolean atualizado = false;
-        try (BufferedReader br = new BufferedReader(new FileReader(PRECOS_FILE))) {
-            String linha;
-            while ((linha = br.readLine()) != null) {
-                String[] p = linha.split(";");
-                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
-                    linha = ano + ";" + siglaCurso + ";" + novoPreco;
-                    atualizado = true;
-                }
-                linhas.add(linha);
-            }
-        } catch (IOException e) { }
-        if (!atualizado) {
-            linhas.add(ano + ";" + siglaCurso + ";" + novoPreco);
         }
-        try (PrintWriter pw = new PrintWriter(new FileWriter(PRECOS_FILE))) {
-            for (String l : linhas) pw.println(l);
-        } catch (IOException e) { }
+        return true;
     }
 }

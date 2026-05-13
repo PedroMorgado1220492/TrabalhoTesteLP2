@@ -9,8 +9,7 @@ public class Departamento {
     // ---------- ATRIBUTOS ----------
     private String sigla;
     private String nome;
-    private Docente docenteResponsavel;
-
+    private boolean ativo;
     private Curso[] cursos;
     private int totalCursos;
 
@@ -24,10 +23,11 @@ public class Departamento {
      * @param nome  O nome por extenso do departamento (ex: Departamento de Informática).
      */
     public Departamento(String sigla, String nome) {
-        this.sigla = sigla;
+        this.sigla = sigla.toUpperCase();
         this.nome = nome;
         this.cursos = new Curso[10]; // Limite estrutural fixado em 10 cursos por departamento
         this.totalCursos = 0;
+        this.ativo = true;
     }
 
     // ---------- GETTERS ----------
@@ -36,19 +36,17 @@ public class Departamento {
 
     public String getNome() { return nome; }
 
-    public Docente getDocenteResponsavel() { return docenteResponsavel; }
-
     public Curso[] getCursos() { return cursos; }
 
-    public int getTotalCursos() { return totalCursos; }
+    public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS ----------
 
-    public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setSigla(String sigla) { this.sigla = sigla.toUpperCase(); }
 
     public void setNome(String nome) { this.nome = nome; }
 
-    public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
+    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // ---------- MÉTODOS DE LÓGICA E AÇÃO ----------
 

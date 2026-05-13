@@ -67,7 +67,7 @@ public class Estatisticas {
      * ou uma mensagem de erro caso o cálculo não seja possível.
      */
     public static String identificarMelhorAluno(RepositorioDados repo) {
-        if (repo.getTotalEstudantes() == 0) return "Sem alunos registados.";
+        if (repo.getTotalEstudantes() == 0) return "N/D";
 
         Estudante melhorEstudante = null;
         double melhorMedia = -1.0;
@@ -77,18 +77,15 @@ public class Estatisticas {
             double somaAluno = 0;
             int contAluno = 0;
 
-            // Extração do subtotal do ano corrente
             for (int j = 0; j < e.getTotalAvaliacoes(); j++) {
                 somaAluno += e.getAvaliacoes()[j].calcularMedia();
                 contAluno++;
             }
-            // Extração do subtotal do histórico passado
             for (int j = 0; j < e.getTotalHistorico(); j++) {
                 somaAluno += e.getHistoricoAvaliacoes()[j].calcularMedia();
                 contAluno++;
             }
 
-            // Regista o novo líder se a média atual superar a anterior
             if (contAluno > 0) {
                 double mediaAluno = somaAluno / contAluno;
                 if (mediaAluno > melhorMedia) {
@@ -98,7 +95,7 @@ public class Estatisticas {
             }
         }
 
-        if (melhorEstudante == null) return "Ainda não existem notas lançadas.";
+        if (melhorEstudante == null) return "N/D";
 
         double mediaArredondada = Math.round(melhorMedia * 100.0) / 100.0;
         return melhorEstudante.getNome() + " (" + melhorEstudante.getNumeroMecanografico() + ") com média de " + mediaArredondada;
@@ -114,22 +111,23 @@ public class Estatisticas {
         if (repo.getTotalCursos() == 0) return null;
 
         Curso cursoVencedor = null;
-        int maxAlunos = -1;
+        int maxAlunos = 0; // Começa em 0, só actualiza se encontrar alunos
 
         for (int i = 0; i < repo.getTotalCursos(); i++) {
             Curso c = repo.getCursos()[i];
             int contadorAlunos = 0;
 
-            // Contabiliza apenas estudantes cuja matrícula atual referencie a sigla em análise
+            // Conta apenas estudantes ativos (ou não?) – o código original conta todos os estudantes, independentemente de estarem ativos?
             for (int j = 0; j < repo.getTotalEstudantes(); j++) {
                 Estudante e = repo.getEstudantes()[j];
-                if (e.getCurso() != null && e.getCurso().getSigla().equals(c.getSigla())) {
+                if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(c.getSigla())) {
                     contadorAlunos++;
                 }
             }
 
-            // Atualiza o curso líder se o volume superar o registo anterior
-            if (contadorAlunos > maxAlunos) {
+            // Só actualiza se este curso tiver mais alunos do que o máximo registado
+            // e se tiver pelo menos 1 aluno (evita cursos vazios)
+            if (contadorAlunos > maxAlunos && contadorAlunos > 0) {
                 maxAlunos = contadorAlunos;
                 cursoVencedor = c;
             }

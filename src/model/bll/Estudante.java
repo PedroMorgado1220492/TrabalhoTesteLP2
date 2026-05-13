@@ -26,8 +26,6 @@ public class Estudante extends Utilizador {
     private Avaliacao[] historicoAvaliacoes;
     private int totalHistorico;
 
-    // ---------- ATRIBUTOS FINANCEIROS ----------
-    private double valorPropinaBase;
 
     // ---------- CONSTRUTOR ----------
 
@@ -66,10 +64,6 @@ public class Estudante extends Utilizador {
         this.historicoAvaliacoes = new Avaliacao[150]; // Histórico com capacidade estendida
         this.totalHistorico = 0;
 
-        // Valor base da propina (apenas para referência, a dívida é calculada externamente)
-        if (this.curso != null) {
-            this.valorPropinaBase = curso.getValorPropinaAnual();
-        }
     }
 
     // ---------- GETTERS SIMPLES ----------
@@ -79,12 +73,10 @@ public class Estudante extends Utilizador {
     public int getAnoPrimeiraInscricao() { return anoPrimeiraInscricao; }
     public int getAnoCurricular() { return anoCurricular; }
     public int getAnoFrequencia() { return anoFrequencia; }
-    public PercursoAcademico getPercursoAcademico() { return percursoAcademico; }
     public Avaliacao[] getAvaliacoes() { return this.avaliacoes; }
     public int getTotalAvaliacoes() { return this.totalAvaliacoes; }
     public Avaliacao[] getHistoricoAvaliacoes() { return historicoAvaliacoes; }
     public int getTotalHistorico() { return totalHistorico; }
-    public double getValorPropinaBase() { return valorPropinaBase; }
     public boolean isAtivo() { return ativo; }
 
     // ---------- SETTERS SIMPLES ----------
@@ -92,8 +84,6 @@ public class Estudante extends Utilizador {
     public void setCurso(Curso curso) { this.curso = curso; }
     public void setAnoCurricular(int anoCurricular) { this.anoCurricular = anoCurricular; }
     public void setAnoFrequencia(int anoFrequencia) { this.anoFrequencia = anoFrequencia; }
-    public void setPercursoAcademico(PercursoAcademico percursoAcademico) { this.percursoAcademico = percursoAcademico; }
-    public void setValorPropinaBase(double valorPropinaBase) { this.valorPropinaBase = valorPropinaBase; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
 
     // =========================================================
@@ -224,9 +214,6 @@ public class Estudante extends Utilizador {
                 }
             }
         }
-
-        // Nota: A nova propina para o próximo ano letivo já não é gerada internamente;
-        // a dívida é calculada dinamicamente a partir dos preços dos cursos e dos pagamentos registados.
     }
 
     // =========================================================
@@ -420,28 +407,29 @@ public class Estudante extends Utilizador {
     }
 
     /**
-     * Tenta reinscrever o estudante (avançar ano se possível) e reconstrói o percurso.
+     * Tenta reinscrever o estudante (ativar se estiver inativo e sem dívidas de anos anteriores,
+     * avançar ano se tiver aproveitamento, e reconstruir o percurso).
      * @param anoAtual Ano letivo corrente.
-     * @return true se a reinscrição foi bem‑sucedida, false se o estudante estiver inativo ou com dívidas.
+     * @return true se a reinscrição foi bem‑sucedida (sem dívidas anteriores).
      */
     public boolean reinscrever(int anoAtual) {
+        if (Propina.temDividasAteAno(this, anoAtual - 1, anoAtual)) {
+            return false;   // ainda tem dívidas de anos anteriores
+        }
+        // Se estava inativo, ativa
         if (!isAtivo()) {
-            return false;
+            setAtivo(true);
         }
-        if (Propina.temDividas(this, anoAtual)) {
-            return false;
-        }
-
-        // Aplicar progressão com base na regra de 60%
+        // Progressão (regra 60%)
         if (temAproveitamentoParaProgredir() && anoFrequencia < 3) {
             anoFrequencia++;
             anoCurricular = anoFrequencia;
         }
-
-        // Reconstruir o percurso (inscreve UCs não concluídas)
+        // Reconstruir o percurso (inscrever UCs não concluídas)
         reconstruirPercurso();
         return true;
     }
+
 
     // ---------- OVERRIDES ----------
 

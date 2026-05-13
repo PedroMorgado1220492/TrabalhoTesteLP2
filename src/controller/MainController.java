@@ -6,6 +6,7 @@ import model.dal.ImportadorCSV;
 import utils.*;
 import view.MainView;
 import model.dal.RepositorioDados;
+import model.bll.Relatorio;
 import utils.CancelamentoException;
 
 /**
@@ -41,15 +42,16 @@ public class MainController {
         view.mostrarBemVindo();
 
         while (aExecutar) {
-            view.mostrarAnoLetivo(repositorio.getAnoAtual());
+            view.mostrarAnoLetivo(repositorio.getAnoAtual(), repositorio.isAnoIniciado());
             int opcao = view.mostrarMenu();
 
             try {
                 switch (opcao) {
                     case 1: processarLogin(); break;
                     case 2: processarRegistoEstudante(); break;
-                    case 3: processarTransicaoAno(); break;
-                    case 4: processarRecuperacaoPassword(); break;
+                    case 3: processarRecuperacaoPassword(); break;
+                    case 4: processarIniciarAnoLetivo(); break;
+                    case 5: processarTransicaoAno(); break;
                     case 0:
                         view.msgEncerramento();
                         aExecutar = false;
@@ -158,6 +160,11 @@ public class MainController {
     private void registarEstudanteNoSistema() {
         view.mostrarCabecalhoRegisto();
 
+        if (repositorio.isAnoIniciado()) {
+            view.msgAnoIniciadoInscricoesFechadas();
+            return;
+        }
+
         // Delegação de pesquisa ao Repositório
         Curso[] cursosAtivos = repositorio.obterCursosDisponiveisParaMatricula();
 
@@ -242,8 +249,123 @@ public class MainController {
         }
     }
 
+
     // =========================================================
-    // 3. TRANSIÇÃO DE ANO LETIVO E VALIDAÇÕES MACRO
+    // 3. RECUPERAÇÃO DA PASSWORD E UTILITÁRIOS
+    // =========================================================
+
+    /**
+     * Lida com os pedidos públicos de redefinição de palavra-passe.
+     */
+    private void processarRecuperacaoPassword() {
+        view.mostrarCabecalhoLogin();
+        String email = view.pedirEmail();
+
+        carregarBaseDeDadosCompleta();
+
+        // Verificar se o email pertence a um Gestor
+        Utilizador user = repositorio.procurarUtilizadorPorEmail(email);
+        if (user instanceof Gestor) {
+            view.msgGestorNaoPodeRecuperar();
+            this.repositorio = new RepositorioDados();
+            return;
+        }
+
+        // Delegação de lógica de segurança aos Utilitários
+        String nif = view.pedirNifRecuperacao();
+        boolean sucesso = utils.Seguranca.recuperarPassword(email, nif, repositorio);
+
+        if (sucesso) {
+            view.msgSucessoRecuperacao();
+            ExportadorCSV.exportarDados("bd", repositorio);
+        } else {
+            view.msgErroDadosIncorretosOuFalhaEmail();
+        }
+
+        this.repositorio = new RepositorioDados();
+    }
+
+
+    // =========================================================
+    // 4. INICIAÇÃO DE ANO LETIVO
+    // =========================================================
+
+    /**
+     * Inicia o ano letivo, realizando todas as verificações necessárias antes do início das aulas.
+     *
+     * <p>Este método executa as seguintes validações:</p>
+     * <ul>
+     *   <li>Verifica se o ano letivo já foi iniciado (caso afirmativo, termina a execução).</li>
+     *   <li>Desativa cursos que não possuem estrutura curricular mínima (pelo menos uma UC ativa por ano).</li>
+     *   <li>Identifica Unidades Curriculares que ainda não têm o número de avaliações definido.</li>
+     *   <li>Gera um relatório detalhado em ficheiro .txt com o resultado das verificações.</li>
+     *   <li>Define o estado do sistema como "ano iniciado" apenas se todas as UCs estiverem configuradas.</li>
+     * </ul>
+     *
+     * <p>Se existirem UCs sem número de avaliações definido, o ano letivo NÃO é iniciado e
+     * o relatório lista as UCs em falta com os respetivos docentes responsáveis.</p>
+     *
+     * <p>Se algum curso for desativado por falta de estrutura curricular, essa informação
+     * é incluída no relatório.</p>
+     *
+     * <p>O relatório é guardado na raiz do projeto com o nome:
+     * <code>relatorio_inicio_ano_[ANO].txt</code></p>
+     *
+     * <p>Após a execução, os dados são persistidos nos ficheiros CSV.</p>
+     *
+     * @see model.bll.Relatorio#gerarRelatorioInicioAno(RepositorioDados)
+     * @see model.bll.Relatorio#salvarRelatorio(String, String)
+     * @see RepositorioDados#setAnoIniciado(boolean)
+     * @see RepositorioDados#isAnoIniciado()
+     */
+    private void processarIniciarAnoLetivo() {
+        carregarBaseDeDadosCompleta();
+
+        if (repositorio.isAnoIniciado()) {
+            view.msgAnoJaIniciado();
+            encerrarSessaoESalvar();
+            return;
+        }
+
+        // Pedir confirmação simples
+        if (!view.pedirConfirmacaoInicioAno(repositorio.getAnoAtual())) {
+            view.mostrarCancelamento();
+            encerrarSessaoESalvar();
+            return;
+        }
+
+        // Gerar relatório
+        Relatorio.ResultadoValidacao resultado = Relatorio.gerarRelatorioInicioAno(repositorio);
+
+        // Imprimir relatório na consola
+        Relatorio.imprimirRelatorio(resultado.getRelatorioConteudo());
+
+        if (!resultado.isTodasUcsDefinidas()) {
+            view.msgExistemUcsSemAvaliacoes();
+        } else {
+            repositorio.setAnoIniciado(true);
+            view.msgInicioAnoSucesso(repositorio.getAnoAtual());
+        }
+
+        if (resultado.isAlgumCursoDesativado()) {
+            view.msgCursosDesativados();
+        }
+
+        // Salvar relatório
+        String fileName = "relatorio_inicio_ano_" + repositorio.getAnoAtual() + ".txt";
+        boolean sucesso = Relatorio.salvarRelatorio(resultado.getRelatorioConteudo(), fileName);
+        if (sucesso) {
+            view.msgRelatorioGerado("relatorios/" + fileName);
+        } else {
+            view.msgErroRelatorio();
+        }
+
+        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+        encerrarSessaoESalvar();
+    }
+
+    // =========================================================
+    // 5. TRANSIÇÃO DE ANO LETIVO
     // =========================================================
 
     /**
@@ -255,6 +377,19 @@ public class MainController {
         carregarBaseDeDadosCompleta();
 
         int proximoAno = repositorio.getAnoAtual() + 1;
+
+        // Verificar se o ano letivo foi iniciado
+        if (!repositorio.isAnoIniciado()) {
+            view.msgTransicaoBloqueada();
+            return;
+        }
+
+        // Verificar se faltam avaliações
+        String[] faltas = repositorio.verificarAvaliacoesEmFalta();
+        if (faltas.length > 0) {
+            view.msgTransicaoBloqueadaPorAvaliacoesEmFalta(faltas);
+            return;
+        }
 
         // Fase 1: Auditar se os cursos têm condições de abrir no próximo ano
         validarArranqueDeCursos(proximoAno);
@@ -277,7 +412,7 @@ public class MainController {
      * Analisa todos os cursos e encerra os que não atingirem a quota mínima de 5 alunos no 1º ano.
      */
     private void validarArranqueDeCursos(int anoAlvo) {
-        view.mostrarAvisoValidacaoCursos();
+
         if (repositorio.getTotalCursos() == 0) return;
 
         for (int i = 0; i < repositorio.getTotalCursos(); i++) {
@@ -288,7 +423,6 @@ public class MainController {
                 // Valida a estrutura estrutural do Curso delegada ao Model
                 if (!curso.temEstruturaValida()) {
                     view.mostrarCursoCanceladoFaltaUCs(curso.getSigla());
-                    curso.setAtivo(false);
                     repositorio.anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
                     continue;
                 }
@@ -297,15 +431,11 @@ public class MainController {
                 int inscritos = repositorio.contarAlunosNoPrimeiroAno(curso.getSigla());
 
                 if (inscritos > 0 && inscritos < 5) {
-                    view.mostrarCursoCancelado(curso.getSigla(), inscritos);
                     repositorio.anularMatriculasPrimeiroAno(curso.getSigla(), anoAlvo);
-                    curso.setAtivo(false);
                 } else if (inscritos >= 5) {
-                    view.mostrarCursoAprovado(curso.getSigla(), inscritos);
                 }
             }
         }
-        view.mostrarFimValidacao();
     }
 
     /**
@@ -334,35 +464,7 @@ public class MainController {
 
 
     // =========================================================
-    // 4. RECUPERAÇÃO DA PASSWORD E UTILITÁRIOS
-    // =========================================================
-
-    /**
-     * Lida com os pedidos públicos de redefinição de palavra-passe.
-     */
-    private void processarRecuperacaoPassword() {
-        view.mostrarCabecalhoLogin();
-        String email = view.pedirEmail();
-        String nif = view.pedirNifRecuperacao();
-
-        carregarBaseDeDadosCompleta();
-
-        // Delegação de lógica de segurança aos Utilitários
-        boolean sucesso = utils.Seguranca.recuperarPassword(email, nif, repositorio);
-
-        if (sucesso) {
-            view.msgSucessoRecuperacao();
-            ExportadorCSV.exportarDados("bd", repositorio);
-        } else {
-            view.msgErroDadosIncorretosOuFalhaEmail();
-        }
-
-        this.repositorio = new RepositorioDados();
-    }
-
-
-    // =========================================================
-    // 5. MÉTODOS AUXILIARES E PRIVADOS
+    // 6. MÉTODOS AUXILIARES E PRIVADOS
     // =========================================================
 
     /**
@@ -386,9 +488,15 @@ public class MainController {
         ImportadorCSV.importarDocentes("bd/docentes.csv", repositorio);
         ImportadorCSV.importarUCs("bd/ucs.csv", repositorio);
         ImportadorCSV.importarEstudantes("bd/estudantes.csv", repositorio);
-        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio); // <-- apenas uma vez!
+        ImportadorCSV.importarAvaliacoes("bd/avaliacoes.csv", repositorio);
     }
 
+    /**
+     * Valida o domínio do email institucional.
+     * O email deve terminar com @issmf.ipp.pt.
+     *
+     * @return Email institucional válido.
+     */
     private String validarDominioEmail() {
         while (true) {
             String email = view.pedirEmail();
@@ -397,6 +505,12 @@ public class MainController {
         }
     }
 
+    /**
+     * Valida o nome completo do estudante.
+     * O nome deve ter pelo menos duas palavras e conter apenas letras.
+     *
+     * @return Nome completo válido.
+     */
     private String validarNome() {
         while (true) {
             String nome = view.pedirNome();
@@ -405,6 +519,12 @@ public class MainController {
         }
     }
 
+    /**
+     * Valida o NIF (Número de Identificação Fiscal).
+     * O NIF deve ter exatamente 9 dígitos e ser único no sistema.
+     *
+     * @return NIF válido.
+     */
     private String validarNif() {
         String nif;
         while (true) {
@@ -420,11 +540,20 @@ public class MainController {
         }
     }
 
+    /**
+     * Valida a data de nascimento.
+     * A data deve ter o formato DD-MM-AAAA, ser uma data real (ex: 30-02 inválido)
+     * e o estudante deve ter pelo menos 16 anos.
+     *
+     * @return Data de nascimento válida.
+     */
     private String validarDataNascimento() {
         while (true) {
             String data = view.pedirDataNascimento();
-            if (!Validador.isDataNascimentoValida(data)) {
-                view.msgErroData();
+            if (!Validador.isDataFormatoValido(data)) {
+                view.msgErroDataFormato();
+            } else if (!Validador.isDataReal(data)) {
+                view.msgErroDataInexistente();
             } else if (!Validador.temIdadeMinima(data)) {
                 view.msgErroIdadeMinima();
             } else {
@@ -433,6 +562,12 @@ public class MainController {
         }
     }
 
+    /**
+     * Valida o email pessoal.
+     * O email deve conter '@' e '.' (formato básico).
+     *
+     * @return Email pessoal válido.
+     */
     private String validarEmailPessoal() {
         while (true) {
             String email = view.pedirEmailPessoal();
@@ -442,5 +577,4 @@ public class MainController {
             view.msgErroEmailPessoal();
         }
     }
-
 }

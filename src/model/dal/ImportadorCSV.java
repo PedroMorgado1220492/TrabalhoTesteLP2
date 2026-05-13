@@ -20,7 +20,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 1. MECANISMOS DE AUTENTICAÇÃO RÁPIDA
+    // MECANISMOS DE AUTENTICAÇÃO RÁPIDA
     // =========================================================
 
     /**
@@ -73,7 +73,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 2. CARREGAMENTO DE INFRAESTRUTURA E DOCÊNCIA
+    // CARREGAMENTO DE INFRAESTRUTURA E DOCÊNCIA
     // =========================================================
 
     /**
@@ -126,7 +126,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 3. CARREGAMENTO ACADÉMICO (CURSOS E UCS)
+    // CARREGAMENTO ACADÉMICO (CURSOS E UCS)
     // =========================================================
 
     /**
@@ -164,8 +164,15 @@ public class ImportadorCSV {
                 Docente doc = procurarDocente(dados[4], repositorio);
                 if (doc == null) continue;
 
-                int numAv = (dados.length > 7) ? Integer.parseInt(dados[7]) : 3;
-                UnidadeCurricular uc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc, numAv);
+                String numAvStr = (dados.length > 7) ? dados[7] : "";
+                Integer numAv = null;
+                if (!numAvStr.isEmpty()) {
+                    try {
+                        numAv = Integer.parseInt(numAvStr);
+                    } catch (NumberFormatException e) { }
+                }
+                UnidadeCurricular uc = new UnidadeCurricular(dados[1], dados[2], Integer.parseInt(dados[3]), doc);
+                uc.setNumAvaliacoes(numAv);
 
                 if (dados.length > 6) uc.setAtivo(Boolean.parseBoolean(dados[6]));
 
@@ -198,7 +205,7 @@ public class ImportadorCSV {
 
 
     // =========================================================
-    // 4. CARREGAMENTO DE ESTUDANTES E AVALIAÇÕES
+    // CARREGAMENTO DE ESTUDANTES E AVALIAÇÕES
     // =========================================================
 
     /**
@@ -293,16 +300,31 @@ public class ImportadorCSV {
         try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
             br.readLine(); // cabeçalho
             String linha = br.readLine();
-            if (linha != null) {
-                return Integer.parseInt(linha.trim());
+            if (linha == null) return 2026;
+            String[] partes = linha.split(";");
+            int ano = Integer.parseInt(partes[0].trim());
+            return ano;
+        } catch (IOException | NumberFormatException e) {
+            return 2026;
+        }
+    }
+
+    public static boolean importarAnoIniciado(String caminho) {
+        try (BufferedReader br = new BufferedReader(new FileReader(caminho))) {
+            br.readLine(); // cabeçalho
+            String linha = br.readLine();
+            if (linha == null) return false;
+            String[] partes = linha.split(";");
+            if (partes.length >= 2) {
+                return Boolean.parseBoolean(partes[1].trim());
             }
-        } catch (IOException | NumberFormatException e) { }
-        return 2026; // valor padrão se ficheiro não existir
+        } catch (IOException e) { }
+        return false;
     }
 
 
     // =========================================================
-    // 5. MÉTODOS DE PESQUISA INTERNA (DESSERIALIZAÇÃO)
+    // MÉTODOS DE PESQUISA INTERNA (DESSERIALIZAÇÃO)
     // =========================================================
 
     private static Departamento procurarDepartamento(String sigla, RepositorioDados repo) {
@@ -338,5 +360,108 @@ public class ImportadorCSV {
             if (repo.getUcs()[i].getSigla().equalsIgnoreCase(sigla)) return repo.getUcs()[i];
         }
         return null;
+    }
+
+    // =========================================================
+    // CARREGAMENTO DE PREÇOS CURSOS
+    // =========================================================
+
+    // Dentro de ImportadorCSV
+    public static double obterPrecoCurso(String siglaCurso, int ano) {
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine(); // cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso) && Integer.parseInt(p[0]) == ano) {
+                    return Double.parseDouble(p[2]);
+                }
+            }
+        } catch (IOException | NumberFormatException e) { }
+        return 1000.0; // valor padrão
+    }
+
+    public static double[][] obterHistoricoPrecos(String siglaCurso) {
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine(); // cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                if (linha.contains(";" + siglaCurso + ";")) count++;
+            }
+        } catch (IOException e) { }
+
+        double[][] historico = new double[count][2];
+        int idx = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine();
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                String[] p = linha.split(";");
+                if (p.length >= 3 && p[1].equalsIgnoreCase(siglaCurso)) {
+                    historico[idx][0] = Integer.parseInt(p[0]);
+                    historico[idx][1] = Double.parseDouble(p[2]);
+                    idx++;
+                }
+            }
+        } catch (IOException e) { }
+        // ordenar por ano
+        for (int i = 0; i < historico.length - 1; i++) {
+            for (int j = 0; j < historico.length - i - 1; j++) {
+                if (historico[j][0] > historico[j+1][0]) {
+                    double[] temp = historico[j];
+                    historico[j] = historico[j+1];
+                    historico[j+1] = temp;
+                }
+            }
+        }
+        return historico;
+    }
+
+    public static String[] lerTodasLinhasPrecos() {
+        int count = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine(); // cabeçalho
+            while (br.readLine() != null) count++;
+        } catch (IOException e) { return new String[0]; }
+        String[] linhas = new String[count];
+        try (BufferedReader br = new BufferedReader(new FileReader("bd/cursos_precos.csv"))) {
+            br.readLine();
+            for (int i = 0; i < count; i++) {
+                linhas[i] = br.readLine();
+            }
+        } catch (IOException e) { return new String[0]; }
+        return linhas;
+    }
+
+    // =========================================================
+    // MÉTODOS PARA GESTÃO DE RECIBOS
+    // =========================================================
+
+    /**
+     * Obtém o próximo número sequencial para um novo recibo.
+     * @return Número sequencial (incrementado a partir do último ID encontrado).
+     */
+    public static int obterProximoNumeroRecibo() {
+        return obterProximoNumero("bd/recibos.csv");
+    }
+
+    private static int obterProximoNumero(String caminhoArquivo) {
+        int ultimoNumero = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoArquivo))) {
+            br.readLine(); // ignorar cabeçalho
+            String linha;
+            while ((linha = br.readLine()) != null) {
+                if (linha.trim().isEmpty()) continue;
+                String[] partes = linha.split(";");
+                if (partes.length > 0) {
+                    try {
+                        int num = Integer.parseInt(partes[0]);
+                        if (num > ultimoNumero) ultimoNumero = num;
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        } catch (IOException e) { }
+        return ultimoNumero + 1;
     }
 }

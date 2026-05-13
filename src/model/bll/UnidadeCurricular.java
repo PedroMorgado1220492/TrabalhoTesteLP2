@@ -15,7 +15,7 @@ public class UnidadeCurricular {
     private int anoCurricular;
     private Docente docenteResponsavel; // Regente principal da disciplina
     private boolean ativo;
-    private int numAvaliacoes;
+    private Integer  numAvaliacoes;
 
     // Estruturas de agregação para suportar a partilha da UC
     private Curso[] cursos;
@@ -32,16 +32,15 @@ public class UnidadeCurricular {
      * @param nome               O nome completo da disciplina.
      * @param anoCurricular      O ano letivo padrão em que a disciplina é lecionada (1, 2 ou 3).
      * @param docenteResponsavel O docente encarregue da regência/coordenação.
-     * @param numAvaliacoes      O número inicial de momentos de avaliação (testes/trabalhos).
      */
-    public UnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel, int numAvaliacoes) {
-        this.sigla = sigla;
+    public UnidadeCurricular(String sigla, String nome, int anoCurricular, Docente docenteResponsavel) {
+        this.sigla = sigla.toUpperCase();
         this.nome = nome;
         this.anoCurricular = anoCurricular;
         this.docenteResponsavel = docenteResponsavel;
-        this.numAvaliacoes = numAvaliacoes;
-        this.ativo = true; // A UC inicia o seu ciclo de vida em estado ativo
-        this.cursos = new Curso[10]; // Limite de partilha fixado em 10 cursos em simultâneo
+        this.numAvaliacoes = null;
+        this.ativo = true;
+        this.cursos = new Curso[10];
         this.totalCursos = 0;
     }
 
@@ -53,16 +52,16 @@ public class UnidadeCurricular {
     public Docente getDocenteResponsavel() { return docenteResponsavel; }
     public Curso[] getCursos() { return cursos; }
     public boolean isAtivo() { return ativo; }
-    public int getNumAvaliacoes() { return numAvaliacoes; }
+    public Integer getNumAvaliacoes() { return numAvaliacoes; }
 
     // ---------- SETTERS SIMPLES ----------
 
-    public void setSigla(String sigla) { this.sigla = sigla; }
+    public void setSigla(String sigla) { this.sigla = sigla.toUpperCase(); }
     public void setNome(String nome) { this.nome = nome; }
     public void setAnoCurricular(int anoCurricular) { this.anoCurricular = anoCurricular; }
     public void setDocenteResponsavel(Docente docenteResponsavel) { this.docenteResponsavel = docenteResponsavel; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
-    public void setNumAvaliacoes(int numAvaliacoes) { this.numAvaliacoes = numAvaliacoes; }
+    public void setNumAvaliacoes(Integer numAvaliacoes) { this.numAvaliacoes = numAvaliacoes; }
 
 
     // =========================================================
@@ -179,6 +178,13 @@ public class UnidadeCurricular {
      * @return true se a UC estiver livre de vínculos e puder ser desativada; false caso contrário.
      */
     public boolean podeSerDesativada() {
-        return this.totalCursos == 0;
+        // Verifica se existe pelo menos um curso ATIVO associado a esta UC
+        for (int i = 0; i < totalCursos; i++) {
+            Curso c = cursos[i];
+            if (c != null && c.isAtivo()) {
+                return false; // não pode desativar porque há curso ativo
+            }
+        }
+        return true; // pode desativar (nenhum curso ativo ou nenhum curso associado)
     }
 }

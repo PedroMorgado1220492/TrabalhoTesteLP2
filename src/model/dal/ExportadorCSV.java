@@ -171,8 +171,9 @@ public class ExportadorCSV {
                         }
                     }
 
+                    String numAvStr = (uc.getNumAvaliacoes() == null) ? "" : String.valueOf(uc.getNumAvaliacoes());
                     pw.println("UC;" + uc.getSigla() + ";" + uc.getNome() + ";" + uc.getAnoCurricular() + ";" +
-                            siglaDoc + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + uc.getNumAvaliacoes());
+                            siglaDoc + ";" + listaCursos.toString() + ";" + uc.isAtivo() + ";" + numAvStr);
                 }
             }
         } catch (IOException e) { }
@@ -243,13 +244,44 @@ public class ExportadorCSV {
      * @param pastaBD  Diretoria onde o ficheiro será guardado (ex: "bd").
      * @param anoAtual O ano letivo a ser persistido.
      */
-    public static void exportarAno(String pastaBD, int anoAtual) {
+    public static void exportarAno(String pastaBD, int anoAtual, boolean anoIniciado) {
         if (!pastaBD.endsWith("/")) pastaBD += "/";
         try (PrintWriter pw = new PrintWriter(new FileWriter(pastaBD + "ano.csv"))) {
-            pw.println("ANO");
-            pw.println(anoAtual);
+            pw.println("ANO;INICIADO");
+            pw.println(anoAtual + ";" + anoIniciado);
         } catch (IOException e) {
             System.err.println("Erro ao guardar ano: " + e.getMessage());
         }
     }
+
+    public static void escreverFicheiroPrecos(String[] linhas) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("bd/cursos_precos.csv"))) {
+            pw.println("ANO_CURSO;SIGLA_CURSO;PRECO");
+            for (String linha : linhas) {
+                pw.println(linha);
+            }
+        } catch (IOException e) { }
+    }
+
+    // =========================================================
+    // MÉTODOS PARA GESTÃO DE RECIBOS
+    // =========================================================
+
+    /**
+     * Regista um recibo no ficheiro recibos.csv.
+     * @param id     Número do recibo (ex: "00000001").
+     * @param numMec Número mecanográfico do estudante.
+     */
+    public static void registarRecibo(String id, int numMec) {
+        String caminho = "bd/recibos.csv";
+        File ficheiro = new File(caminho);
+        boolean ficheiroJaExiste = ficheiro.exists();
+        try (PrintWriter pw = new PrintWriter(new FileWriter(caminho, true))) {
+            if (!ficheiroJaExiste) {
+                pw.println("ID_RECIBO;NUM_MECANOGRAFICO");
+            }
+            pw.println(id + ";" + numMec);
+        } catch (IOException e) { }
+    }
+
 }

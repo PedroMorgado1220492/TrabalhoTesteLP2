@@ -1,0 +1,16 @@
+TIPO;SIGLA;NOME;ANO;DOCENTE_RESPONSAVEL;CURSOS;ATIVO;NUM_AVALIACOES
+UC;MAC;Matemática Clássica;1;PVU;;true;
+UC;MAT1;Matemática 1;1;PDZ;LEC,LEM,LEE;true;
+UC;DES;Desenho Técnico;1;PBQ;LEC;true;
+UC;MAT2;Matemática 2;2;PDZ;LEC,LEM,LEE;true;
+UC;EST1;Estruturas 1;2;PYA;LEC;true;
+UC;EST2;Estruturas 2;3;PYA;LEC;true;
+UC;COM1;Construções Mecânicas 1;1;PCU;LEM;true;
+UC;COM2;Construções Mecânicas 2;3;PCU;LEM;true;
+UC;PRO1;Programação 1;1;PGN;LEE;true;
+UC;CIR;Circuitos;1;PGN;LEE;true;
+UC;SDE;Sistemas Digitais Elétricos;1;PGN;LEE;true;
+UC;ELE;Eletromagnetismo;1;PGN;LEE;true;
+UC;PRO2;Programação 2;2;PGN;LEE;true;
+UC;REA;Reatores;1;PIM;LEN;true;
+UC;SIE;Sistemas de Energia;3;PGN;;true;
