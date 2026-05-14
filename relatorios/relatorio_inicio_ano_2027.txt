@@ -1,0 +1,38 @@
+RELATÓRIO DE VERIFICAÇÃO PARA INÍCIO DO ANO LETIVO
+================================================
+
+Ano letivo: 2027
+
+
+--- Curso LEC - Licenciatura em Engenharia Civil ---
+Situação: 1º ano com 3 alunos (mínimo 5) - 1º ANO NÃO ABRE
+Nota: Alunos do 2º e 3º ano mantêm-se inscritos.
+Alunos: 1º ano: 0 (removidos) | 2º ano: 3 | 3º ano: 0
+
+--- Curso LEM - Licenciatura de Engenharia Mecânica ---
+Situação: SEM ALUNOS - NÃO ABRE
+Alunos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
+
+--- Curso LEE - Licenciatura de Engenharia Eletrotécnica ---
+Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO
+Alunos removidos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
+
+--- Curso LEN - Licenciatura em Engenharia Nuclear ---
+Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO
+Alunos removidos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
+
+--- Curso LFQ - Licenciatura em Fisica e Química ---
+Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO
+Alunos removidos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
+
+--- UCs sem número de avaliações definido ---
+UC MAT1 - Matemática 1 | Docente responsável: Professora Ana
+UC EM1 - Engenharia dos Materiais 1 | Docente responsável: Professor Abel
+UC DES - Desenho Técnico | Docente responsável: Professor Abel
+UC MAT2 - Matemática 2 | Docente responsável: Professora Ana
+UC EST1 - Estruturas 1 | Docente responsável: Professor Carlos
+UC EST2 - Estruturas 2 | Docente responsável: Professor Carlos
+UC COM1 - Construções Mecânicas 1 | Docente responsável: Professor Luis
+UC COM2 - Construções Mecânicas 2 | Docente responsável: Professor Luis
+
+--> O ano letivo NÃO pode ser iniciado. Faltam definir o número de avaliações nas UCs acima.

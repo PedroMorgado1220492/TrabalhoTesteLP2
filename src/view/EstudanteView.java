@@ -122,16 +122,14 @@ public class EstudanteView {
         return utils.Consola.lerOpcaoMenu();
     }
 
-    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double dividaTotal) {
-        double dividaAnualExibicao = valorAnual;
-        double dividaAnteriorExibicao = dividaTotal - dividaAnualExibicao;
-        double valorPago = valorAnual + dividaAnteriorExibicao - dividaTotal;
-        if (dividaAnteriorExibicao < 0) dividaAnteriorExibicao = 0;
-        System.out.print("\n");
+    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double dividaTotal, double totalPago) {
+        double dividaAnosAnteriores = dividaTotal - valorAnual;
+        if (dividaAnosAnteriores < 0) dividaAnosAnteriores = 0;
+
         System.out.println("\n--------- EXTRATO FINANCEIRO ----------");
         System.out.printf("Propina do Ano %d : %.2f€\n", anoAtual, valorAnual);
-        System.out.printf("Dívida Anos Anteriores: %.2f€\n", dividaAnteriorExibicao);
-        System.out.printf("Total Pago: %.2f€\n", valorPago);
+        System.out.printf("Dívida Anos Anteriores: %.2f€\n", dividaAnosAnteriores);
+        System.out.printf("Total Pago: %.2f€\n", totalPago);
         System.out.printf("Total por Pagar: %.2f€\n", dividaTotal);
         System.out.println("---------------------------------------");
     }

@@ -1,7 +1,6 @@
 import controller.MainController;
 import view.MainView;
 import model.dal.RepositorioDados;
-import model.dal.ImportadorCSV;
 
 /**
  * Classe principal (Entry Point) do Sistema de Gestão Académica ISSMF.
@@ -24,16 +23,14 @@ public class Main {
         MainView view = new MainView();
 
         // 2. Instanciação do MODEL (Camada de Dados - Repositório em Memória)
+        // O construtor do RepositorioDados já carrega o ano e todos os dados
         RepositorioDados repositorio = new RepositorioDados();
 
-        // 3. Carregar o ano atual persistido
-        int ano = ImportadorCSV.importarAno("bd/ano.csv");
-        repositorio.setAnoAtual(ano);
-
-        // 4. Instanciação do CONTROLLER (Liga a View ao Model)
+        // 3. Instanciação do CONTROLLER (Liga a View ao Model)
         MainController mc = new MainController(view, repositorio);
 
-        // 5. Início do ciclo de vida do sistema
+        // 4. Início do ciclo de vida do sistema
         mc.iniciarSistema();
     }
 }
+

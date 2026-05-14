@@ -111,8 +111,23 @@ public class DocenteView {
         System.out.println("Morada de Residência: " + d.getMorada());
         System.out.println("Data de Nascimento  : " + d.getDataNascimento());
         System.out.println("--------------------------------------");
-    }
 
+        // Listar UCs que leciona
+        System.out.println("\n--- UNIDADES CURRICULARES QUE LECIONA ---");
+        if (d.getTotalUcsLecionadas() == 0) {
+            System.out.println("  (Nenhuma UC atribuída)");
+        } else {
+            for (int i = 0; i < d.getTotalUcsLecionadas(); i++) {
+                UnidadeCurricular uc = d.getUcsLecionadas()[i];
+                if (uc != null) {
+                    System.out.printf("  -> [%s] %s (Ano: %d) | %s\n",
+                            uc.getSigla(), uc.getNome(), uc.getAnoCurricular(),
+                            uc.isAtivo() ? "ATIVA" : "INATIVA");
+                }
+            }
+        }
+        System.out.println("--------------------------------------");
+    }
     public void mostrarEstatisticas(String siglaUC, double[] stats) {
         int inscritos = (int) stats[0];
         int avaliados = (int) stats[1];
@@ -214,4 +229,5 @@ public class DocenteView {
     public void msgAvisoSemAlunosInscritos() { System.out.println(">> Aviso: Sem alunos inscritos no presente ano letivo."); }
     public void msgNotificacaoEnviada() { System.out.println(">> Estudante notificado por e-mail automaticamente."); }
     public void msgAnoNaoIniciado() { System.out.println(">> O ano letivo ainda não foi iniciado. Não é possível lançar avaliações."); }
+    public void mostrarErroAtualizacaoPassword() { System.out.println(">> Erro: A password foi alterada no perfil mas não foi possível atualizar o ficheiro de logins."); }
 }

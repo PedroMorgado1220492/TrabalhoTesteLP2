@@ -33,9 +33,9 @@ public class Recibo {
         String dataAtual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
         // 3. Obter próximo número sequencial e registar recibo através das classes DAL
-        int numRecibo = model.dal.ImportadorCSV.obterProximoNumeroRecibo();
+        int numRecibo = model.dal.ReciboDAL.obterProximoNumeroRecibo();
         String numReciboFormatado = String.format("%08d", numRecibo);
-        model.dal.ExportadorCSV.registarRecibo(numReciboFormatado, e.getNumeroMecanografico());
+        model.dal.ReciboDAL.registarRecibo(numReciboFormatado, e.getNumeroMecanografico());
 
         // 4. Caminho do ficheiro .txt
         String caminhoTxt = "recibos/recibo_" + numReciboFormatado + ".txt";
