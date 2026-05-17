@@ -328,8 +328,21 @@ public class Estudante extends Utilizador {
         // Arquivar avaliações existentes antes de reconstruir
         arquivarAvaliacoes();
 
-        // Progressão (regra 60%)
-        if (temAproveitamentoParaProgredir() && anoFrequencia < 3) {
+        // Progressão baseada no curso e histórico (60% de aprovação nas UCs do ano de frequência)
+        int totalUcsAno = 0;
+        int aprovadas = 0;
+        if (curso != null) {
+            for (int i = 0; i < curso.getTotalUCs(); i++) {
+                UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+                if (uc != null && uc.getAnoCurricular() == anoFrequencia) {
+                    totalUcsAno++;
+                    if (jaConcluiuUC(uc.getSigla())) {
+                        aprovadas++;
+                    }
+                }
+            }
+        }
+        if (totalUcsAno > 0 && (double) aprovadas / totalUcsAno >= 0.6 && anoFrequencia < 3) {
             anoFrequencia++;
             anoCurricular = anoFrequencia;
         }

@@ -18,42 +18,27 @@ public class ReciboDAL {
     public static int obterProximoNumeroRecibo() {
         int maxNumero = 0;
         File f = new File(FILE_PATH);
+        if (!f.exists()) return 1;
 
-        // Se o ficheiro não existe, começar do 1
-        if (!f.exists()) {
-            return 1;
-        }
-
-        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
             String linha;
             boolean primeiraLinha = true;
             while ((linha = br.readLine()) != null) {
                 if (linha.trim().isEmpty()) continue;
-
-                // Ignorar cabeçalho
                 if (primeiraLinha) {
                     primeiraLinha = false;
-                    continue;
+                    // Ignorar qualquer linha que não comece com dígito (cabeçalho)
+                    if (!linha.matches("^\\d.*")) continue;
                 }
-
                 String[] p = linha.split(";");
                 if (p.length >= 1) {
                     try {
-                        // O número do recibo está na primeira coluna
                         int num = Integer.parseInt(p[0].trim());
-                        if (num > maxNumero) {
-                            maxNumero = num;
-                        }
-                    } catch (NumberFormatException e) {
-                        // Ignorar linhas com formato inválido
-                    }
+                        if (num > maxNumero) maxNumero = num;
+                    } catch (NumberFormatException e) { }
                 }
             }
-        } catch (IOException e) {
-            System.err.println("Erro ao ler recibos: " + e.getMessage());
-            return 1;
-        }
-
+        } catch (IOException e) { }
         return maxNumero + 1;
     }
 
@@ -70,12 +55,12 @@ public class ReciboDAL {
             parentDir.mkdirs();
         }
 
-        boolean ficheiroExiste = f.exists();
+        boolean ficheiroExiste = f.exists() && f.length() > 0;
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH, true))) {
-            // Se o ficheiro não existe ou está vazio, adicionar cabeçalho
-            if (!ficheiroExiste || f.length() == 0) {
-                pw.println("NUM_RECIBO;NUM_MEC;DATA_EMISSAO");
+            // Escrever cabeçalho apenas se o ficheiro é novo
+            if (!ficheiroExiste) {
+                pw.println("ID_RECIBO;NUM_MECANOGRAFICO;DATA_EMISSAO");
             }
             String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
             pw.println(numRecibo + ";" + numMec + ";" + dataAtual);

@@ -94,11 +94,7 @@ public class AvaliacaoDAL {
      */
     public static void carregarAvaliacoes(List<Estudante> estudantes, List<UnidadeCurricular> ucs, int anoAtual) {
         File f = new File(FILE_PATH);
-        System.out.println("DEBUG: A carregar avaliações de " + f.getAbsolutePath());
-        if (!f.exists()) {
-            System.out.println("DEBUG: Ficheiro não existe!");
-            return;
-        }
+        if (!f.exists()) return;
 
         Map<Integer, Estudante> mapEst = new HashMap<>();
         for (Estudante e : estudantes) mapEst.put(e.getNumeroMecanografico(), e);
@@ -106,40 +102,20 @@ public class AvaliacaoDAL {
         Map<String, UnidadeCurricular> mapUc = new HashMap<>();
         for (UnidadeCurricular uc : ucs) mapUc.put(uc.getSigla().toUpperCase(), uc);
 
-        System.out.println("DEBUG: Mapa estudantes tem " + mapEst.size() + " entradas");
-        System.out.println("DEBUG: Mapa UCs tem " + mapUc.size() + " entradas");
-
         try (BufferedReader br = new BufferedReader(new FileReader(f))) {
             String linha;
             boolean primeiro = true;
-            int linhasLidas = 0;
-            int notasAdicionadas = 0;
             while ((linha = br.readLine()) != null) {
-                if (primeiro) {
-                    System.out.println("DEBUG: Cabeçalho: " + linha);
-                    primeiro = false;
-                    continue;
-                }
+                if (primeiro) { primeiro = false; continue; }
                 if (linha.trim().isEmpty()) continue;
-                linhasLidas++;
                 String[] p = linha.split(";");
-                if (p.length < 5 || !p[0].equals("NOTA")) {
-                    System.out.println("DEBUG: Linha ignorada (não NOTA ou formato inválido): " + linha);
-                    continue;
-                }
+                if (p.length < 5 || !p[0].equals("NOTA")) continue;
                 try {
                     int num = Integer.parseInt(p[1]);
                     String sigla = p[2].toUpperCase();
                     int ano = Integer.parseInt(p[3]);
-                    System.out.println("DEBUG: Processando linha: num=" + num + " sigla=" + sigla + " ano=" + ano);
                     Estudante e = mapEst.get(num);
                     UnidadeCurricular uc = mapUc.get(sigla);
-                    if (e == null) {
-                        System.out.println("DEBUG: Estudante " + num + " não encontrado no mapa!");
-                    }
-                    if (uc == null) {
-                        System.out.println("DEBUG: UC " + sigla + " não encontrada no mapa!");
-                    }
                     if (e == null || uc == null) continue;
 
                     for (int i = 4; i <= 6 && i < p.length; i++) {
@@ -147,19 +123,22 @@ public class AvaliacaoDAL {
                         if (!notaStr.isEmpty()) {
                             notaStr = notaStr.replace(",", ".");
                             double nota = Double.parseDouble(notaStr);
-                            System.out.println("DEBUG: Adicionando nota " + nota + " a " + e.getNome() + " na UC " + sigla);
-                            e.adicionarNota(uc, nota, ano);
-                            notasAdicionadas++;
+                            if (ano < anoAtual) {
+                                // Nota de ano anterior -> arquivar no histórico
+                                Avaliacao hist = e.getAvaliacaoHistorico(uc.getSigla());
+                                if (hist == null) {
+                                    hist = new Avaliacao(e, uc, ano);
+                                    e.adicionarAoHistorico(hist);
+                                }
+                                hist.adicionarResultado(nota);
+                            } else {
+                                // Nota do ano letivo corrente
+                                e.adicionarNota(uc, nota, ano);
+                            }
                         }
                     }
-                } catch (NumberFormatException ex) {
-                    System.out.println("DEBUG: Erro de formato na linha: " + linha + " - " + ex.getMessage());
-                }
+                } catch (NumberFormatException e) { }
             }
-            System.out.println("DEBUG: Total de linhas lidas (excluindo cabeçalho): " + linhasLidas);
-            System.out.println("DEBUG: Total de notas adicionadas: " + notasAdicionadas);
-        } catch (IOException e) {
-            System.out.println("DEBUG: Erro de I/O: " + e.getMessage());
-        }
+        } catch (IOException e) { }
     }
 }

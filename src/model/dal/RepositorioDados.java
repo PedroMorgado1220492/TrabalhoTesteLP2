@@ -64,9 +64,8 @@ public class RepositorioDados {
         this.gestores = gestorDAL.buscarTodos();
         this.ucs = ucDAL.buscarTodos(this.cursos);
 
-        if (this.anoIniciado) {
-            AvaliacaoDAL.carregarAvaliacoes(this.estudantes, this.ucs, this.anoAtual);
-        }
+        // REMOVA O IF - carregar sempre as avaliações
+        AvaliacaoDAL.carregarAvaliacoes(this.estudantes, this.ucs, this.anoAtual);
 
         reconstruirAssociacoes();
     }
@@ -498,10 +497,17 @@ public class RepositorioDados {
             }
         }
 
-        // Forçar a inscrição dos estudantes nas UCs
+        // Forçar a inscrição dos estudantes nas UCs, mas apenas se não tiverem dívidas
+        int anoAtual = this.anoAtual;
         for (Estudante e : estudantes) {
             if (e.isAtivo() && e.getCurso() != null) {
-                e.reconstruirPercurso();
+                // Verificar se o estudante tem dívidas (até ao ano atual)
+                if (!Propina.temDividas(e, anoAtual)) {
+                    e.reconstruirPercurso();
+                } else {
+                    // Se tem dívidas, garantir que não fica inscrito em nenhuma UC
+                    e.getPercursoAcademico().limparInscricoesAtivas();
+                }
             }
         }
 

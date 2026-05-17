@@ -326,6 +326,7 @@ public class EstudanteController {
 
         if (tinhaDividasAnteriores && !agoraTemDividasAnteriores) {
             if (estudanteLogado.reinscrever(anoAtual)) {
+                repositorio.atualizarEstudante(estudanteLogado);
                 view.msgPercursoAtualizado();
                 if (estudanteLogado.getAnoFrequencia() > 1) {
                     view.msgEstudanteProgrediu(estudanteLogado.getAnoFrequencia());
