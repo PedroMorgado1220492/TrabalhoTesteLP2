@@ -501,11 +501,10 @@ public class RepositorioDados {
         int anoAtual = this.anoAtual;
         for (Estudante e : estudantes) {
             if (e.isAtivo() && e.getCurso() != null) {
-                // Verificar se o estudante tem dívidas (até ao ano atual)
-                if (!Propina.temDividas(e, anoAtual)) {
+                // Verificar apenas dívidas de anos anteriores (excluindo o ano atual)
+                if (!Propina.temDividasAteAno(e, anoAtual - 1, anoAtual)) {
                     e.reconstruirPercurso();
                 } else {
-                    // Se tem dívidas, garantir que não fica inscrito em nenhuma UC
                     e.getPercursoAcademico().limparInscricoesAtivas();
                 }
             }

@@ -9,8 +9,8 @@ Situação: ATIVO - ABRE PARA 1º ANO
 Alunos: 1º ano: 5 | 2º ano: 0 | 3º ano: 0
 
 --- Curso LEM - Licenciatura de Engenharia Mecânica ---
-Situação: 1º ano com 2 alunos (mínimo 5) - 1º ANO NÃO ABRE
-Alunos: 1º ano: 0 (removidos) | 2º ano: 0 | 3º ano: 0
+Situação: SEM ALUNOS - NÃO ABRE
+Alunos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
 
 --- Curso LEE - Licenciatura de Engenharia Eletrotécnica ---
 Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO

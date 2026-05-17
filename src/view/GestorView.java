@@ -402,7 +402,7 @@ public class GestorView {
         System.out.println("\n=============== MÉTRICAS INSTITUCIONAIS ===============");
         System.out.printf("Média Global da Instituição : %.2f Valores\n", media);
         System.out.println("Mérito Académico (Melhor Aluno): " + melhor);
-        System.out.println("Aderência (Curso com mais inscritos): " + (cursoTop != null ? cursoTop : "N/D"));
+        System.out.println("Curso com mais inscritos: " + (cursoTop != null ? cursoTop : "N/D"));
         System.out.println("=============================================================");
     }
 

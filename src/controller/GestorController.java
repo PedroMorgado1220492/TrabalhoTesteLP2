@@ -946,6 +946,7 @@ public class GestorController {
                         String data = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                         Propina.adicionarMulta(numMec, anoAtual, multa, data);
                         view.mostrarMultaAplicada(multa);
+                        est.getPercursoAcademico().limparInscricoesAtivas();
                     }
                 }
                 est.setAtivo(!est.isAtivo());
