@@ -354,36 +354,31 @@ public class MainController {
     private void processarTransicaoAno() {
         view.mostrarCabecalhoTransicao();
 
-        int proximoAno = repositorio.getAnoAtual() + 1;
+        int anoAtual = repositorio.getAnoAtual();
+        int proximoAno = anoAtual + 1;
 
-        // Verificar se o ano letivo foi iniciado
         if (!repositorio.isAnoIniciado()) {
             view.msgTransicaoBloqueada();
             return;
         }
 
-        // Verificar se faltam avaliações
         String[] faltas = repositorio.verificarAvaliacoesEmFalta();
         if (faltas.length > 0) {
             view.msgTransicaoBloqueadaPorAvaliacoesEmFalta(faltas);
             return;
         }
 
-        // Fase 1: Auditar se os cursos têm condições de abrir no próximo ano
         validarArranqueDeCursos(proximoAno);
 
         if (view.pedirConfirmacaoAvanco(proximoAno)) {
-            repositorio.avancarAno();
+            // Gerar certificados para alunos que concluíram o ano que termina (antes de avançar)
+            gerarCertificadosConcluintes(anoAtual);
 
-            // Fase 2: Processar formaturas do ano que está a terminar (antes de avançar)
-            gerarCertificadosConcluintes(repositorio.getAnoAtual());  // usa o ano atual
-
-            if (view.pedirConfirmacaoAvanco(proximoAno)) {
-                repositorio.avancarAno();
-                view.msgSucessoAvancoAno(repositorio.getAnoAtual());
-            }
+            repositorio.avancarAno();   // apenas uma chamada
+            view.msgSucessoAvancoAno(repositorio.getAnoAtual());
+        } else {
+            view.msgCancelamentoAvancoAno(anoAtual);
         }
-
     }
 
     /**

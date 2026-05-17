@@ -5,9 +5,9 @@ Ano letivo: 2027
 
 
 --- Curso LEC - Licenciatura em Engenharia Civil ---
-Situação: 1º ano com 1 alunos (mínimo 5) - 1º ANO NÃO ABRE
+Situação: 1º ano com 2 alunos (mínimo 5) - 1º ANO NÃO ABRE
 Nota: Alunos do 2º e 3º ano mantêm-se inscritos.
-Alunos: 1º ano: 0 (removidos) | 2º ano: 4 | 3º ano: 0
+Alunos: 1º ano: 0 (removidos) | 2º ano: 3 | 3º ano: 0
 
 --- Curso LEM - Licenciatura de Engenharia Mecânica ---
 Situação: SEM ALUNOS - NÃO ABRE

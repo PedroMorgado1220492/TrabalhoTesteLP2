@@ -96,7 +96,7 @@ public class Relatorio {
                 for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
                     Estudante e = repositorio.getEstudantes()[j];
                     if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoFrequencia() == 1) {
-                        e.setAtivo(false);
+                        // e.setAtivo(false);
                     }
                 }
             } else if (alunosAno1 == 0 && (alunosAno2 > 0 || alunosAno3 > 0)) {
