@@ -26,19 +26,21 @@ public class LoginDAL {
             parentDir.mkdirs();
         }
 
-        boolean ficheiroExiste = f.exists();
+        boolean ficheiroExiste = f.exists() && f.length() > 0;
 
         try (FileWriter fw = new FileWriter(FILE_PATH, true);
-             BufferedWriter bw = new BufferedWriter(fw);
-             PrintWriter pw = new PrintWriter(bw)) {
+             PrintWriter pw = new PrintWriter(fw)) {
 
             // Se o ficheiro não existe ou está vazio, adicionar cabeçalho
-            if (!ficheiroExiste || f.length() == 0) {
-                pw.print("TIPO;EMAIL;PASSWORD\r\n");
+            if (!ficheiroExiste) {
+                pw.println("TIPO;EMAIL;PASSWORD");  // println adiciona quebra de linha automática
             }
-            pw.print(tipo.toUpperCase() + ";" + email + ";" + passwordEncriptada + "\r\n");
+
+            // Adicionar o novo registo
+            pw.println(tipo.toUpperCase() + ";" + email + ";" + passwordEncriptada);
             pw.flush();
             return true;
+
         } catch (IOException e) {
             System.err.println("Erro ao registar login: " + e.getMessage());
             e.printStackTrace();

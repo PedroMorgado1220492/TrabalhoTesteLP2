@@ -305,18 +305,18 @@ public class EstudanteController {
         String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, totalDevido, novaDividaTotal);
 
         // Anular Email Recibo
-        if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
-            boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
-                    estudanteLogado.getNome(),
-                    caminhoRecibo);
-            if (emailEnviado) {
-                view.msgNotificacaoEnviada();
-            } else {
+      //  if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
+          //  boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
+                 //   estudanteLogado.getNome(),
+                 //   caminhoRecibo);
+       //     if (emailEnviado) {
+          //      view.msgNotificacaoEnviada();
+       //     } else {
                 view.msgFalhaEnvioEmail();
-            }
-        } else {
-            view.msgReciboNaoEnviado();
-        }
+      //      }
+    //    } else {
+    //        view.msgReciboNaoEnviado();
+    //    }
         // Até aqui.
 
         view.msgSucesso();

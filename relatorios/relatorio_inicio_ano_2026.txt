@@ -6,7 +6,7 @@ Ano letivo: 2026
 
 --- Curso LEC - Licenciatura em Engenharia Civil ---
 Situação: ATIVO - ABRE PARA 1º ANO
-Alunos: 1º ano: 6 | 2º ano: 0 | 3º ano: 0
+Alunos: 1º ano: 5 | 2º ano: 0 | 3º ano: 0
 
 --- Curso LEM - Licenciatura de Engenharia Mecânica ---
 Situação: 1º ano com 2 alunos (mínimo 5) - 1º ANO NÃO ABRE

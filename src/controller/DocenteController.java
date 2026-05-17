@@ -209,6 +209,13 @@ public class DocenteController {
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        // Verificar se a UC está ativa
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
+
         view.mostrarCabecalhoPauta(uc.getNome());
 
         // Delegação de pesquisa ao Repositório
@@ -251,6 +258,12 @@ public class DocenteController {
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
+
         Estudante[] alunos = repositorio.obterEstudantesPorUC(uc.getSigla());
 
         if (alunos.length == 0) {
@@ -329,11 +342,14 @@ public class DocenteController {
         if (idx < 0 || idx >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idx];
-        Estudante[] alunos = repositorio.obterEstudantesPorUC(uc.getSigla());
-        System.out.println("DEBUG - UC: " + uc.getSigla() + " - Alunos inscritos: " + alunos.length);
-        for (Estudante e : alunos) {
-            System.out.println("   - Aluno: " + e.getNome() + " - Ativo: " + e.isAtivo());
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
         }
+
+        Estudante[] alunos = repositorio.obterEstudantesPorUC(uc.getSigla());
+
 
         if (alunos.length == 0) {
             view.msgAvisoTurmaVazia();
@@ -419,9 +435,20 @@ public class DocenteController {
             view.msgAvisoSemUCs();
             return;
         }
+
+        if (repositorio.isAnoIniciado()) {
+            view.msgAlteracaoMomentosBloqueada();
+            return;
+        }
+
         int idxUC = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
 
         // Verificar estado atual
         Integer numAtual = uc.getNumAvaliacoes();
@@ -460,18 +487,18 @@ public class DocenteController {
         for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
             UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
             if (uc != null) {
+                String estado = uc.isAtivo() ? "ATIVA" : "INATIVA";
                 Integer numAv = uc.getNumAvaliacoes();
                 if (numAv != null) {
                     temAlgumaDefinida = true;
                 }
-                view.mostrarUcComMomentosAvaliacao(uc.getSigla(), uc.getNome(), numAv);
+                view.mostrarUcComMomentosAvaliacao(uc.getSigla(), uc.getNome(), numAv, estado);
             }
         }
 
         if (!temAlgumaDefinida) {
             view.msgNenhumMomentoDefinido();
         }
-        // Sem pausa - volta automaticamente ao menu
     }
 
 
@@ -493,6 +520,11 @@ public class DocenteController {
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
 
         // Delega o cálculo matemático pesado à classe Utilitária
         double[] stats = utils.Estatisticas.calcularEstatisticasUC(uc, repositorio);

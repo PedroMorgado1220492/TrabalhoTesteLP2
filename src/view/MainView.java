@@ -88,7 +88,7 @@ public class MainView {
     // 3. FORMULÁRIOS DE REGISTO E REVISÃO
     // =========================================================
 
-    public String pedirNome() { return utils.Consola.lerString("Nome e Sobrenome: "); }
+    public String pedirNome() { return utils.Consola.lerString("Nome Completo: "); }
     public String pedirNif() { return utils.Consola.lerString("NIF (9 dígitos): "); }
 
     public String pedirNifRecuperacao() throws utils.CancelamentoException {

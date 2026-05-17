@@ -25,12 +25,22 @@ public class DepartamentoDAL {
         if (!f.exists()) return lista;
 
         try (BufferedReader br = new BufferedReader(new FileReader(f))) {
-            br.readLine(); // cabeçalho
+            br.readLine(); // cabeçalho (agora tem 4 colunas)
             String linha;
             while ((linha = br.readLine()) != null) {
                 String[] p = linha.split(";");
                 if (p.length < 3) continue;
-                lista.add(new Departamento(p[1], p[2]));
+
+                Departamento dep = new Departamento(p[1], p[2]);
+
+                // Ler o estado ativo se existir (para compatibilidade com ficheiros antigos)
+                if (p.length >= 4) {
+                    dep.setAtivo(Boolean.parseBoolean(p[3]));
+                } else {
+                    dep.setAtivo(true); // valor default para backwards compatibility
+                }
+
+                lista.add(dep);
             }
         } catch (IOException e) { }
         return lista;
@@ -61,9 +71,9 @@ public class DepartamentoDAL {
 
     private void salvarTodos(List<Departamento> lista) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(FILE_PATH))) {
-            pw.println("TIPO;SIGLA;NOME");
+            pw.println("TIPO;SIGLA;NOME;ATIVO");  // Adicionar coluna ATIVO
             for (Departamento d : lista) {
-                pw.printf("DEPARTAMENTO;%s;%s\n", d.getSigla(), d.getNome());
+                pw.printf("DEPARTAMENTO;%s;%s;%b\n", d.getSigla(), d.getNome(), d.isAtivo());
             }
         } catch (IOException e) { }
     }

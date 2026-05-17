@@ -500,7 +500,22 @@ public class GestorController {
 
         if (view.confirmarDados()) {
             Departamento departamentoAntigo = curso.getDepartamento();
+
+            // Remover o curso do departamento antigo (se o departamento tiver esta funcionalidade)
+            if (departamentoAntigo != null) {
+                // Nota: O modelo Departamento não tem método removerCurso,
+                // mas podemos ignorar porque a relação principal é do Curso para o Departamento
+            }
+
+            // Alterar o departamento do curso
             curso.setDepartamento(novoDepartamento);
+
+            // Adicionar o curso ao novo departamento (se necessário)
+            // Nota: O modelo Departamento tem método adicionarCurso, mas pode já estar lá
+
+            // 🔧 IMPORTANTE: Persistir a alteração no CSV
+            repositorio.atualizarCurso(curso);
+
             view.mostrarSucessoAlteracaoDepartamentoCurso(curso.getNome(), novoDepartamento.getNome());
         } else {
             view.mostrarAvisoSemAlteracao();
@@ -658,7 +673,6 @@ public class GestorController {
         for (int i = 0; i < curso.getTotalUCs(); i++) {
             UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
             if (uc != null) {
-                System.out.println("DEBUG - UC: " + uc.getSigla());
             }
         }
 
@@ -691,12 +705,14 @@ public class GestorController {
             String novoNomeUc = view.pedirNovoNome(ucEditar.getNome());
             if (!novoNomeUc.trim().isEmpty()) {
                 ucEditar.setNome(novoNomeUc);
+                repositorio.atualizarUnidadeCurricular(ucEditar);
             }
 
             String novoAnoStr = view.pedirNovoAnoCurricular(ucEditar.getAnoCurricular());
             if (!novoAnoStr.trim().isEmpty()) {
                 try {
                     ucEditar.setAnoCurricular(Integer.parseInt(novoAnoStr));
+                    repositorio.atualizarUnidadeCurricular(ucEditar);
                 } catch (NumberFormatException e) {
                     view.mostrarErroAnoNumericoMantido();
                 }
@@ -853,6 +869,7 @@ public class GestorController {
             if (e != null && e.getCurso().getSigla().equals(curso.getSigla()) && !e.isAtivo()) {
                 e.setAtivo(true);
                 e.matricularNasUcsIniciais();
+                repositorio.atualizarEstudante(e);
             }
         }
     }

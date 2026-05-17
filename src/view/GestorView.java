@@ -522,7 +522,7 @@ public class GestorView {
     public void msgErroDataFormato() { System.out.println(">> Erro: Formato inválido. Use DD-MM-AAAA."); }
     public void msgErroDataInexistente() { System.out.println(">> Erro: A data introduzida não existe no calendário."); }
     public void msgErroDataFutura() { System.out.println(">> Erro: A data de nascimento não pode ser futura."); }
-    public void msgErroIdadeMinima() { System.out.println(">> Erro: O estudante deve ter pelo menos 16 anos."); }
+    public void msgErroIdadeMinima() { System.out.println(">> Erro: O utilizador deve ter pelo menos 16 anos."); }
     public void mostrarErroNumMecNumerico() { System.out.println(">> Erro: O número mecanográfico é estritamente numérico."); }
     public void mostrarSiglaGerada(String s) { System.out.println(">> Atribuição: Sigla institucional gerada: " + s); }
     public void mostrarErroEmailInvalido() { System.out.println(">> Erro: O email pessoal introduzido é inválido.'."); }
@@ -587,4 +587,5 @@ public class GestorView {
     public void mostrarErroDepartamentoInativo() { System.out.println("Erro: Departamento de destino esta inativo."); }
     public void mostrarSucessoAtualizacaoDocente() { System.out.println(">> Docente responsável atualizado com sucesso!"); }
     public void mostrarErroAtualizacaoPassword() { System.out.println(">> Erro: A password foi alterada no perfil mas não foi possível atualizar o ficheiro de logins."); }
+
 }

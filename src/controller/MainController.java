@@ -226,7 +226,7 @@ public class MainController {
             if (e != null && e.getCurso().getSigla().equals(curso.getSigla()) && !e.isAtivo()) {
                 e.setAtivo(true);
                 e.matricularNasUcsIniciais();
-                // Opcional: Enviar email extra a avisar que a turma abriu
+                repositorio.atualizarEstudante(e);
             }
         }
     }

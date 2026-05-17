@@ -73,17 +73,44 @@ public class Validador {
     }
 
     /**
-     * Verifica se a data existe no calendário (considera anos bissextos).
+     * Verifica se a data existe no calendário (considera anos bissextos e meses com 30/31 dias).
      * @param data String da data no formato DD-MM-AAAA.
-     * @return true se a data é real (ex: 29-02-2000), false caso contrário.
+     * @return true se a data é real (ex: 29-02-2000), false caso contrário (ex: 31-06-1996).
      */
     public static boolean isDataReal(String data) {
         if (!isDataFormatoValido(data)) return false;
+
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            LocalDate.parse(data, formatter);
-            return true;
-        } catch (DateTimeParseException e) {
+            String[] partes = data.split("-");
+            int dia = Integer.parseInt(partes[0]);
+            int mes = Integer.parseInt(partes[1]);
+            int ano = Integer.parseInt(partes[2]);
+
+            // Verificar mês válido (1-12)
+            if (mes < 1 || mes > 12) {
+                return false;
+            }
+
+            // Dias por mês (considerando fevereiro com 28/29 dias)
+            int diasNoMes;
+            switch (mes) {
+                case 2: // Fevereiro
+                    // Verificar ano bissexto
+                    boolean anoBissexto = (ano % 400 == 0) || (ano % 4 == 0 && ano % 100 != 0);
+                    diasNoMes = anoBissexto ? 29 : 28;
+                    break;
+                case 4: case 6: case 9: case 11: // Abril, Junho, Setembro, Novembro
+                    diasNoMes = 30;
+                    break;
+                default: // Janeiro, Março, Maio, Julho, Agosto, Outubro, Dezembro
+                    diasNoMes = 31;
+                    break;
+            }
+
+            // Verificar se o dia está dentro do limite do mês
+            return dia >= 1 && dia <= diasNoMes;
+
+        } catch (NumberFormatException e) {
             return false;
         }
     }
@@ -146,9 +173,9 @@ public class Validador {
     }
 
     /**
-     * Valida se a data de nascimento é válida (não futura e idade >= 16)
-     * @param data A data de nascimento em formato String
-     * @return 0 - válida, 1 - data futura, 2 - idade inferior a 16 anos
+     * Valida se a data de nascimento é válida (não futura, idade >= 16 e data real)
+     * @param data A data de nascimento em formato String (DD-MM-AAAA)
+     * @return 0 - válida, 1 - data futura ou inválida, 2 - idade inferior a 16 anos
      */
     public static int validarDataNascimentoComErro(String data) {
         if (data == null) return 1;
@@ -160,6 +187,12 @@ public class Validador {
 
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+            // Verificar se a data é REAL (31 de Junho, 30 de Fevereiro, etc.)
+            if (!isDataReal(data)) {
+                return 1; // data inexistente
+            }
+
             LocalDate dataNascimento = LocalDate.parse(data, formatter);
 
             // Verificar se é data futura
