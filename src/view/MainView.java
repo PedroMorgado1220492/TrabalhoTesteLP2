@@ -224,4 +224,5 @@ public class MainView {
     public void msgInicioAnoSucesso(int ano) { System.out.println(">> Ano letivo " + ano + " iniciado com sucesso!"); }
     public void msgRelatorioGerado(String nomeFicheiro) { System.out.println(">> Relatório gerado: " + nomeFicheiro); }
     public void msgErroRelatorio() { System.out.println(">> Erro ao salvar o relatório."); }
+    public void msgCertificadoNaoEmitidoPorDividas(String nomeAluno) { System.out.println("Aluno " + nomeAluno + " concluiu o curso mas tem dívidas. Certificado não emitido."); }
 }

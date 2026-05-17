@@ -1,6 +1,6 @@
 TIPO;NUM_MEC;EMAIL;NOME;NIF;MORADA;DATANASCIMENTO;ANO_MATRICULA;CURSO;EMAIL_PESSOAL;ATIVO;ANO_FREQUENCIA
-ESTUDANTE;20260001;20260001@issmf.ipp.pt;Afonso Henriques Moreira;258963147;Guimarães;25-07-2003;2026;LEC;1220492@isep.ipp.pt;true;2
-ESTUDANTE;20260002;20260002@issmf.ipp.pt;Beatriz Sofia Antunes;233654789;Coimbra;12-03-2004;2026;LEC;1220492@isep.ipp.pt;true;2
-ESTUDANTE;20260003;20260003@issmf.ipp.pt;Daniela Filipa Pires;241536789;Viseu;05-11-2002;2026;LEC;1220492@isep.ipp.pt;true;1
-ESTUDANTE;20260004;20260004@issmf.ipp.pt;Eduardo Jorge Mendes;259874123;Braga;18-01-2005;2026;LEC;1220492@isep.ipp.pt;true;2
-ESTUDANTE;20260005;20260005@issmf.ipp.pt;Frederico José Santos;210456789;Lisboa;30-09-2001;2026;LEC;1220492@isep.ipp.pt;true;2
+ESTUDANTE;20260001;20260001@issmf.ipp.pt;Afonso Henriques Moreira;258963147;Guimarães;25-07-2003;2026;LEC;1220492@isep.ipp.pt;true;3
+ESTUDANTE;20260002;20260002@issmf.ipp.pt;Beatriz Sofia Antunes;233654789;Coimbra;12-03-2004;2026;LEC;1220492@isep.ipp.pt;true;3
+ESTUDANTE;20260003;20260003@issmf.ipp.pt;Daniela Filipa Pires;241536789;Viseu;05-11-2002;2026;LEC;1220492@isep.ipp.pt;true;2
+ESTUDANTE;20260004;20260004@issmf.ipp.pt;Eduardo Jorge Mendes;259874123;Braga;18-01-2005;2026;LEC;1220492@isep.ipp.pt;true;3
+ESTUDANTE;20260005;20260005@issmf.ipp.pt;Frederico José Santos;210456789;Lisboa;30-09-2001;2026;LEC;1220492@isep.ipp.pt;true;3

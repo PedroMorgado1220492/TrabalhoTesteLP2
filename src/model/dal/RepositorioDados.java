@@ -595,15 +595,12 @@ public class RepositorioDados {
      *         Cada string tem o formato: "numMec;nome;siglaUC;nomeUC;numExistente;numNecessario"
      */
     public String[] verificarAvaliacoesEmFalta() {
-        // Primeira passagem: contar quantas faltas existem
         int countFaltas = 0;
         for (Estudante e : estudantes) {
-            if (e != null && e.isAtivo() && e.getCurso() != null) {
-                // Percorrer todas as UCs do curso do aluno no seu ano de frequência
-                Curso curso = e.getCurso();
-                for (int i = 0; i < curso.getTotalUCs(); i++) {
-                    UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-                    if (uc != null && uc.getAnoCurricular() == e.getAnoFrequencia() && uc.getNumAvaliacoes() != null) {
+            if (e != null && e.isAtivo() && e.getPercursoAcademico() != null) {
+                for (int i = 0; i < e.getPercursoAcademico().getTotalUcsInscrito(); i++) {
+                    UnidadeCurricular uc = e.getPercursoAcademico().getUcsInscrito()[i];
+                    if (uc != null && uc.getNumAvaliacoes() != null) {
                         int numNecessario = uc.getNumAvaliacoes();
                         Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
                         int numExistente = (av != null) ? av.getTotalAvaliacoesLancadas() : 0;
@@ -615,19 +612,15 @@ public class RepositorioDados {
             }
         }
 
-        if (countFaltas == 0) {
-            return new String[0];
-        }
+        if (countFaltas == 0) return new String[0];
 
-        // Segunda passagem: preencher o array
         String[] faltas = new String[countFaltas];
         int idx = 0;
         for (Estudante e : estudantes) {
-            if (e != null && e.isAtivo() && e.getCurso() != null) {
-                Curso curso = e.getCurso();
-                for (int i = 0; i < curso.getTotalUCs(); i++) {
-                    UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-                    if (uc != null && uc.getAnoCurricular() == e.getAnoFrequencia() && uc.getNumAvaliacoes() != null) {
+            if (e != null && e.isAtivo() && e.getPercursoAcademico() != null) {
+                for (int i = 0; i < e.getPercursoAcademico().getTotalUcsInscrito(); i++) {
+                    UnidadeCurricular uc = e.getPercursoAcademico().getUcsInscrito()[i];
+                    if (uc != null && uc.getNumAvaliacoes() != null) {
                         int numNecessario = uc.getNumAvaliacoes();
                         Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
                         int numExistente = (av != null) ? av.getTotalAvaliacoesLancadas() : 0;
@@ -640,7 +633,6 @@ public class RepositorioDados {
                 }
             }
         }
-
         return faltas;
     }
 

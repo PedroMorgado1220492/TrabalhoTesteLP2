@@ -80,25 +80,26 @@ public class Estudante extends Utilizador {
     public void reconstruirPercurso() {
         if (curso == null) return;
 
+        if (concluiuCurso()) {
+            percursoAcademico.limparInscricoesAtivas();
+            return;
+        }
+
         percursoAcademico.limparInscricoesAtivas();
 
-        // Inscrever em UCs do ano de frequência que não estejam concluídas
+        // UCs do ano de frequência
         for (int i = 0; i < curso.getTotalUCs(); i++) {
             UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-            if (uc != null && uc.getAnoCurricular() == anoFrequencia) {
-                if (!jaConcluiuUC(uc.getSigla())) {
-                    percursoAcademico.inscreverEmUc(uc);
-                }
+            if (uc != null && uc.getAnoCurricular() == anoFrequencia && !jaConcluiuUC(uc.getSigla())) {
+                percursoAcademico.inscreverEmUc(uc);
             }
         }
 
-        // Inscrever em UCs de anos anteriores que NÃO foram concluídas (reprovadas ou não feitas)
+        // UCs de anos anteriores não concluídas
         for (int i = 0; i < curso.getTotalUCs(); i++) {
             UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
-            if (uc != null && uc.getAnoCurricular() < anoFrequencia) {
-                if (!jaConcluiuUC(uc.getSigla())) {
-                    percursoAcademico.inscreverEmUc(uc);
-                }
+            if (uc != null && uc.getAnoCurricular() < anoFrequencia && !jaConcluiuUC(uc.getSigla())) {
+                percursoAcademico.inscreverEmUc(uc);
             }
         }
     }
@@ -274,22 +275,31 @@ public class Estudante extends Utilizador {
         if (totalHistorico < historicoAvaliacoes.length) {
             historicoAvaliacoes[totalHistorico] = av;
             totalHistorico++;
+
         }
     }
 
     public Avaliacao getAvaliacaoHistorico(String siglaUC) {
+        Avaliacao melhor = null;
         for (int i = 0; i < this.totalHistorico; i++) {
-            if (this.historicoAvaliacoes[i] != null &&
-                    this.historicoAvaliacoes[i].getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
-                return this.historicoAvaliacoes[i];
+            Avaliacao av = this.historicoAvaliacoes[i];
+            if (av != null && av.getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC)) {
+                if (melhor == null || av.calcularMedia() > melhor.calcularMedia()) {
+                    melhor = av;
+                }
             }
         }
-        return null;
+        return melhor;
     }
 
     public boolean jaConcluiuUC(String siglaUC) {
-        Avaliacao av = getAvaliacaoHistorico(siglaUC);
-        return av != null && av.calcularMedia() >= 9.5;
+        for (int i = 0; i < totalHistorico; i++) {
+            Avaliacao av = historicoAvaliacoes[i];
+            if (av != null && av.getUnidadeCurricular().getSigla().equalsIgnoreCase(siglaUC) && av.calcularMedia() >= 9.5) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public double calcularMediaFinal() {

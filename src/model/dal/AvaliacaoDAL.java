@@ -124,15 +124,10 @@ public class AvaliacaoDAL {
                             notaStr = notaStr.replace(",", ".");
                             double nota = Double.parseDouble(notaStr);
                             if (ano < anoAtual) {
-                                // Nota de ano anterior -> arquivar no histórico
-                                Avaliacao hist = e.getAvaliacaoHistorico(uc.getSigla());
-                                if (hist == null) {
-                                    hist = new Avaliacao(e, uc, ano);
-                                    e.adicionarAoHistorico(hist);
-                                }
+                                Avaliacao hist = new Avaliacao(e, uc, ano);
                                 hist.adicionarResultado(nota);
+                                e.adicionarAoHistorico(hist);
                             } else {
-                                // Nota do ano letivo corrente
                                 e.adicionarNota(uc, nota, ano);
                             }
                         }

@@ -375,12 +375,13 @@ public class MainController {
         if (view.pedirConfirmacaoAvanco(proximoAno)) {
             repositorio.avancarAno();
 
-            // Fase 2: Processar formaturas do ano que está a terminar
-            gerarCertificadosConcluintes(proximoAno - 1);
+            // Fase 2: Processar formaturas do ano que está a terminar (antes de avançar)
+            gerarCertificadosConcluintes(repositorio.getAnoAtual());  // usa o ano atual
 
-            view.msgSucessoAvancoAno(repositorio.getAnoAtual());
-        } else {
-            view.msgCancelamentoAvancoAno(repositorio.getAnoAtual());
+            if (view.pedirConfirmacaoAvanco(proximoAno)) {
+                repositorio.avancarAno();
+                view.msgSucessoAvancoAno(repositorio.getAnoAtual());
+            }
         }
 
     }
@@ -422,18 +423,17 @@ public class MainController {
     private void gerarCertificadosConcluintes(int ano) {
         for (int i = 0; i < repositorio.getTotalEstudantes(); i++) {
             Estudante e = repositorio.getEstudantes()[i];
-
-            if (e != null && e.getCurso() != null && e.isAtivo()) {
-
-                // Delegação de regras académicas ao Model Estudante
-                if (e.concluiuCurso()) {
-                    String caminhoCertificado = model.bll.Certificado.gerarCertificado(e, ano);
-
+            if (e != null && e.getCurso() != null && e.isAtivo() && e.concluiuCurso()) {
+                // Verificar se tem dívidas até ao ano atual (ano de conclusão)
+                if (!Propina.temDividasAteAno(e, ano, ano)) {
+                    String caminhoCertificado = Certificado.gerarCertificado(e, ano);
                     if (caminhoCertificado != null && e.getEmailPessoal() != null && !e.getEmailPessoal().isEmpty()) {
-                        utils.ServicoEmail.enviarEmailCertificado(e.getEmailPessoal(), e.getNome(), caminhoCertificado);
+                        ServicoEmail.enviarEmailCertificado(e.getEmailPessoal(), e.getNome(), caminhoCertificado);
                     }
-                    // A conta é desativada pois o aluno tornou-se diplomado/alumnni
                     e.setAtivo(false);
+                    repositorio.atualizarEstudante(e);
+                } else {
+                    view.msgCertificadoNaoEmitidoPorDividas(e.getNome());
                 }
             }
         }
