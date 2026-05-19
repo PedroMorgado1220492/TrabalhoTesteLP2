@@ -1,0 +1,4 @@
+TIPO;SIGLA;NOME;ATIVO
+DEPARTAMENTO;DEN;Departamento de Engenharia;true
+DEPARTAMENTO;DCI;Departamento de Ciencias;true
+DEPARTAMENTO;DCS;Departamento de Ciencias Sociais;false

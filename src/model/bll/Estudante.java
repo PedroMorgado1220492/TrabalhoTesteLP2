@@ -1,6 +1,7 @@
 package model.bll;
 
 import model.dal.PrecoCursoDAL;
+import utils.ServicoEmail;
 
 /**
  * Representa um Estudante matriculado na instituição.
@@ -179,6 +180,16 @@ public class Estudante extends Utilizador {
                 }
             }
         }
+    }
+
+    public boolean gerarCertificado(int anoConclusao, String emailDestino) {
+        String caminho = Certificado.gerarCertificado(this, anoConclusao);
+        if (caminho != null) {
+            ServicoEmail.enviarEmailCertificado(emailDestino, this.getNome(), caminho);
+            this.setAtivo(false);
+            return true;
+        }
+        return false;
     }
 
     // =========================================================

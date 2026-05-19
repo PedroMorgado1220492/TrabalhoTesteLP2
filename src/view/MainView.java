@@ -225,4 +225,13 @@ public class MainView {
     public void msgRelatorioGerado(String nomeFicheiro) { System.out.println(">> Relatório gerado: " + nomeFicheiro); }
     public void msgErroRelatorio() { System.out.println(">> Erro ao salvar o relatório."); }
     public void msgCertificadoNaoEmitidoPorDividas(String nomeAluno) { System.out.println("Aluno " + nomeAluno + " concluiu o curso mas tem dívidas. Certificado não emitido."); }
+    public void msgFaltaPrecosParaTransicao(int ano, String[] cursosFaltantes) {
+        System.out.println("\n>> NÃO É POSSÍVEL TRANSITAR PARA O ANO " + ano + ".");
+        System.out.println(">> Os seguintes cursos ativos não têm preço definido para " + ano + ":");
+        for (String sigla : cursosFaltantes) {
+            System.out.println("   - " + sigla);
+        }
+        System.out.println(">> Utilize a opção 'Atualizar Preço do Curso' (Gestor) para definir os preços em falta.");
+    }
+    public void msgTodosPrecosDefinidosParaTransicao(int ano) { System.out.println(">> Todos os cursos ativos têm preço definido para " + ano + ". Pode avançar."); }
 }

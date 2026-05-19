@@ -68,6 +68,11 @@ public class EstudanteController {
                     case 5:
                         if (desativarConta()) running = false;
                         break;
+                    case 6:
+                        if (pedirCertificado()) {
+                            running = false;
+                        }
+                        break;
                     case 0:
                         view.msgSaida();
                         running = false;
@@ -401,5 +406,46 @@ public class EstudanteController {
             return true;
         }
         return false;
+    }
+
+    // =========================================================
+    // 6. CERTIFICADO
+    // =========================================================
+
+
+    private boolean pedirCertificado() {
+        view.msgCertificadoApenasAnoSeguinte();
+
+        int anoAtual = repositorio.getAnoAtual();
+        int anoConclusao = anoAtual - 1;
+        String email = estudanteLogado.getEmailPessoal();
+
+        if (email == null || email.isEmpty()) {
+            view.msgErroSemEmailPessoal();
+            return false;
+        }
+
+        // 1. Verificar dívidas (até ao ano de conclusão)
+        if (Propina.temDividasAteAno(estudanteLogado, anoConclusao, anoAtual)) {
+            view.msgTemDividasParaCertificado();
+            return false;
+        }
+
+        // 2. Verificar se todas as UCs estão concluídas (histórico)
+        if (!estudanteLogado.concluiuCurso()) {
+            view.msgNaoConcluiuCurso();
+            return false;
+        }
+
+        // 3. Gerar certificado (método do model, sem validações)
+        boolean sucesso = estudanteLogado.gerarCertificado(anoConclusao, email);
+        if (!sucesso) {
+            view.msgErroGerarCertificado();
+            return false;
+        }
+
+        repositorio.atualizarEstudante(estudanteLogado);
+        view.msgCertificadoEmitido();
+        return true; // indica logout
     }
 }

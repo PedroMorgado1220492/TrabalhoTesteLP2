@@ -295,7 +295,7 @@ public class GestorController {
             view.mostrarOpcaoInvalida();
         }
 
-        double precoInicial = view.pedirNovoPreco(1000.0);
+        double precoInicial = view.pedirPrecoInicialCurso();
         if (precoInicial <= 0) {
             view.mostrarErroPrecoInvalido();
             return;
@@ -381,6 +381,14 @@ public class GestorController {
         if (curso.isAtivo() && !curso.podeSerDesativado(repositorio.getEstudantes(), repositorio.getTotalEstudantes())) {
             view.msgAvisoCursoComAlunosAtivos(curso.getSigla());
             return;
+        }
+
+        if (!curso.isAtivo()) { // vai ser ativado
+            double precoAtual = PrecoCursoDAL.obterPrecoCurso(curso.getSigla(), repositorio.getAnoAtual());
+            if (precoAtual == 1000.0) {
+                double novoPreco = view.pedirPrecoCursoParaAno(curso.getSigla(), repositorio.getAnoAtual());
+                PrecoCursoDAL.adicionarOuAtualizarPreco(curso.getSigla(), repositorio.getAnoAtual(), novoPreco);
+            }
         }
 
         curso.setAtivo(!curso.isAtivo());

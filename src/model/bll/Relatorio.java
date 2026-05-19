@@ -1,5 +1,6 @@
 package model.bll;
 
+import model.dal.PrecoCursoDAL;
 import model.dal.RepositorioDados;
 import java.io.File;
 import java.io.FileWriter;
@@ -76,13 +77,7 @@ public class Relatorio {
                 relatorio.append("Alunos removidos: 1º ano: ").append(alunosAno1)
                         .append(" | 2º ano: ").append(alunosAno2)
                         .append(" | 3º ano: ").append(alunosAno3).append("\n");
-                // Remover alunos do curso
-                for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
-                    Estudante e = repositorio.getEstudantes()[j];
-                    if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla())) {
-                        e.setAtivo(false);
-                    }
-                }
+
             } else if (alunosAno1 > 0 && alunosAno1 < 5) {
                 // Curso não abre para 1º ano - remover alunos do 1º ano
                 relatorio.append("\n--- Curso ").append(curso.getSigla()).append(" - ").append(curso.getNome()).append(" ---\n");
@@ -92,13 +87,7 @@ public class Relatorio {
                 }
                 relatorio.append("Alunos: 1º ano: 0 (removidos) | 2º ano: ").append(alunosAno2)
                         .append(" | 3º ano: ").append(alunosAno3).append("\n");
-                // Remover alunos do 1º ano
-                for (int j = 0; j < repositorio.getTotalEstudantes(); j++) {
-                    Estudante e = repositorio.getEstudantes()[j];
-                    if (e != null && e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla()) && e.getAnoFrequencia() == 1) {
-                        // e.setAtivo(false);
-                    }
-                }
+
             } else if (alunosAno1 == 0 && (alunosAno2 > 0 || alunosAno3 > 0)) {
                 relatorio.append("\n--- Curso ").append(curso.getSigla()).append(" - ").append(curso.getNome()).append(" ---\n");
                 relatorio.append("Situação: NÃO ACEITA NOVOS ALUNOS NO 1º ANO\n");
@@ -151,6 +140,7 @@ public class Relatorio {
         }
 
         return new ResultadoValidacao(todasUcsDefinidas, algumCursoDesativado, relatorio.toString());
+
     }
 
     /**

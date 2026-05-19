@@ -4,7 +4,7 @@
 O aluno Beatriz Sofia Antunes,
 numero mecanografico 20260002,
 morada Coimbra,
-na data 17/05/2026,
+na data 19/05/2026,
 pagou 1000,00 euros de um total de 1000,00 euros,
 do curso de Licenciatura em Engenharia Civil.
 

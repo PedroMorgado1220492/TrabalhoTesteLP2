@@ -693,6 +693,49 @@ public class RepositorioDados {
     }
 
     // =========================================================
+    // INÍCIO DE ANO LETIVO
+    // =========================================================
+
+    /**
+     * Desativa todos os cursos que possuem estrutura curricular inválida,
+     * bem como todos os estudantes associados a esses cursos.
+     * <p>
+     * Um curso é considerado com estrutura inválida se não tiver pelo menos uma
+     * Unidade Curricular ativa em cada um dos três anos curriculares (1º, 2º e 3º).
+     * </p>
+     * <p>
+     * Para cada curso inválido:
+     * <ul>
+     *   <li>O estado do curso é alterado para <code>false</code> (inativo).</li>
+     *   <li>Todos os estudantes cujo curso corresponda a essa sigla são também
+     *       desativados (<code>setAtivo(false)</code>).</li>
+     *   <li>As alterações são persistidas no respetivo ficheiro CSV através do
+     *       repositório.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Este método é chamado durante o processo de início do ano letivo,
+     * antes da geração do relatório de verificação, garantindo que apenas cursos
+     * válidos permaneçam ativos.
+     * </p>
+     *
+     * @see model.bll.Curso#temEstruturaValida()
+     * @see model.dal.RepositorioDados#atualizarCurso(Curso)
+     * @see model.dal.RepositorioDados#atualizarEstudante(Estudante)
+     */
+    public void desativarCursoEAlunos(Curso curso) {
+        if (curso == null) return;
+        curso.setAtivo(false);
+        atualizarCurso(curso);
+        for (Estudante e : estudantes) {
+            if (e.getCurso() != null && e.getCurso().getSigla().equals(curso.getSigla())) {
+                e.setAtivo(false);
+                atualizarEstudante(e);
+            }
+        }
+    }
+
+    // =========================================================
     // CONFIGURAÇÃO DO ANO (ESTADO)
     // =========================================================
 

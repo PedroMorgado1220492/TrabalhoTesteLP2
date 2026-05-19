@@ -1,6 +1,7 @@
 package controller;
 
 import model.bll.*;
+import model.dal.PrecoCursoDAL;
 import utils.*;
 import view.MainView;
 import model.dal.RepositorioDados;
@@ -300,24 +301,27 @@ public class MainController {
      * @see RepositorioDados#isAnoIniciado()
      */
     private void processarIniciarAnoLetivo() {
-
         if (repositorio.isAnoIniciado()) {
             view.msgAnoJaIniciado();
             encerrarSessaoESalvar();
             return;
         }
 
-        // Pedir confirmação simples
         if (!view.pedirConfirmacaoInicioAno(repositorio.getAnoAtual())) {
             view.mostrarCancelamento();
             encerrarSessaoESalvar();
             return;
         }
 
+        // Desativação de cursos inválidos
+        for (Curso c : repositorio.getCursos()) {
+            if (c != null && !c.temEstruturaValida()) {
+                repositorio.desativarCursoEAlunos(c);
+            }
+        }
+
         // Gerar relatório
         Relatorio.ResultadoValidacao resultado = Relatorio.gerarRelatorioInicioAno(repositorio);
-
-        // Imprimir relatório na consola
         Relatorio.imprimirRelatorio(resultado.getRelatorioConteudo());
 
         if (!resultado.isTodasUcsDefinidas()) {
@@ -331,7 +335,6 @@ public class MainController {
             view.msgCursosDesativados();
         }
 
-        // Salvar relatório
         String fileName = "relatorio_inicio_ano_" + repositorio.getAnoAtual() + ".txt";
         boolean sucesso = Relatorio.salvarRelatorio(resultado.getRelatorioConteudo(), fileName);
         if (sucesso) {
@@ -342,6 +345,8 @@ public class MainController {
 
         encerrarSessaoESalvar();
     }
+
+
 
     // =========================================================
     // 5. TRANSIÇÃO DE ANO LETIVO
@@ -370,15 +375,45 @@ public class MainController {
 
         validarArranqueDeCursos(proximoAno);
 
-        if (view.pedirConfirmacaoAvanco(proximoAno)) {
-            // Gerar certificados para alunos que concluíram o ano que termina (antes de avançar)
-            gerarCertificadosConcluintes(anoAtual);
+        // --- VERIFICAÇÃO DE PREÇOS  ---
+        String[] cursosSemPreco = verificarPrecosParaProximoAno(proximoAno);
+        if (cursosSemPreco.length > 0) {
+            view.msgFaltaPrecosParaTransicao(proximoAno, cursosSemPreco);
+            return; // BLOQUEIA a transição
+        } else {
+            view.msgTodosPrecosDefinidosParaTransicao(proximoAno);
+        }
 
-            repositorio.avancarAno();   // apenas uma chamada
+        // --- Só avança se o gestor confirmar ---
+        if (view.pedirConfirmacaoAvanco(proximoAno)) {
+            repositorio.avancarAno();
             view.msgSucessoAvancoAno(repositorio.getAnoAtual());
         } else {
             view.msgCancelamentoAvancoAno(anoAtual);
         }
+    }
+
+    private String[] verificarPrecosParaProximoAno(int ano) {
+        int faltam = 0;
+        Curso[] cursos = repositorio.getCursos();
+        int total = repositorio.getTotalCursos();
+        for (int i = 0; i < total; i++) {
+            Curso c = cursos[i];
+            if (c != null && c.isAtivo()) {
+                double preco = PrecoCursoDAL.obterPrecoCurso(c.getSigla(), ano);
+                if (preco == 1000.0) faltam++;
+            }
+        }
+        String[] faltantes = new String[faltam];
+        int idx = 0;
+        for (int i = 0; i < total; i++) {
+            Curso c = cursos[i];
+            if (c != null && c.isAtivo()) {
+                double preco = PrecoCursoDAL.obterPrecoCurso(c.getSigla(), ano);
+                if (preco == 1000.0) faltantes[idx++] = c.getSigla();
+            }
+        }
+        return faltantes;
     }
 
     /**

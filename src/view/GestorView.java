@@ -587,5 +587,6 @@ public class GestorView {
     public void mostrarErroDepartamentoInativo() { System.out.println("Erro: Departamento de destino esta inativo."); }
     public void mostrarSucessoAtualizacaoDocente() { System.out.println(">> Docente responsável atualizado com sucesso!"); }
     public void mostrarErroAtualizacaoPassword() { System.out.println(">> Erro: A password foi alterada no perfil mas não foi possível atualizar o ficheiro de logins."); }
-
+    public double pedirPrecoInicialCurso() { return utils.Consola.lerDouble("Valor da propina anual para o novo curso (€): "); }
+    public double pedirPrecoCursoParaAno(String siglaCurso, int ano) { return utils.Consola.lerDouble("Preço da propina para " + siglaCurso + " no ano " + ano + " (€): "); }
 }
