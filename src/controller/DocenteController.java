@@ -140,15 +140,26 @@ public class DocenteController {
         String passAtualRaw = view.pedirPassAtual();
         String passAtualEnc = Seguranca.encriptar(passAtualRaw);
 
-        // Delega a validação de segurança ao Modelo (Docente/Utilizador)
+        // Validação de segurança delegada ao modelo (herança de Utilizador)
         if (docenteLogado.verificarPassword(passAtualEnc)) {
             String novaPassRaw = view.pedirNovaPass();
             String confirmacaoRaw = view.pedirConfirmacaoPass();
 
             if (!novaPassRaw.isEmpty() && novaPassRaw.equals(confirmacaoRaw)) {
-                // Guarda a nova password de forma segura no modelo
-                docenteLogado.setPassword(Seguranca.encriptar(novaPassRaw));
-                view.msgSucesso();
+                String novaPassEnc = Seguranca.encriptar(novaPassRaw);
+                docenteLogado.setPassword(novaPassEnc);
+
+                // ATUALIZAR TAMBÉM NO FICHEIRO DE LOGINS
+                boolean loginAtualizado = model.dal.LoginDAL.atualizarPassword(docenteLogado.getEmail(), novaPassEnc);
+
+                // Também atualizar no ficheiro de docentes (persistência)
+                repositorio.atualizarDocente(docenteLogado);
+
+                if (loginAtualizado) {
+                    view.msgSucesso();
+                } else {
+                    view.mostrarErroAtualizacaoPassword();
+                }
             } else {
                 view.msgErroPassNaoCoincidem();
             }
@@ -198,6 +209,13 @@ public class DocenteController {
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        // Verificar se a UC está ativa
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
+
         view.mostrarCabecalhoPauta(uc.getNome());
 
         // Delegação de pesquisa ao Repositório
@@ -240,6 +258,12 @@ public class DocenteController {
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
+
         Estudante[] alunos = repositorio.obterEstudantesPorUC(uc.getSigla());
 
         if (alunos.length == 0) {
@@ -284,22 +308,21 @@ public class DocenteController {
 
         if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
             view.msgSucesso();
+            // USAR A DAL PARA GUARDAR A NOTA
+            model.dal.AvaliacaoDAL.guardarNota(alu.getNumeroMecanografico(), uc.getSigla(), repositorio.getAnoAtual(), nota);
 
             // Anular Email Nota Individual
-                // Notificação por email para o estudante
-                model.bll.Avaliacao avAtual = alu.getAvaliacaoAtual(uc.getSigla());
-                if (avAtual != null && alu.getEmailPessoal() != null && !alu.getEmailPessoal().isEmpty()) {
-                    boolean emailEnviado = utils.ServicoEmail.enviarEmailAvaliacao(alu, uc.getNome(), avAtual);
+            // Notificação por email para o estudante
+            model.bll.Avaliacao avAtual = alu.getAvaliacaoAtual(uc.getSigla());
+            if (avAtual != null && alu.getEmailPessoal() != null && !alu.getEmailPessoal().isEmpty()) {
+                boolean emailEnviado = utils.ServicoEmail.enviarEmailAvaliacao(alu, uc.getNome(), avAtual);
 
-                    if (emailEnviado) {
-                        view.msgNotificacaoEnviada();
-                    }
+                if (emailEnviado) {
+                    view.msgNotificacaoEnviada();
                 }
-            // Até aqui.
-
-                // Gravar alterações no CSV
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             }
+            // Até aqui.
+        }
     }
 
     /**
@@ -319,7 +342,14 @@ public class DocenteController {
         if (idx < 0 || idx >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idx];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
+
         Estudante[] alunos = repositorio.obterEstudantesPorUC(uc.getSigla());
+
 
         if (alunos.length == 0) {
             view.msgAvisoTurmaVazia();
@@ -380,13 +410,14 @@ public class DocenteController {
             Estudante alu = alunos[idxAluno];
             if (alu.adicionarNota(uc, nota, repositorio.getAnoAtual())) {
                 count++;
+                // USAR A DAL PARA GUARDAR A NOTA
+                model.dal.AvaliacaoDAL.guardarNota(alu.getNumeroMecanografico(), uc.getSigla(), repositorio.getAnoAtual(), nota);
             }
         }
 
         view.resumoLote(count);
 
         if (count > 0) {
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             String caminhoTxt = model.bll.Pauta.gerarFicheiroPauta(uc, alunos);
             if (caminhoTxt != null) {
                 view.msgPautaGeradaSucesso(caminhoTxt);
@@ -404,9 +435,20 @@ public class DocenteController {
             view.msgAvisoSemUCs();
             return;
         }
+
+        if (repositorio.isAnoIniciado()) {
+            view.msgAlteracaoMomentosBloqueada();
+            return;
+        }
+
         int idxUC = view.pedirUC(docenteLogado.getUcsLecionadas(), docenteLogado.getTotalUcsLecionadas());
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
 
         // Verificar estado atual
         Integer numAtual = uc.getNumAvaliacoes();
@@ -419,8 +461,11 @@ public class DocenteController {
         int num = view.pedirNumAvaliacoes(uc.getSigla());
         if (num >= 1 && num <= 3) {
             uc.setNumAvaliacoes(num);
+
+            // PERSISTIR A ALTERAÇÃO NO CSV
+            repositorio.atualizarUnidadeCurricular(uc);
+
             view.msgSucesso();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.msgErroNumAvaliacoes();
         }
@@ -442,18 +487,18 @@ public class DocenteController {
         for (int i = 0; i < docenteLogado.getTotalUcsLecionadas(); i++) {
             UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[i];
             if (uc != null) {
+                String estado = uc.isAtivo() ? "ATIVA" : "INATIVA";
                 Integer numAv = uc.getNumAvaliacoes();
                 if (numAv != null) {
                     temAlgumaDefinida = true;
                 }
-                view.mostrarUcComMomentosAvaliacao(uc.getSigla(), uc.getNome(), numAv);
+                view.mostrarUcComMomentosAvaliacao(uc.getSigla(), uc.getNome(), numAv, estado);
             }
         }
 
         if (!temAlgumaDefinida) {
             view.msgNenhumMomentoDefinido();
         }
-        // Sem pausa - volta automaticamente ao menu
     }
 
 
@@ -475,6 +520,11 @@ public class DocenteController {
         if (idxUC < 0 || idxUC >= docenteLogado.getTotalUcsLecionadas()) return;
 
         UnidadeCurricular uc = docenteLogado.getUcsLecionadas()[idxUC];
+
+        if (!uc.isAtivo()) {
+            view.msgErroUCInativa();
+            return;
+        }
 
         // Delega o cálculo matemático pesado à classe Utilitária
         double[] stats = utils.Estatisticas.calcularEstatisticasUC(uc, repositorio);

@@ -1,5 +1,7 @@
 package model.bll;
 
+import model.dal.PrecoCursoDAL;
+import model.dal.PagamentoDAL;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -10,9 +12,6 @@ import java.io.PrintWriter;
 /**
  * Classe utilitária para gestão de pagamentos e cálculo de dívidas de propinas.
  * Toda a persistência é feita através do ficheiro CSV "pagamentos_propinas.csv".
- *
- * @see model.dal.ImportadorCSV
- * @see model.dal.ExportadorCSV
  */
 public class Propina {
 
@@ -30,8 +29,6 @@ public class Propina {
         }
     }
 
-
-
     // =========================================================
     // OPERAÇÕES DE REGISTO E CONSULTA DE PAGAMENTOS
     // =========================================================
@@ -42,7 +39,6 @@ public class Propina {
     public static void registarPagamento(int numMec, int anoLetivo, double valor, String data) {
         garantirFicheiroPagamentos();
         try (PrintWriter pw = new PrintWriter(new FileWriter(PAGAMENTOS_FILE, true))) {
-            // Garantir que o registo começa numa nova linha
             pw.println();
             pw.print(numMec + ";" + anoLetivo + ";" + valor + ";" + data);
         } catch (IOException e) {
@@ -123,7 +119,7 @@ public class Propina {
     public static double calcularDividaTotal(Estudante estudante, int anoAtual) {
         double totalDevido = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
-            totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
+            totalDevido += PrecoCursoDAL.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
         }
         double totalPago = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
@@ -145,7 +141,7 @@ public class Propina {
     public static double getDividaAteAno(Estudante estudante, int anoLimite, int anoCorrente) {
         double totalDevido = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoLimite; ano++) {
-            totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
+            totalDevido += PrecoCursoDAL.obterPrecoCurso(estudante.getCurso().getSigla(), ano);
         }
         double totalPagoGeral = 0.0;
         for (int ano = estudante.getAnoPrimeiraInscricao(); ano <= anoCorrente; ano++) {

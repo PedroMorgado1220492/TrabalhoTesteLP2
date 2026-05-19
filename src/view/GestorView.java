@@ -150,6 +150,7 @@ public class GestorView {
     public String pedirNovaMorada(String atual) { return utils.Consola.lerString("Nova Morada (Atual: " + atual + ") [Enter p/ manter]: "); }
     public String pedirNovoEmailPessoal(String atual) { return utils.Consola.lerString("Novo Email Pessoal (Atual: " + atual + ") [Enter p/ manter]: "); }
     public double pedirNovoPreco(double atual) { return utils.Consola.lerDouble("Novo valor de propina anual (Atual: " + atual + "€): "); }
+    public double pedirNovoPrecoParaAno(double atual, int ano) { return utils.Consola.lerDouble("Novo valor de propina anual para o ano de " + ano + " (Atual: " + atual + "€): "); }
     public String pedirNovoDocenteUC(String atual) { return utils.Consola.lerString("Sigla do Novo Docente [Enter p/ manter]: "); }
     public String pedirNovoNumAvaliacoes(int atual) { return utils.Consola.lerString("Novo nº de Avaliações [Enter p/ manter]: "); }
     public String pedirPassAtual() { return utils.Consola.lerString("Palavra-passe Atual: "); }
@@ -401,7 +402,7 @@ public class GestorView {
         System.out.println("\n=============== MÉTRICAS INSTITUCIONAIS ===============");
         System.out.printf("Média Global da Instituição : %.2f Valores\n", media);
         System.out.println("Mérito Académico (Melhor Aluno): " + melhor);
-        System.out.println("Aderência (Curso com mais inscritos): " + (cursoTop != null ? cursoTop : "N/D"));
+        System.out.println("Curso com mais inscritos: " + (cursoTop != null ? cursoTop : "N/D"));
         System.out.println("=============================================================");
     }
 
@@ -462,16 +463,19 @@ public class GestorView {
         int anoAlvo = anoAtual + 1;
         for (int i = 0; i < total; i++) {
             if (cursos[i] != null && cursos[i].isAtivo()) {
-                double precoAtual = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAtual);
-                double precoAlvo = model.dal.ImportadorCSV.obterPrecoCurso(cursos[i].getSigla(), anoAlvo);
-                if (precoAlvo == 1000.0) {
+                double precoAtual = model.dal.PrecoCursoDAL.obterPrecoCurso(cursos[i].getSigla(), anoAtual);
+                double precoAlvo = model.dal.PrecoCursoDAL.obterPrecoCurso(cursos[i].getSigla(), anoAlvo);
+
+                // Se não houver preço definido para o ano alvo, usar o preço atual
+                if (precoAlvo == 1000.0 && precoAtual != 1000.0) {
                     precoAlvo = precoAtual;
                 }
+
                 System.out.printf("%d - [%s] %s (Preço atual: %.2f€ | Preço para %d: %.2f€)\n",
                         (i+1), cursos[i].getSigla(), cursos[i].getNome(), precoAtual, anoAlvo, precoAlvo);
             }
         }
-        return utils.Consola.lerInt("Indique o curso a alterar");
+        return utils.Consola.lerInt("Indique o curso a alterar: ");
     }
 
     // =========================================================
@@ -506,7 +510,7 @@ public class GestorView {
     public void mostrarErroCursoBloqueado() { System.out.println(">> Erro: Curso em funcionamento. Alterações estruturais proibidas."); }
     public void mostrarErroAnoNumerico() { System.out.println(">> Erro: O ano deve ser um valor inteiro (1, 2 ou 3)."); }
     public void mostrarErroAnoNumericoMantido() { System.out.println(">> Erro: Formato inválido. Valor original mantido."); }
-    public void mostrarErroLimiteUCsAno(String c, int a) { System.out.println(">> Erro: Curso " + c + " excedeu o teto de 5 UCs no " + a + "º ano."); }
+    public void mostrarErroLimiteUCsAno(String c, int a) { System.out.println(">> Erro: Curso " + c + " excedeu o limite de 5 UCs no " + a + "º ano."); }
     public void mostrarErroUCJaNoCurso() { System.out.println(">> Erro: Duplicação de UC detectada no curso."); }
     public void mostrarSucessoPartilhaUC(String u, String c) { System.out.println(">> Sucesso: UC '" + u + "' agora partilhada com '" + c + "'."); }
     public void msgErroUCInativa() { System.out.println(">> Erro: UC inactiva. Impossível efectuar vínculos."); }
@@ -517,7 +521,8 @@ public class GestorView {
     public void mostrarErroNifFormato() { System.out.println("\n>> Erro: Formato de NIF inválido. Introduza exatamente 9 dígitos."); }
     public void msgErroDataFormato() { System.out.println(">> Erro: Formato inválido. Use DD-MM-AAAA."); }
     public void msgErroDataInexistente() { System.out.println(">> Erro: A data introduzida não existe no calendário."); }
-    public void mostrarErroIdadeMinima() { System.out.println(">> Erro: O estudante deve ter pelo menos 16 anos."); }
+    public void msgErroDataFutura() { System.out.println(">> Erro: A data de nascimento não pode ser futura."); }
+    public void msgErroIdadeMinima() { System.out.println(">> Erro: O utilizador deve ter pelo menos 16 anos."); }
     public void mostrarErroNumMecNumerico() { System.out.println(">> Erro: O número mecanográfico é estritamente numérico."); }
     public void mostrarSiglaGerada(String s) { System.out.println(">> Atribuição: Sigla institucional gerada: " + s); }
     public void mostrarErroEmailInvalido() { System.out.println(">> Erro: O email pessoal introduzido é inválido.'."); }
@@ -580,4 +585,8 @@ public class GestorView {
     public void mostrarRevisaoAlteracaoDepartamentoCurso(String nomeCurso, String depAntigo, String depNovo) { System.out.println("Mover curso " + nomeCurso + " de " + depAntigo + " para " + depNovo); }
     public void mostrarSucessoAlteracaoDepartamentoCurso(String nomeCurso, String novoDepartamento) { System.out.println("Curso " + nomeCurso + " movido para " + novoDepartamento); }
     public void mostrarErroDepartamentoInativo() { System.out.println("Erro: Departamento de destino esta inativo."); }
+    public void mostrarSucessoAtualizacaoDocente() { System.out.println(">> Docente responsável atualizado com sucesso!"); }
+    public void mostrarErroAtualizacaoPassword() { System.out.println(">> Erro: A password foi alterada no perfil mas não foi possível atualizar o ficheiro de logins."); }
+    public double pedirPrecoInicialCurso() { return utils.Consola.lerDouble("Valor da propina anual para o novo curso (€): "); }
+    public double pedirPrecoCursoParaAno(String siglaCurso, int ano) { return utils.Consola.lerDouble("Preço da propina para " + siglaCurso + " no ano " + ano + " (€): "); }
 }

@@ -8,6 +8,7 @@ import model.bll.Estudante;
 import model.dal.RepositorioDados;
 import utils.Validador;
 import utils.Seguranca;
+import model.dal.PrecoCursoDAL;
 
 /**
  * Controlador responsável pela gestão das operações e interações do Estudante.
@@ -52,12 +53,25 @@ public class EstudanteController {
             int opcao = view.mostrarMenuPrincipal();
             try {
                 switch (opcao) {
-                    case 1: view.mostrarDadosFicha(estudanteLogado); break;
-                    case 2: menuAtualizar(); break;
-                    case 3: verPercurso(); break;
-                    case 4: gerirPropinas(); break;
+                    case 1:
+                        view.mostrarDadosFicha(estudanteLogado);
+                        break;
+                    case 2:
+                        menuAtualizar();
+                        break;
+                    case 3:
+                        verPercurso();
+                        break;
+                    case 4:
+                        gerirPropinas();
+                        break;
                     case 5:
                         if (desativarConta()) running = false;
+                        break;
+                    case 6:
+                        if (pedirCertificado()) {
+                            running = false;
+                        }
                         break;
                     case 0:
                         view.msgSaida();
@@ -136,13 +150,26 @@ public class EstudanteController {
             int op = view.mostrarMenuAtualizarDados();
             try {
                 switch (op) {
-                    case 1: atualizarNome(); break;
-                    case 2: atualizarNif(); break;
-                    case 3: atualizarMorada(); break;
-                    case 4: atualizarPassword(); break;
-                    case 5: atualizarEmailPessoal(); break;
-                    case 0: sub = false; break;
-                    default: view.msgErroOpcao();
+                    case 1:
+                        atualizarNome();
+                        break;
+                    case 2:
+                        atualizarNif();
+                        break;
+                    case 3:
+                        atualizarMorada();
+                        break;
+                    case 4:
+                        atualizarPassword();
+                        break;
+                    case 5:
+                        atualizarEmailPessoal();
+                        break;
+                    case 0:
+                        sub = false;
+                        break;
+                    default:
+                        view.msgErroOpcao();
                 }
             } catch (utils.CancelamentoException e) {
                 view.mostrarCancelamento("de Atualização");
@@ -191,13 +218,17 @@ public class EstudanteController {
         String passAtualRaw = view.pedirPassAtual();
         String passAtualEnc = Seguranca.encriptar(passAtualRaw);
 
-        // Validação de segurança delegada ao modelo (herança de Utilizador)
         if (estudanteLogado.verificarPassword(passAtualEnc)) {
             String novaPassRaw = view.pedirNovaPass();
             String confirmacaoRaw = view.pedirConfirmacaoPass();
 
             if (!novaPassRaw.isEmpty() && novaPassRaw.equals(confirmacaoRaw)) {
-                estudanteLogado.setPassword(Seguranca.encriptar(novaPassRaw));
+                String novaPassEnc = Seguranca.encriptar(novaPassRaw);
+                estudanteLogado.setPassword(novaPassEnc);
+
+                // ATUALIZAR TAMBÉM NO FICHEIRO DE LOGINS
+                model.dal.LoginDAL.atualizarPassword(estudanteLogado.getEmail(), novaPassEnc);
+
                 view.msgSucesso();
             } else {
                 view.msgErroPassNaoCoincidem();
@@ -219,9 +250,6 @@ public class EstudanteController {
         if (!novoEmail.trim().isEmpty()) {
             estudanteLogado.setEmailPessoal(novoEmail);
 
-            // 3. Gravar imediatamente no CSV para persistir a alteração
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-
             view.msgSucesso();
         } else {
             // Se estiver vazio, assumimos que o utilizador desistiu da alteração
@@ -241,66 +269,70 @@ public class EstudanteController {
         int numMec = estudanteLogado.getNumeroMecanografico();
 
         // Mostrar histórico de pagamentos
-        Propina.Pagamento[] pagamentos = Propina.getPagamentos(numMec);
+        model.bll.Propina.Pagamento[] pagamentos = model.bll.Propina.getPagamentos(numMec);
         view.mostrarHistoricoPagamentos(pagamentos);
 
-        double valorAnualAtual = model.dal.ImportadorCSV.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
-        double pagoAnoAtual = Propina.getTotalPago(numMec, anoAtual);
-        double dividaAnoAtual = valorAnualAtual - pagoAnoAtual;
-        double dividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
-        double dividaAnteriorReal = Propina.getDividaAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+        double valorAnualAtual = PrecoCursoDAL.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
+        double pagoAnoAtual = model.bll.Propina.getTotalPago(numMec, anoAtual);
+        double dividaTotal = model.bll.Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        double totalPago = 0.0;
+        for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
+            totalPago += model.bll.Propina.getTotalPago(numMec, ano);
+        }
 
-        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, dividaTotal);
+        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, dividaTotal, totalPago);
 
         if (dividaTotal <= 0.01) return;
 
         double valor = calcularValorPagamento(dividaTotal, valorAnualAtual);
         if (valor <= 0) return;
 
-        // Verificar se havia dívida de anos anteriores antes do pagamento
-        boolean tinhaDividasAnteriores = Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+        // Guardar estado da dívida de anos anteriores antes do pagamento
+        boolean tinhaDividasAnteriores = model.bll.Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
 
         // Registar pagamento
         String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        Propina.registarPagamento(numMec, anoAtual, valor, dataAtual);
+        model.bll.Propina.registarPagamento(numMec, anoAtual, valor, dataAtual);
 
         // Recalcular valores após pagamento
-        double novaDividaTotal = Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        double novaDividaTotal = model.bll.Propina.calcularDividaTotal(estudanteLogado, anoAtual);
         double novoPagoAno = pagoAnoAtual + valor;
         double novaDividaAno = valorAnualAtual - novoPagoAno;
+
+        // Calcular total devido para recibo (usando PrecoCursoDAL)
         double totalDevido = 0.0;
         for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
-            totalDevido += model.dal.ImportadorCSV.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
+            totalDevido += PrecoCursoDAL.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
         }
-        double totalPago = totalDevido - novaDividaTotal;
 
-        // Gerar recibo
+
+        // Gerar recibo e enviar email (código mantém-se igual)
         String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, totalDevido, novaDividaTotal);
-        if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
 
-            // Anular Email Recibo
-            boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
-                    estudanteLogado.getNome(),
-                    caminhoRecibo);
-            if (emailEnviado) {
-                view.msgNotificacaoEnviada();
-            } else {
+        // Anular Email Recibo
+      //  if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
+          //  boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
+                 //   estudanteLogado.getNome(),
+                 //   caminhoRecibo);
+       //     if (emailEnviado) {
+          //      view.msgNotificacaoEnviada();
+       //     } else {
                 view.msgFalhaEnvioEmail();
-            }
-            // Até aqui.
-
-        } else {
-            view.msgReciboNaoEnviado();
-        }
+      //      }
+    //    } else {
+    //        view.msgReciboNaoEnviado();
+    //    }
+        // Até aqui.
 
         view.msgSucesso();
 
-        // Verificar se a dívida de anos anteriores foi eliminada por este pagamento
-        boolean agoraTemDividasAnteriores = Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+        // Verificar estado da dívida de anos anteriores após pagamento
+        boolean agoraTemDividasAnteriores = model.bll.Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
 
         if (tinhaDividasAnteriores && !agoraTemDividasAnteriores) {
-            // Pagamento eliminou as dívidas de anos anteriores → permitir reinscrição (e progressão se tiver aproveitamento)
             if (estudanteLogado.reinscrever(anoAtual)) {
+                estudanteLogado.reconstruirPercurso();
+                repositorio.atualizarEstudante(estudanteLogado);
                 view.msgPercursoAtualizado();
                 if (estudanteLogado.getAnoFrequencia() > 1) {
                     view.msgEstudanteProgrediu(estudanteLogado.getAnoFrequencia());
@@ -309,12 +341,12 @@ public class EstudanteController {
                 view.msgReinscricaoNaoPossivel();
             }
         }
-        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
     }
 
     /**
      * Calcula e valida o valor a ser pago pelo estudante, mediante as regras da instituição.
      * * @param propina A propina alvo de pagamento.
+     *
      * @return O valor final aprovado para pagamento, ou 0.0 em caso de cancelamento/erro.
      */
     private double calcularValorPagamento(double dividaTotal, double valorAnualAtual) {
@@ -365,11 +397,55 @@ public class EstudanteController {
      */
     private boolean desativarConta() {
         if (view.pedirConfirmacaoDesativacao()) {
-            estudanteLogado.setAtivo(false); // Altera o estado no Modelo
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio); // Grava a desativação
+            estudanteLogado.setAtivo(false);
+
+            // PERSISTIR A ALTERAÇÃO NO CSV
+            repositorio.atualizarEstudante(estudanteLogado);
+
             view.msgContaDesativada();
             return true;
         }
         return false;
+    }
+
+    // =========================================================
+    // 6. CERTIFICADO
+    // =========================================================
+
+
+    private boolean pedirCertificado() {
+        view.msgCertificadoApenasAnoSeguinte();
+
+        int anoAtual = repositorio.getAnoAtual();
+        int anoConclusao = anoAtual - 1;
+        String email = estudanteLogado.getEmailPessoal();
+
+        if (email == null || email.isEmpty()) {
+            view.msgErroSemEmailPessoal();
+            return false;
+        }
+
+        // 1. Verificar dívidas (até ao ano de conclusão)
+        if (Propina.temDividasAteAno(estudanteLogado, anoConclusao, anoAtual)) {
+            view.msgTemDividasParaCertificado();
+            return false;
+        }
+
+        // 2. Verificar se todas as UCs estão concluídas (histórico)
+        if (!estudanteLogado.concluiuCurso()) {
+            view.msgNaoConcluiuCurso();
+            return false;
+        }
+
+        // 3. Gerar certificado (método do model, sem validações)
+        boolean sucesso = estudanteLogado.gerarCertificado(anoConclusao, email);
+        if (!sucesso) {
+            view.msgErroGerarCertificado();
+            return false;
+        }
+
+        repositorio.atualizarEstudante(estudanteLogado);
+        view.msgCertificadoEmitido();
+        return true; // indica logout
     }
 }

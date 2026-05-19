@@ -1,6 +1,7 @@
 package controller;
 
 import model.bll.*;
+import model.dal.PrecoCursoDAL;
 import utils.GeradorEmail;
 import utils.GeradorPassword;
 import utils.ServicoEmail;
@@ -118,7 +119,6 @@ public class GestorController {
             Departamento novoDep = gestorAtivo.criarDepartamento(sigla, nome);
             if (repositorio.adicionarDepartamento(novoDep)) {
                 view.mostrarSucessoRegistoDepartamento(nome);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteDepartamentos();
             }
@@ -149,7 +149,6 @@ public class GestorController {
         if (!novoNomeDep.trim().isEmpty()) {
             depEditar.setNome(novoNomeDep);
             view.mostrarSucessoAtualizacao();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarAvisoSemAlteracao();
         }
@@ -182,6 +181,9 @@ public class GestorController {
             // Tenta ATIVAR o departamento
             ativarDepartamento(dep);
         }
+
+        // PERSISTIR A ALTERAÇÃO NO CSV
+        repositorio.atualizarDepartamento(dep);
     }
 
     /**
@@ -198,7 +200,6 @@ public class GestorController {
         if (view.confirmarInativacaoDepartamento(dep.getNome())) {
             dep.setAtivo(false);
             view.mostrarSucessoInativacaoDepartamento(dep.getNome());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarAvisoSemAlteracao();
         }
@@ -213,7 +214,6 @@ public class GestorController {
         if (view.confirmarAtivacaoDepartamento(dep.getNome())) {
             dep.setAtivo(true);
             view.mostrarSucessoAtivacaoDepartamento(dep.getNome());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarAvisoSemAlteracao();
         }
@@ -295,7 +295,7 @@ public class GestorController {
             view.mostrarOpcaoInvalida();
         }
 
-        double precoInicial = view.pedirNovoPreco(1000.0);
+        double precoInicial = view.pedirPrecoInicialCurso();
         if (precoInicial <= 0) {
             view.mostrarErroPrecoInvalido();
             return;
@@ -309,13 +309,8 @@ public class GestorController {
 
             if (repositorio.adicionarCurso(novoCurso)) {
                 int anoAtual = repositorio.getAnoAtual();
-                String[] linhas = model.dal.ImportadorCSV.lerTodasLinhasPrecos();
-                String[] novasLinhas = new String[linhas.length + 1];
-                System.arraycopy(linhas, 0, novasLinhas, 0, linhas.length);
-                novasLinhas[novasLinhas.length - 1] = anoAtual + ";" + siglaCurso.toUpperCase() + ";" + precoInicial;
-                model.dal.ExportadorCSV.escreverFicheiroPrecos(novasLinhas);
+                PrecoCursoDAL.adicionarOuAtualizarPreco(siglaCurso, anoAtual, precoInicial);
                 view.mostrarSucessoRegistoCurso(nomeCurso);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteCursos();
             }
@@ -351,7 +346,6 @@ public class GestorController {
             if (!novoNomeCurso.trim().isEmpty()) {
                 cursoEditar.setNome(novoNomeCurso);
                 view.mostrarSucessoAtualizacao();
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarAvisoSemAlteracao();
             }
@@ -389,9 +383,20 @@ public class GestorController {
             return;
         }
 
+        if (!curso.isAtivo()) { // vai ser ativado
+            double precoAtual = PrecoCursoDAL.obterPrecoCurso(curso.getSigla(), repositorio.getAnoAtual());
+            if (precoAtual == 1000.0) {
+                double novoPreco = view.pedirPrecoCursoParaAno(curso.getSigla(), repositorio.getAnoAtual());
+                PrecoCursoDAL.adicionarOuAtualizarPreco(curso.getSigla(), repositorio.getAnoAtual(), novoPreco);
+            }
+        }
+
         curso.setAtivo(!curso.isAtivo());
+
+        // PERSISTIR A ALTERAÇÃO NO CSV
+        repositorio.atualizarCurso(curso);
+
         view.msgSucessoEstadoAlterado("Curso", curso.isAtivo());
-        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
     }
 
     private void verPercursoAcademicoCurso() {
@@ -421,38 +426,28 @@ public class GestorController {
         if (escolha == -1) return;
         if (escolha >= 1 && escolha <= repositorio.getTotalCursos()) {
             Curso cursoEscolhido = repositorio.getCursos()[escolha - 1];
-            // Mostrar histórico (leitura)
-            double[][] historico = model.dal.ImportadorCSV.obterHistoricoPrecos(cursoEscolhido.getSigla());
+
+            double[][] historico = PrecoCursoDAL.obterHistoricoPrecos(cursoEscolhido.getSigla());
             view.mostrarHistoricoPrecosCurso(cursoEscolhido.getSigla(), historico);
 
             int anoAlvo = repositorio.getAnoAtual() + 1;
-            double precoAntigo = model.dal.ImportadorCSV.obterPrecoCurso(cursoEscolhido.getSigla(), anoAlvo);
-            double novoPreco = view.pedirNovoPreco(precoAntigo);
+            double precoAntigo = PrecoCursoDAL.obterPrecoCurso(cursoEscolhido.getSigla(), anoAlvo);
+
+            if (precoAntigo == 1000.0) {
+                precoAntigo = PrecoCursoDAL.obterPrecoCurso(cursoEscolhido.getSigla(), repositorio.getAnoAtual());
+            }
+
+            double novoPreco = view.pedirNovoPrecoParaAno(precoAntigo, anoAlvo);
+
             if (novoPreco > 0) {
-                // Ler todas as linhas do ficheiro de preços (sem cabeçalho)
-                String[] linhas = model.dal.ImportadorCSV.lerTodasLinhasPrecos();
-                boolean atualizado = false;
-                for (int i = 0; i < linhas.length; i++) {
-                    String[] p = linhas[i].split(";");
-                    if (p.length >= 3 && p[1].equalsIgnoreCase(cursoEscolhido.getSigla()) && Integer.parseInt(p[0]) == anoAlvo) {
-                        linhas[i] = anoAlvo + ";" + cursoEscolhido.getSigla().toUpperCase() + ";" + novoPreco;
-                        atualizado = true;
-                        break;
-                    }
+                boolean sucesso = PrecoCursoDAL.adicionarOuAtualizarPreco(cursoEscolhido.getSigla(), anoAlvo, novoPreco);
+
+                if (sucesso) {
+                    cursoEscolhido.setValorPropinaAnual(novoPreco);
+                    view.mostrarSucessoAlteracaoPreco(cursoEscolhido.getSigla(), novoPreco);
+                } else {
+                    view.mostrarErroPrecoInvalido();
                 }
-                if (!atualizado) {
-                    // Adicionar nova linha
-                    String[] novasLinhas = new String[linhas.length + 1];
-                    System.arraycopy(linhas, 0, novasLinhas, 0, linhas.length);
-                    novasLinhas[novasLinhas.length - 1] = anoAlvo + ";" + cursoEscolhido.getSigla().toUpperCase() + ";" + novoPreco;
-                    linhas = novasLinhas;
-                }
-                // Escrever de volta
-                model.dal.ExportadorCSV.escreverFicheiroPrecos(linhas);
-                // Atualizar o valor base do curso (para uso futuro)
-                cursoEscolhido.setValorPropinaAnual(novoPreco);
-                view.mostrarSucessoAlteracaoPreco(cursoEscolhido.getSigla(), novoPreco);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroPrecoInvalido();
             }
@@ -513,9 +508,23 @@ public class GestorController {
 
         if (view.confirmarDados()) {
             Departamento departamentoAntigo = curso.getDepartamento();
+
+            // Remover o curso do departamento antigo (se o departamento tiver esta funcionalidade)
+            if (departamentoAntigo != null) {
+                // Nota: O modelo Departamento não tem método removerCurso,
+                // mas podemos ignorar porque a relação principal é do Curso para o Departamento
+            }
+
+            // Alterar o departamento do curso
             curso.setDepartamento(novoDepartamento);
+
+            // Adicionar o curso ao novo departamento (se necessário)
+            // Nota: O modelo Departamento tem método adicionarCurso, mas pode já estar lá
+
+            // 🔧 IMPORTANTE: Persistir a alteração no CSV
+            repositorio.atualizarCurso(curso);
+
             view.mostrarSucessoAlteracaoDepartamentoCurso(curso.getNome(), novoDepartamento.getNome());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarAvisoSemAlteracao();
         }
@@ -594,17 +603,20 @@ public class GestorController {
         if (idxCurso < 0 || idxCurso >= repositorio.getTotalCursos()) return;
         Curso cursoAssociado = repositorio.getCursos()[idxCurso];
 
+        if (!cursoAssociado.podeAdicionarUcNoAno(anoCurricular)) {
+            view.mostrarErroLimiteUCsAno(cursoAssociado.getSigla(), anoCurricular);
+            return;
+        }
 
-        view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla());
+            view.mostrarRevisaoUC(siglaUc, nomeUc, anoCurricular, docenteResponsavel.getNome(), cursoAssociado.getSigla());
 
         if (view.confirmarDados()) {
             UnidadeCurricular novaUc = gestorAtivo.criarUnidadeCurricular(siglaUc, nomeUc, anoCurricular, docenteResponsavel);
 
+            novaUc.estabelecerVinculosIniciais(cursoAssociado);
+
             if (repositorio.adicionarUnidadeCurricular(novaUc)) {
-                // A própria UC encarrega-se de amarrar as referências cruzadas
-                novaUc.estabelecerVinculosIniciais(cursoAssociado);
                 view.mostrarSucessoRegistoUC(nomeUc);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteUCs();
             }
@@ -627,18 +639,15 @@ public class GestorController {
             return;
         }
 
-        Curso cursoAlvo = null;
-        while (true) {
-            String siglaCurso = view.pedirSiglaCursoBusca();
-            cursoAlvo = repositorio.obterCursoPorSigla(siglaCurso);
+        // Usar o método pedirCursoLista que já lista todos os cursos
+        int idxCurso = view.pedirCursoLista(repositorio.getCursos(), repositorio.getTotalCursos());
+        if (idxCurso < 0 || idxCurso >= repositorio.getTotalCursos()) return;
 
-            if (cursoAlvo == null) {
-                view.mostrarErroCursoNaoEncontrado();
-            } else if (!cursoAlvo.isAtivo()) {
-                view.mostrarErroCursoInativo();
-            } else {
-                break;
-            }
+        Curso cursoAlvo = repositorio.getCursos()[idxCurso];
+
+        if (!cursoAlvo.isAtivo()) {
+            view.mostrarErroCursoInativo();
+            return;
         }
 
         if (cursoAlvo.temUnidadeCurricular(ucPartilhar.getSigla())) {
@@ -653,8 +662,11 @@ public class GestorController {
 
         cursoAlvo.adicionarUnidadeCurricular(ucPartilhar);
         ucPartilhar.adicionarCurso(cursoAlvo);
+
+        // Salvar a alteração no CSV
+        repositorio.atualizarUnidadeCurricular(ucPartilhar);
+
         view.mostrarSucessoPartilhaUC(ucPartilhar.getNome(), cursoAlvo.getSigla());
-        model.dal.ExportadorCSV.exportarDados("bd", repositorio);
     }
 
     private void removerUcDeCurso() {
@@ -666,6 +678,13 @@ public class GestorController {
             else break;
         }
 
+        for (int i = 0; i < curso.getTotalUCs(); i++) {
+            UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+            if (uc != null) {
+            }
+        }
+
+        // Passar o curso diretamente, não um novo array
         view.mostrarRelatorioUCsPorCurso(new Curso[]{curso}, 1);
 
         if (curso.getTotalUCs() == 0) return;
@@ -676,9 +695,9 @@ public class GestorController {
             UnidadeCurricular uc = repositorio.obterUCPorSigla(sigla);
             if (uc != null) {
                 uc.removerCurso(curso.getSigla());
+                repositorio.atualizarUnidadeCurricular(uc);
             }
             view.mostrarSucessoAtualizacao();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroUCNaoEncontrada();
         }
@@ -692,12 +711,16 @@ public class GestorController {
             view.mostrarInfoEdicao(ucEditar.getNome());
 
             String novoNomeUc = view.pedirNovoNome(ucEditar.getNome());
-            if (!novoNomeUc.trim().isEmpty()) ucEditar.setNome(novoNomeUc);
+            if (!novoNomeUc.trim().isEmpty()) {
+                ucEditar.setNome(novoNomeUc);
+                repositorio.atualizarUnidadeCurricular(ucEditar);
+            }
 
             String novoAnoStr = view.pedirNovoAnoCurricular(ucEditar.getAnoCurricular());
             if (!novoAnoStr.trim().isEmpty()) {
                 try {
                     ucEditar.setAnoCurricular(Integer.parseInt(novoAnoStr));
+                    repositorio.atualizarUnidadeCurricular(ucEditar);
                 } catch (NumberFormatException e) {
                     view.mostrarErroAnoNumericoMantido();
                 }
@@ -711,8 +734,9 @@ public class GestorController {
                 } else if (!novoDoc.isAtivo()) {
                     view.mostrarErroDocenteInativo();
                 } else {
-                    // Delega a gestão da troca de ponteiros ao Model da UC
                     ucEditar.trocarDocenteResponsavel(novoDoc);
+                    repositorio.atualizarUnidadeCurricular(ucEditar);  // PERSISTIR
+                    view.mostrarSucessoAtualizacaoDocente();
                 }
             }
 
@@ -722,6 +746,7 @@ public class GestorController {
                     int novoNum = Integer.parseInt(novoNumAvStr);
                     if (novoNum >= 1 && novoNum <= 3) {
                         ucEditar.setNumAvaliacoes(novoNum);
+                        repositorio.atualizarUnidadeCurricular(ucEditar);  // PERSISTIR
                     } else {
                         view.mostrarErroNumAvaliacoes();
                     }
@@ -731,7 +756,6 @@ public class GestorController {
             }
 
             view.mostrarSucessoAtualizacao();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroUCNaoEncontrada();
         }
@@ -749,8 +773,11 @@ public class GestorController {
             }
 
             uc.setAtivo(!uc.isAtivo());
+
+            // PERSISTIR A ALTERAÇÃO NO CSV
+            repositorio.atualizarUnidadeCurricular(uc);
+
             view.msgSucessoEstadoAlterado("Unidade Curricular", uc.isAtivo());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroUCNaoEncontrada();
         }
@@ -836,8 +863,6 @@ public class GestorController {
                 boolean emailEnviado = ServicoEmail.enviarEmailBoasVindas(novoEstudante, passGeradaEst);
                 view.mostrarStatusEmail(emailEnviado, novoEstudante.getEmailPessoal());
                 view.mostrarCredenciaisCriadas("ESTUDANTE", novoEstudante.getNome(), novoEstudante.getEmail(), passGeradaEst);
-
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteEstudantes();
             }
@@ -852,6 +877,7 @@ public class GestorController {
             if (e != null && e.getCurso().getSigla().equals(curso.getSigla()) && !e.isAtivo()) {
                 e.setAtivo(true);
                 e.matricularNasUcsIniciais();
+                repositorio.atualizarEstudante(e);
             }
         }
     }
@@ -909,8 +935,6 @@ public class GestorController {
             }
 
             view.mostrarSucessoAtualizacao();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
-
         } catch (NumberFormatException e) {
             view.mostrarErroNumMecNumerico();
         }
@@ -930,11 +954,15 @@ public class GestorController {
                         String data = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
                         Propina.adicionarMulta(numMec, anoAtual, multa, data);
                         view.mostrarMultaAplicada(multa);
+                        est.getPercursoAcademico().limparInscricoesAtivas();
                     }
                 }
                 est.setAtivo(!est.isAtivo());
+
+                // PERSISTIR A ALTERAÇÃO NO CSV
+                repositorio.atualizarEstudante(est);
+
                 view.msgSucessoEstadoAlterado("Estudante", est.isAtivo());
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroEstudanteNaoEncontrado();
             }
@@ -990,7 +1018,6 @@ public class GestorController {
                 view.mostrarStatusEmail(emailEnviado, novoDocente.getEmailPessoal());
 
                 view.mostrarCredenciaisCriadas("DOCENTE", novoDocente.getNome(), novoDocente.getEmail(), passGeradaDoc);
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteDocentes();
             }
@@ -1019,9 +1046,7 @@ public class GestorController {
             if (!novoEmail.trim().isEmpty()) {
                 docEditar.setEmailPessoal(novoEmail);
             }
-
             view.mostrarSucessoAtualizacao();
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroDocenteNaoEncontrado();
         }
@@ -1040,8 +1065,11 @@ public class GestorController {
             }
 
             doc.setAtivo(!doc.isAtivo());
+
+            // PERSISTIR A ALTERAÇÃO NO CSV
+            repositorio.atualizarDocente(doc);
+
             view.msgSucessoEstadoAlterado("Docente", doc.isAtivo());
-            model.dal.ExportadorCSV.exportarDados("bd", repositorio);
         } else {
             view.mostrarErroDocenteNaoEncontrado();
         }
@@ -1164,8 +1192,6 @@ public class GestorController {
                 String destinoHardcoded = "1220492@isep.ipp.pt";
                 boolean emailEnviado = utils.ServicoEmail.enviarEmailNovoGestor(emailGerado, passRaw, destinoHardcoded);
                 view.mostrarStatusEmail(emailEnviado, destinoHardcoded);
-
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarErroLimiteGestores();
             }
@@ -1200,8 +1226,11 @@ public class GestorController {
 
             if (view.confirmarDados()) {
                 gestorAlvo.setAtivo(false);
+
+                // PERSISTIR A ALTERAÇÃO NO CSV
+                repositorio.atualizarGestor(gestorAlvo);
+
                 view.mostrarSucessoDesativacaoGestor();
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
             } else {
                 view.mostrarAvisoSemAlteracao();
             }
@@ -1219,9 +1248,20 @@ public class GestorController {
             String confirmacaoRaw = view.pedirConfirmacaoPass();
 
             if (!novaPassRaw.isEmpty() && novaPassRaw.equals(confirmacaoRaw)) {
-                gestorAtivo.setPassword(Seguranca.encriptar(novaPassRaw));
-                view.msgSucesso();
-                model.dal.ExportadorCSV.exportarDados("bd", repositorio);
+                String novaPassEnc = Seguranca.encriptar(novaPassRaw);
+                gestorAtivo.setPassword(novaPassEnc);
+
+                // ATUALIZAR TAMBÉM NO FICHEIRO DE LOGINS
+                boolean loginAtualizado = model.dal.LoginDAL.atualizarPassword(gestorAtivo.getEmail(), novaPassEnc);
+
+                // Também atualizar no ficheiro de gestores (persistência)
+                repositorio.atualizarGestor(gestorAtivo);
+
+                if (loginAtualizado) {
+                    view.msgSucesso();
+                } else {
+                    view.mostrarErroAtualizacaoPassword();
+                }
             } else {
                 view.msgErroPassNaoCoincidem();
             }
@@ -1280,10 +1320,15 @@ public class GestorController {
                 view.msgErroDataFormato();
             } else if (!Validador.isDataReal(data)) {
                 view.msgErroDataInexistente();
-            } else if (!Validador.temIdadeMinima(data)) {
-                view.mostrarErroIdadeMinima();
             } else {
-                return data;
+                int resultado = Validador.validarDataNascimentoComErro(data);
+                if (resultado == 1) {
+                    view.msgErroDataFutura();
+                } else if (resultado == 2) {
+                    view.msgErroIdadeMinima();
+                } else {
+                    return data;
+                }
             }
         }
     }

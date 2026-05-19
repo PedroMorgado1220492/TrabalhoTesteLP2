@@ -1,10 +1,11 @@
 package utils;
 
-import model.dal.RepositorioDados;
+import model.bll.UnidadeCurricular;
 import model.bll.Estudante;
+import model.bll.Avaliacao;
 import model.bll.Curso;
 import model.bll.Docente;
-import model.bll.Avaliacao;
+import model.dal.RepositorioDados;
 
 /**
  * Classe utilitária dedicada ao processamento de métricas e indicadores de desempenho.
@@ -17,7 +18,8 @@ public class Estatisticas {
      * Construtor privado para impedir a instanciação da classe.
      * Segue o padrão Utility Class, já que todos os métodos expostos são estáticos.
      */
-    private Estatisticas() {}
+    private Estatisticas() {
+    }
 
     // =========================================================
     // ESTATÍSTICAS GLOBAIS INSTITUCIONAIS (PARA O GESTOR)
@@ -221,28 +223,39 @@ public class Estatisticas {
 
     /**
      * Calcula as estatísticas puras de uma UC para o ano letivo atual.
+     *
      * @return Um array de double com: [inscritos, avaliados, max, min, media, positivas, negativas]
      */
-    public static double[] calcularEstatisticasUC(model.bll.UnidadeCurricular uc, model.dal.RepositorioDados repo) {
+    public static double[] calcularEstatisticasUC(UnidadeCurricular uc, RepositorioDados repo) {
+        int inscritos = 0;
+        int avaliados = 0;
         double max = -1.0, min = 21.0, soma = 0;
-        int countComNotas = 0, inscritos = 0;
         int positivas = 0, negativas = 0;
 
-        for (int i = 0; i < repo.getTotalEstudantes(); i++) {
-            model.bll.Estudante e = repo.getEstudantes()[i];
+        Integer numAvaliacoesNecessarias = uc.getNumAvaliacoes();
 
+        for (Estudante e : repo.getEstudantes()) {
             if (e != null && e.isAtivo() && e.estaInscrito(uc.getSigla())) {
                 inscritos++;
-                model.bll.Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
+                Avaliacao av = e.getAvaliacaoAtual(uc.getSigla());
 
-                if (av != null && av.getTotalAvaliacoesLancadas() > 0) {
+                // Verificar se tem todas as avaliações necessárias
+                boolean temTodasAvaliacoes = false;
+
+                if (av != null && numAvaliacoesNecessarias != null) {
+                    if (av.getTotalAvaliacoesLancadas() >= numAvaliacoesNecessarias) {
+                        temTodasAvaliacoes = true;
+                    }
+                }
+
+                // Só conta como avaliado se tiver TODAS as avaliações necessárias
+                if (temTodasAvaliacoes) {
+                    avaliados++;
                     double media = av.calcularMedia();
 
                     if (media > max) max = media;
                     if (media < min) min = media;
-
                     soma += media;
-                    countComNotas++;
 
                     if (media >= 9.5) positivas++;
                     else negativas++;
@@ -250,12 +263,11 @@ public class Estatisticas {
             }
         }
 
-        if (countComNotas == 0) {
+        if (avaliados == 0) {
             return new double[] { inscritos, 0, 0, 0, 0, 0, 0 };
         }
 
-        double mediaGlobal = soma / countComNotas;
-
-        return new double[] { inscritos, countComNotas, max, min, mediaGlobal, positivas, negativas };
+        double mediaGlobal = soma / avaliados;
+        return new double[] { inscritos, avaliados, max, min, mediaGlobal, positivas, negativas };
     }
 }

@@ -88,7 +88,7 @@ public class MainView {
     // 3. FORMULÁRIOS DE REGISTO E REVISÃO
     // =========================================================
 
-    public String pedirNome() { return utils.Consola.lerString("Nome e Sobrenome: "); }
+    public String pedirNome() { return utils.Consola.lerString("Nome Completo: "); }
     public String pedirNif() { return utils.Consola.lerString("NIF (9 dígitos): "); }
 
     public String pedirNifRecuperacao() throws utils.CancelamentoException {
@@ -197,7 +197,8 @@ public class MainView {
     public void mostrarErroNifFormato() { System.out.println("\n>>Erro: Formato de NIF inválido. Introduza exatamente 9 dígitos."); }
     public void msgErroDataFormato() { System.out.println(">> Erro: Formato inválido. Use DD-MM-AAAA."); }
     public void msgErroDataInexistente() { System.out.println(">> Erro: A data introduzida não existe no calendário."); }
-    public void msgErroIdadeMinima() { System.out.println(">> Erro: O studante deve ter pelo menos 16 anos."); }
+    public void msgErroDataFutura() { System.out.println(">> Erro: A data de nascimento não pode ser futura."); }
+    public void msgErroIdadeMinima() { System.out.println(">> Erro: O estudante deve ter pelo menos 16 anos."); }
     public void msgErroNumeroInvalido() { System.out.println(">> Erro: Seleção fora do intervalo permitido."); }
     public void msgErroLimiteEstudantes() { System.out.println(">> Erro: Capacidade máxima do sistema atingida."); }
     public void msgOpcaoInvalida() { System.out.println(">> Erro: Opção de menu inválida."); }
@@ -213,7 +214,7 @@ public class MainView {
 
     public void msgAnoIniciadoInscricoesFechadas() { System.out.println(">> O ano letivo já foi iniciado. As inscrições estão fechadas."); }
     public void msgSucessoRecuperacao() { System.out.println(">> Sucesso: Verifique a nova senha no seu email pessoal."); }
-    public void msgErroDadosIncorretosOuFalhaEmail() { System.out.println(">> Erro: Utilizador e NIF não coorrespondem."); }
+    public void msgErroDadosIncorretosOuFalhaEmail() { System.out.println(">> Erro: Utilizador e NIF não correspondem."); }
     public void msgErroArquivoNaoEncontrado(String c) { System.err.println(">> Erro: Ficheiro " + c + " não localizado."); }
     public void msgGestorNaoPodeRecuperar() { System.out.println(">> Utilizador Gestor não pode recuperar palavra-passe por este meio."); }
 
@@ -223,4 +224,14 @@ public class MainView {
     public void msgInicioAnoSucesso(int ano) { System.out.println(">> Ano letivo " + ano + " iniciado com sucesso!"); }
     public void msgRelatorioGerado(String nomeFicheiro) { System.out.println(">> Relatório gerado: " + nomeFicheiro); }
     public void msgErroRelatorio() { System.out.println(">> Erro ao salvar o relatório."); }
+    public void msgCertificadoNaoEmitidoPorDividas(String nomeAluno) { System.out.println("Aluno " + nomeAluno + " concluiu o curso mas tem dívidas. Certificado não emitido."); }
+    public void msgFaltaPrecosParaTransicao(int ano, String[] cursosFaltantes) {
+        System.out.println("\n>> NÃO É POSSÍVEL TRANSITAR PARA O ANO " + ano + ".");
+        System.out.println(">> Os seguintes cursos ativos não têm preço definido para " + ano + ":");
+        for (String sigla : cursosFaltantes) {
+            System.out.println("   - " + sigla);
+        }
+        System.out.println(">> Utilize a opção 'Atualizar Preço do Curso' (Gestor) para definir os preços em falta.");
+    }
+    public void msgTodosPrecosDefinidosParaTransicao(int ano) { System.out.println(">> Todos os cursos ativos têm preço definido para " + ano + ". Pode avançar."); }
 }

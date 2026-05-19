@@ -62,8 +62,9 @@ public class Avaliacao {
      * @return true se a nota foi adicionada com sucesso; false se o limite de notas da UC já foi atingido.
      */
     public boolean adicionarResultado(double nota) {
-        // Valida simultaneamente o espaço no array e o limite definido ativamente pela UC
-        if (totalAvaliacoesLancadas < unidadeCurricular.getNumAvaliacoes() && totalAvaliacoesLancadas < resultadosAvaliacoes.length) {
+        Integer limite = unidadeCurricular.getNumAvaliacoes();
+        int max = (limite != null) ? limite : 3;
+        if (totalAvaliacoesLancadas < max && totalAvaliacoesLancadas < resultadosAvaliacoes.length) {
             resultadosAvaliacoes[totalAvaliacoesLancadas] = nota;
             totalAvaliacoesLancadas++;
             return true;
@@ -91,4 +92,5 @@ public class Avaliacao {
 
         return soma / totalAvaliacoesLancadas;
     }
+
 }

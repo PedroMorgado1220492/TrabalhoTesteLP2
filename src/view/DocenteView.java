@@ -68,8 +68,10 @@ public class DocenteView {
     public int pedirUC(UnidadeCurricular[] ucs, int total) {
         System.out.println("\n--- SELECIONAR UNIDADE CURRICULAR ---");
         for (int i = 0; i < total; i++) {
-            System.out.printf("%d - [%s] %s\n", (i + 1), ucs[i].getSigla(), ucs[i].getNome());
+            String estado = ucs[i].isAtivo() ? "ATIVA" : "INATIVA";
+            System.out.printf("%d - [%s] %s (%s)\n", (i + 1), ucs[i].getSigla(), ucs[i].getNome(), estado);
         }
+        System.out.println("0 - Recuar");
         return utils.Consola.lerInt("Escolha o número da UC: ") - 1;
     }
 
@@ -111,8 +113,23 @@ public class DocenteView {
         System.out.println("Morada de Residência: " + d.getMorada());
         System.out.println("Data de Nascimento  : " + d.getDataNascimento());
         System.out.println("--------------------------------------");
-    }
 
+        // Listar UCs que leciona
+        System.out.println("\n--- UNIDADES CURRICULARES QUE LECIONA ---");
+        if (d.getTotalUcsLecionadas() == 0) {
+            System.out.println("  (Nenhuma UC atribuída)");
+        } else {
+            for (int i = 0; i < d.getTotalUcsLecionadas(); i++) {
+                UnidadeCurricular uc = d.getUcsLecionadas()[i];
+                if (uc != null) {
+                    System.out.printf("  -> [%s] %s (Ano: %d) | %s\n",
+                            uc.getSigla(), uc.getNome(), uc.getAnoCurricular(),
+                            uc.isAtivo() ? "ATIVA" : "INATIVA");
+                }
+            }
+        }
+        System.out.println("--------------------------------------");
+    }
     public void mostrarEstatisticas(String siglaUC, double[] stats) {
         int inscritos = (int) stats[0];
         int avaliados = (int) stats[1];
@@ -155,9 +172,9 @@ public class DocenteView {
         System.out.println("\n--- MOMENTOS DE AVALIAÇÃO DAS SUAS UCs ---");
     }
 
-    public void mostrarUcComMomentosAvaliacao(String sigla, String nome, Integer numAvaliacoes) {
-        String estado = (numAvaliacoes == null) ? "NÃO DEFINIDO" : numAvaliacoes + " momento(s) de avaliação";
-        System.out.printf(">> [%s] %s - %s\n", sigla, nome, estado);
+    public void mostrarUcComMomentosAvaliacao(String sigla, String nome, Integer numAvaliacoes, String estado) {
+        String info = (numAvaliacoes == null) ? "NÃO DEFINIDO" : numAvaliacoes + " momento(s) de avaliação";
+        System.out.printf(">> [%s] %s - %s (%s)\n", sigla, nome, info, estado);
     }
 
     public void msgNenhumMomentoDefinido() {
@@ -214,4 +231,7 @@ public class DocenteView {
     public void msgAvisoSemAlunosInscritos() { System.out.println(">> Aviso: Sem alunos inscritos no presente ano letivo."); }
     public void msgNotificacaoEnviada() { System.out.println(">> Estudante notificado por e-mail automaticamente."); }
     public void msgAnoNaoIniciado() { System.out.println(">> O ano letivo ainda não foi iniciado. Não é possível lançar avaliações."); }
+    public void mostrarErroAtualizacaoPassword() { System.out.println(">> Erro: A password foi alterada no perfil mas não foi possível atualizar o ficheiro de logins."); }
+    public void msgErroUCInativa() { System.out.println(">> Erro: Esta Unidade Curricular está inativa. Operação cancelada."); }
+    public void msgAlteracaoMomentosBloqueada() { System.out.println(">> Erro: O ano letivo já foi iniciado. Não é possível alterar os momentos de avaliação."); }
 }

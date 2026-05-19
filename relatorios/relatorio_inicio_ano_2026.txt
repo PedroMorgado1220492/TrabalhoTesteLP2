@@ -4,23 +4,23 @@ RELATÓRIO DE VERIFICAÇÃO PARA INÍCIO DO ANO LETIVO
 Ano letivo: 2026
 
 
---- Curso LEC - Licenciatura de Engenharia Civil ---
+--- Curso LEC - Licenciatura em Engenharia Civil ---
 Situação: ATIVO - ABRE PARA 1º ANO
-Alunos: 1º ano: 6 | 2º ano: 0 | 3º ano: 0
+Alunos: 1º ano: 5 | 2º ano: 0 | 3º ano: 0
 
---- Curso LEM - Licenciatura em Engenharia Mecânica ---
+--- Curso LEM - Licenciatura de Engenharia Mecânica ---
 Situação: 1º ano com 2 alunos (mínimo 5) - 1º ANO NÃO ABRE
 Alunos: 1º ano: 0 (removidos) | 2º ano: 0 | 3º ano: 0
 
---- Curso LEE - Licenciatura em Engenharia Eletrotécnica ---
+--- Curso LEE - Licenciatura de Engenharia Eletrotécnica ---
 Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO
 Alunos removidos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
 
---- Curso LEN - Licanciatura em Engenharia Nuclear ---
+--- Curso LEN - Licenciatura em Engenharia Nuclear ---
 Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO
 Alunos removidos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
 
---- Curso LFQ - Licenciatura em Fisico Química ---
+--- Curso LFQ - Licenciatura em Fisica e Química ---
 Situação: ESTRUTURA INVÁLIDA - CURSO DESATIVADO
 Alunos removidos: 1º ano: 0 | 2º ano: 0 | 3º ano: 0
 

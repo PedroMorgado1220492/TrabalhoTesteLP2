@@ -1,0 +1,25 @@
+=====================================================
+             CERTIFICADO DE CONCLUSÃO                
+=====================================================
+O aluno Beatriz Sofia Antunes, com a morada Coimbra,
+número de contribuinte 233654789 terminou o curso
+no ano 2028, curso de Licenciatura em Engenharia Civil,
+com média final de 15 valores.
+=====================================================
+UNIDADES CURRICULARES CONCLUÍDAS:
+
+--- 1º ANO ---
+  [EM1] Engenharia dos Materiais 1 | Nota Final: 14.0
+  [MAT1] Matemática 1 | Nota Final: 14.0
+  [MAT1] Matemática 1 | Nota Final: 15.0
+  [DES] Desenho Técnico | Nota Final: 15.0
+
+--- 2º ANO ---
+  [MAT2] Matemática 2 | Nota Final: 15.0
+  [MAT2] Matemática 2 | Nota Final: 14.0
+  [EST1] Estruturas 1 | Nota Final: 17.0
+
+--- 3º ANO ---
+  [EST2] Estruturas 2 | Nota Final: 15.0
+=====================================================
+Certificado Identificador: 20260002
