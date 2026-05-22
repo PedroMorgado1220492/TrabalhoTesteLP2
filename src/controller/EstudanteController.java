@@ -105,7 +105,17 @@ public class EstudanteController {
         }
 
         view.mostrarCabecalhoPercurso();
-        view.mostrarAnoFrequencia(estudanteLogado.getAnoFrequencia());
+        if (estudanteLogado.concluiuCurso()) {
+            int anoAtual = repositorio.getAnoAtual();
+            // Verifica apenas dívidas de anos anteriores (exclui o ano corrente)
+            if (Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual)) {
+                view.mostrarAvisoDividasParaCertificado();
+            } else {
+                view.mostrarCursoTerminado();
+            }
+        } else {
+            view.mostrarAnoFrequencia(estudanteLogado.getAnoFrequencia());
+        }
 
         // Itera sobre os 3 anos estruturais da Licenciatura
         for (int ano = 1; ano <= 3; ano++) {
@@ -268,77 +278,102 @@ public class EstudanteController {
         int anoAtual = repositorio.getAnoAtual();
         int numMec = estudanteLogado.getNumeroMecanografico();
 
-        // Mostrar histórico de pagamentos
+        // Histórico de pagamentos (sempre visível)
         model.bll.Propina.Pagamento[] pagamentos = model.bll.Propina.getPagamentos(numMec);
         view.mostrarHistoricoPagamentos(pagamentos);
 
-        double valorAnualAtual = PrecoCursoDAL.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
-        double pagoAnoAtual = model.bll.Propina.getTotalPago(numMec, anoAtual);
-        double dividaTotal = model.bll.Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        // Verificar se o estudante já tem todas as UCs aprovadas (histórico + atuais)
+        boolean todasAprovadas = estudanteLogado.cursoCompleto();
+        double valorAnualAtual;
+        double dividaTotal;
+
+        if (todasAprovadas) {
+            // Curso concluído: ignorar propina do ano corrente
+            valorAnualAtual = 0.0;
+            dividaTotal = model.bll.Propina.getDividaAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+        } else {
+            valorAnualAtual = model.dal.PrecoCursoDAL.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), anoAtual);
+            dividaTotal = model.bll.Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        }
+
         double totalPago = 0.0;
         for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
             totalPago += model.bll.Propina.getTotalPago(numMec, ano);
         }
 
-        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, dividaTotal, totalPago);
+        // Exibir extrato (a view esconde a linha da propina se todasAprovadas == true)
+        view.mostrarExtratoPropinas(anoAtual, valorAnualAtual, dividaTotal, totalPago, todasAprovadas);
 
+        // Se não há dívida (nem de anos anteriores), termina
         if (dividaTotal <= 0.01) return;
 
-        double valor = calcularValorPagamento(dividaTotal, valorAnualAtual);
-        if (valor <= 0) return;
+        // --- Menu de pagamento (só aparece se houver dívida e o curso não estiver terminado, ou se houver dívida antiga mesmo com curso terminado) ---
+        double prestacaoBase = (todasAprovadas ? 0.0 : valorAnualAtual * 0.10);
+        double valorMinimoPrestacao = Math.min(prestacaoBase, dividaTotal);
 
-        // Guardar estado da dívida de anos anteriores antes do pagamento
-        boolean tinhaDividasAnteriores = model.bll.Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
-
-        // Registar pagamento
-        String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        model.bll.Propina.registarPagamento(numMec, anoAtual, valor, dataAtual);
-
-        // Recalcular valores após pagamento
-        double novaDividaTotal = model.bll.Propina.calcularDividaTotal(estudanteLogado, anoAtual);
-        double novoPagoAno = pagoAnoAtual + valor;
-        double novaDividaAno = valorAnualAtual - novoPagoAno;
-
-        // Calcular total devido para recibo (usando PrecoCursoDAL)
-        double totalDevido = 0.0;
-        for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
-            totalDevido += PrecoCursoDAL.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
+        int op = view.mostrarOpcoesPagamento(dividaTotal, valorMinimoPrestacao);
+        double valorEscolhido = 0.0;
+        switch (op) {
+            case 1: valorEscolhido = dividaTotal; break;
+            case 2: valorEscolhido = valorMinimoPrestacao; break;
+            case 3: valorEscolhido = view.pedirValorLivre(); break;
+            default: return;
+        }
+        if (valorEscolhido <= 0) return;
+        if (valorEscolhido > dividaTotal) {
+            view.msgErroValorSuperiorDivida();
+            return;
+        }
+        if (valorEscolhido < valorMinimoPrestacao) {
+            view.msgErroValorMinimo(valorMinimoPrestacao);
+            return;
         }
 
+        // --- Registar pagamento ---
+        boolean tinhaDividasAnteriores = model.bll.Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+        String dataAtual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        model.bll.Propina.registarPagamento(numMec, anoAtual, valorEscolhido, dataAtual);
 
-        // Gerar recibo e enviar email (código mantém-se igual)
-        String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valor, totalDevido, novaDividaTotal);
+        // Recalcular dívida após pagamento
+        double novaDividaTotal;
+        if (todasAprovadas) {
+            novaDividaTotal = model.bll.Propina.getDividaAteAno(estudanteLogado, anoAtual - 1, anoAtual);
+        } else {
+            novaDividaTotal = model.bll.Propina.calcularDividaTotal(estudanteLogado, anoAtual);
+        }
 
-        // Anular Email Recibo
-      //  if (caminhoRecibo != null && estudanteLogado.getEmailPessoal() != null && !estudanteLogado.getEmailPessoal().isEmpty()) {
-          //  boolean emailEnviado = utils.ServicoEmail.enviarEmailRecibo(estudanteLogado.getEmailPessoal(),
-                 //   estudanteLogado.getNome(),
-                 //   caminhoRecibo);
-       //     if (emailEnviado) {
-          //      view.msgNotificacaoEnviada();
-       //     } else {
-                view.msgFalhaEnvioEmail();
-      //      }
-    //    } else {
-    //        view.msgReciboNaoEnviado();
-    //    }
-        // Até aqui.
-
+        // Gerar recibo (opcional, sem email para testes)
+        double totalDevido = 0.0;
+        for (int ano = estudanteLogado.getAnoPrimeiraInscricao(); ano <= anoAtual; ano++) {
+            totalDevido += model.dal.PrecoCursoDAL.obterPrecoCurso(estudanteLogado.getCurso().getSigla(), ano);
+        }
+        String caminhoRecibo = model.bll.Recibo.gerarRecibo(estudanteLogado, valorEscolhido, totalDevido, novaDividaTotal);
+        if (caminhoRecibo == null) {
+            view.msgFalhaEnvioEmail();
+        } else {
+            view.msgFalhaEnvioEmail(); // mensagem de teste
+        }
         view.msgSucesso();
 
-        // Verificar estado da dívida de anos anteriores após pagamento
+        // --- Reinscrever se as dívidas de anos anteriores foram liquidadas ---
         boolean agoraTemDividasAnteriores = model.bll.Propina.temDividasAteAno(estudanteLogado, anoAtual - 1, anoAtual);
-
         if (tinhaDividasAnteriores && !agoraTemDividasAnteriores) {
-            if (estudanteLogado.reinscrever(anoAtual)) {
+            if (todasAprovadas) {
+                // Curso já completo: arquivar avaliações e reconstruir percurso imediatamente
+                estudanteLogado.arquivarAvaliacoes();
                 estudanteLogado.reconstruirPercurso();
                 repositorio.atualizarEstudante(estudanteLogado);
                 view.msgPercursoAtualizado();
-                if (estudanteLogado.getAnoFrequencia() > 1) {
-                    view.msgEstudanteProgrediu(estudanteLogado.getAnoFrequencia());
-                }
             } else {
-                view.msgReinscricaoNaoPossivel();
+                if (estudanteLogado.reinscrever(anoAtual)) {
+                    repositorio.atualizarEstudante(estudanteLogado);
+                    view.msgPercursoAtualizado();
+                    if (estudanteLogado.getAnoFrequencia() > 1) {
+                        view.msgEstudanteProgrediu(estudanteLogado.getAnoFrequencia());
+                    }
+                } else {
+                    view.msgReinscricaoNaoPossivel();
+                }
             }
         }
     }

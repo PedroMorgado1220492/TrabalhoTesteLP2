@@ -123,15 +123,19 @@ public class EstudanteView {
         return utils.Consola.lerOpcaoMenu();
     }
 
-    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double dividaTotal, double totalPago) {
+    public void mostrarExtratoPropinas(int anoAtual, double valorAnual, double dividaTotal, double totalPago, boolean cursoTerminado) {
         double dividaAnosAnteriores = dividaTotal - valorAnual;
         if (dividaAnosAnteriores < 0) dividaAnosAnteriores = 0;
 
         System.out.println("\n--------- EXTRATO FINANCEIRO ----------");
-        System.out.printf("Propina do Ano %d : %.2f€\n", anoAtual, valorAnual);
+        if (!cursoTerminado) {
+            System.out.printf("Propina do Ano %d : %.2f€\n", anoAtual, valorAnual);
+        }
         System.out.printf("Dívida Anos Anteriores: %.2f€\n", dividaAnosAnteriores);
         System.out.printf("Total Pago: %.2f€\n", totalPago);
-        System.out.printf("Total por Pagar: %.2f€\n", dividaTotal);
+        if (!cursoTerminado) {
+            System.out.printf("Total por Pagar: %.2f€\n", dividaTotal);
+        }
         System.out.println("---------------------------------------");
     }
 
@@ -175,8 +179,7 @@ public class EstudanteView {
     public void msgTemDividasParaCertificado() { System.out.println(">> Não é possível emitir o certificado para Estudantes com dívidas pendentes."); }
     public void msgErroGerarCertificado() { System.out.println(">> Ocorreu um erro ao gerar o certificado. Tente novamente."); }
     public void msgCertificadoEmitido() { System.out.println(">> Certificado de conclusão de curso emitido e enviado por email. A sua conta será desativada."); }
-    public void msgCertificadoApenasAnoSeguinte() {
-        System.out.println(">> NOTA: O certificado de conclusão de curso só pode ser solicitado no ano letivo seguinte ao da conclusão do curso.");
-        System.out.println(">> Certifique-se de que todas as unidades curriculares estão concluídas e que não existem dívidas.");
-    }
+    public void msgCertificadoApenasAnoSeguinte() { System.out.println(">> O certificado de conclusão de curso só pode ser solicitado no ano letivo seguinte ao da conclusão do curso."); }
+    public void mostrarCursoTerminado() { System.out.println(">> Curso Terminado - Imprima o seu Certificado"); }
+    public void mostrarAvisoDividasParaCertificado() { System.out.println(">> O Estudante concluiu o Curso com dívidas - Pagar dívidas para Imprimir Certificado"); }
 }

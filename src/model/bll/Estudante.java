@@ -338,6 +338,19 @@ public class Estudante extends Utilizador {
         return ucsAprovadas == this.curso.getTotalUCs();
     }
 
+
+    public boolean cursoCompleto() {
+        if (curso == null) return false;
+        for (int i = 0; i < curso.getTotalUCs(); i++) {
+            UnidadeCurricular uc = curso.getUnidadesCurriculares()[i];
+            if (uc == null) continue;
+            if (obterCodigoEstadoUc(uc.getSigla()) != 3) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean reinscrever(int anoAtual) {
         if (Propina.temDividasAteAno(this, anoAtual - 1, anoAtual)) {
             return false;
